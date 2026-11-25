@@ -30,8 +30,8 @@ const PIXEL = true;             // pixel look: whole-number scale, no smoothing
 const FONT = '"Courier New", Courier, monospace';
 const TITLE = 'SpiritOfMurin';
 function controlsList() {
-  return [`${K('up')}${K('left')}${K('down')}${K('right')}: andar`, `${K('cut')}: corte (aperte de novo para encadear)`, `${K('qi')}: feitiçaria de qi`,
-    `${K('step')}: passo   ${K('lock')}: travar no alvo`, `${K('use')}: examinar/pegar   ${K('heal')}: bálsamo`,
+  return [`${K('up')}${K('left')}${K('down')}${K('right')}: andar`, `${K2('cut')}: corte (aperte de novo para encadear)`, `${K2('qi')}: feitiçaria de qi`,
+    `${K2('step')}: passo   ${K2('lock')}: travar no alvo`, `${K('use')}: examinar/pegar   ${K('heal')}: bálsamo`,
     `${K('book')}: livro   ${K('bag')}: inventário   ${K('map')}: mapa`, `${K('pause')}: pausa   ${K('mute')}: som   O: teclas`];
 }
 const clock = window.GAME_CLOCK || { now: () => performance.now() / 1000 }; // a check may inject one
@@ -95,6 +95,23 @@ addEventListener('keydown', e => {
   if (!e.repeat) { down.add(e.code); hit.add(e.code); }
   if (e.code === 'Space' || e.code === 'Tab' || e.code.startsWith('Arrow') || Object.values(binds).includes(e.code)) e.preventDefault();
 });
+// Mouse buttons enter the same sets as keys, as 'Mouse0' (left), 'Mouse1' (middle), 'Mouse2'
+// (right), so any action can be bound to them. The click's place, in game pixels, is kept for
+// the menus (title, Teclas), which consume the click: a scene reads `hit` once and it is cleared.
+const mouse = { x: -1, y: -1, click: false };
+function mouseAt(e) {
+  const r = canvas.getBoundingClientRect();
+  mouse.x = (e.clientX - r.left) * W / r.width; mouse.y = (e.clientY - r.top) * H / r.height;
+}
+addEventListener('mousedown', e => {
+  startAudio(); mouseAt(e);
+  const code = 'Mouse' + e.button; down.add(code); hit.add(code);
+  if (e.button === 0) mouse.click = true;
+  e.preventDefault(); // no text selection, no middle-button autoscroll
+});
+addEventListener('mouseup', e => down.delete('Mouse' + e.button));
+addEventListener('mousemove', mouseAt);
+addEventListener('contextmenu', e => e.preventDefault()); // the right button is the step, not the browser menu
 
 // ---- Key bindings: changed on the Teclas screen, remembered in this browser --------------
 const ACTIONS = [
@@ -109,11 +126,19 @@ function loadBinds() {
   binds = {}; for (const [id, , def] of ACTIONS) binds[id] = def;
   try { const s = JSON.parse(localStorage.getItem(BIND_KEY) || 'null'); if (s) for (const id in s) if (id in binds && typeof s[id] === 'string') binds[id] = s[id]; } catch (e) { /* no storage: defaults */ }
 }
-function saveBinds() { try { localStorage.setItem(BIND_KEY, JSON.stringify(binds)); } catch (e) { /* not kept */ } }
-loadBinds();
-const held = id => down.has(binds[id]);
-const tapped = id => hit.has(binds[id]);
-const KEYNAMES = { Space: 'Espaço', Tab: 'Tab', Enter: 'Enter', ShiftLeft: 'Shift', ShiftRight: 'Shift dir.', ControlLeft: 'Ctrl', ControlRight: 'Ctrl dir.',
+function saveBinds() { try { localStorage.setItem(BIND_KEY, JSON.stringify(binds)); localStorage.setItem(BIND2_KEY, JSON.stringify(binds2)); } catch (e) { /* not kept */ } }
+const BIND2_KEY = 'spiritofmurin.teclas2';
+const BIND2_DEFAULT = { cut: 'Mouse0', step: 'Mouse2' };
+let binds2 = {};
+function loadBinds2() {
+  binds2 = {}; for (const [id] of ACTIONS) binds2[id] = BIND2_DEFAULT[id] || '';
+  try { const s = JSON.parse(localStorage.getItem(BIND2_KEY) || 'null'); if (s) for (const id in s) if (id in binds2 && typeof s[id] === 'string') binds2[id] = s[id]; } catch (e) { /* defaults */ }
+  for (const id in binds2) if (binds2[id] && Object.values(binds).includes(binds2[id])) binds2[id] = ''; // never the same input twice
+}
+loadBinds(); loadBinds2();
+const held = id => down.has(binds[id]) || (!!binds2[id] && down.has(binds2[id]));
+const tapped = id => hit.has(binds[id]) || (!!binds2[id] && hit.has(binds2[id]));
+const KEYNAMES = { Mouse0: 'Mouse esquerdo', Mouse1: 'Mouse do meio', Mouse2: 'Mouse direito', Mouse3: 'Mouse lateral 1', Mouse4: 'Mouse lateral 2', Space: 'Espaço', Tab: 'Tab', Enter: 'Enter', ShiftLeft: 'Shift', ShiftRight: 'Shift dir.', ControlLeft: 'Ctrl', ControlRight: 'Ctrl dir.',
   AltLeft: 'Alt', ArrowUp: 'Seta cima', ArrowDown: 'Seta baixo', ArrowLeft: 'Seta esq.', ArrowRight: 'Seta dir.', Comma: ',', Period: '.',
   Semicolon: ';', Slash: '/', Quote: "'", BracketLeft: '[', BracketRight: ']', Minus: '-', Equal: '=', Backslash: '\\', CapsLock: 'Caps', Backspace: 'Apagar' };
 function keyLabel(code) {
@@ -124,6 +149,9 @@ function keyLabel(code) {
   return KEYNAMES[code] || code;
 }
 const K = id => keyLabel(binds[id]);
+// both inputs of an action, short, for the control lists: "J/Mouse esq."
+const SHORT = { Mouse0: 'Mouse esq.', Mouse1: 'Mouse meio', Mouse2: 'Mouse dir.', Mouse3: 'Mouse lat.1', Mouse4: 'Mouse lat.2' };
+const K2 = id => K(id) + (binds2[id] ? '/' + (SHORT[binds2[id]] || keyLabel(binds2[id])) : '');
 addEventListener('keyup', e => down.delete(e.code));
 addEventListener('pointerdown', () => startAudio());
 addEventListener('blur', () => down.clear());
@@ -946,7 +974,7 @@ function updatePlay(dt) {
   if (state.reveal > 0) {
     state.reveal -= dt;
     if (state.reveal <= 0) {
-      toast(`Com o alvo travado: ${K('step')} + direção para o lado do inimigo.`, 6);
+      toast(`Com o alvo travado: ${K2('step')} + direção para o lado do inimigo.`, 6);
       toast(`Experimente na estátua: ${K('lock')} trava nela.`, 6);
     }
     return;
@@ -1600,7 +1628,7 @@ function drawWorld(cx, cy) {
   if (state.learnedSide && tgh && guarding(tgh) && (state.flankHits || 0) < 3 && !state.panel) {
     const keys = sideKeys(p, tgh);
     if (keys) {
-      const s2 = `${K('step')} + ${keys}: contornar`, X = Math.round(p.x - cx), Y = Math.round(p.y - cy) + 14;
+      const s2 = `${K2('step')} + ${keys}: contornar`, X = Math.round(p.x - cx), Y = Math.round(p.y - cy) + 14;
       ctx.font = `bold 9px ${FONT}`; const w = ctx.measureText(s2).width + 8;
       ctx.fillStyle = C.panel; ctx.fillRect(Math.round(X - w / 2), Y - 6, Math.round(w), 12);
       text(s2, X, Y, 9, C.learn);
@@ -1743,7 +1771,25 @@ function drawMountains(fancy = false) {
   ctx.fillStyle = 'rgba(200,220,210,0.05)'; ctx.fillRect(0, H - 150, W, 30); ctx.fillRect(0, H - 100, W, 18);
 }
 // ---- Menus: navigation, keycaps, parchment -------------------------------------------------
-const teclas = { from: 'title', sel: 0, wait: false };
+const teclas = { from: 'title', sel: 0, col: 0, wait: false, msg: '', msgT: 0 };
+// Put `code` in an action's slot (0 = Tecla, 1 = Mouse / extra). If another slot already uses it,
+// the two trade places; a main slot is never left empty.
+function assignInput(id, col, code) {
+  const mine = col === 0 ? binds : binds2, old = mine[id];
+  if (code === old) { teclas.wait = false; return; }
+  let owner = null;
+  for (const [aid] of ACTIONS) { if (binds[aid] === code) owner = [aid, 0]; if (binds2[aid] === code) owner = [aid, 1]; }
+  if (owner && owner[1] === 0 && !old) { // it would leave that action without its main input
+    teclas.msg = `${keyLabel(code)} é a tecla principal de "${ACTIONS.find(a => a[0] === owner[0])[1]}". Troque lá primeiro.`; teclas.msgT = 3;
+    teclas.wait = false; sfx('fizzle'); return;
+  }
+  if (owner) (owner[1] === 0 ? binds : binds2)[owner[0]] = old || '';
+  mine[id] = code; saveBinds(); teclas.wait = false; sfx('chime');
+}
+function restoreBinds() {
+  for (const [id, , def] of ACTIONS) { binds[id] = def; binds2[id] = BIND2_DEFAULT[id] || ''; }
+  saveBinds(); sfx('chime');
+}
 const titleMenu = { read: false, save: { kind: 'none' }, sel: 0, confirm: false, csel: 0 };
 const navY = () => (pressed('ArrowUp') || tapped('up') ? -1 : 0) + (pressed('ArrowDown') || tapped('down') ? 1 : 0);
 const navX = () => (pressed('ArrowLeft') || tapped('left') ? -1 : 0) + (pressed('ArrowRight') || tapped('right') ? 1 : 0);
@@ -1929,7 +1975,12 @@ const scenes = {
       state.t += dt;
       if (!titleMenu.read) { titleMenu.read = true; titleMenu.save = readJourney(); titleMenu.sel = 0; titleMenu.confirm = false; }
       const sv = titleMenu.save, ok = sv.kind === 'ok';
-      const go = pressed('Enter') || pressed('Space') || tapped('use');
+      let go = pressed('Enter') || pressed('Space') || tapped('use');
+      if (mouse.click && hit.has('Mouse0')) { // clicks choose the item under the pointer
+        if (titleMenu.confirm) { const i = Math.round((mouse.y - (H / 2 + 8)) / 16); if (i === 0 || i === 1) { titleMenu.csel = i; go = true; } }
+        else if (ok) { const i = Math.round((mouse.y - 86) / 15); if (i === 0 || i === 1) { titleMenu.sel = i; go = true; } }
+        else go = true;
+      }
       if (titleMenu.confirm) { // "Novo jogo" over a saved journey: default is to keep it
         const ny = navY(); if (ny) { titleMenu.csel = clamp(titleMenu.csel + ny, 0, 1); sfx('menu'); }
         if (pressed('Escape') || (go && titleMenu.csel === 0)) { titleMenu.confirm = false; sfx('page2'); events.push({ type: 'newgame', confirmed: false }); }
@@ -2015,37 +2066,49 @@ const scenes = {
   },
   teclas: {
     update() {
+      if (teclas.msgT > 0) teclas.msgT -= STEP;
       if (teclas.wait) {
         if (pressed('Escape')) { teclas.wait = false; return; }
+        if (teclas.col === 1 && (pressed('Backspace') || pressed('Delete'))) { binds2[ACTIONS[teclas.sel][0]] = ''; saveBinds(); teclas.wait = false; sfx('page2'); return; }
         const code = [...hit][0];
-        if (code) {
-          const id = ACTIONS[teclas.sel][0], other = Object.keys(binds).find(k => binds[k] === code && k !== id);
-          if (other) binds[other] = binds[id]; // the two keys trade places
-          binds[id] = code; saveBinds(); teclas.wait = false; sfx('chime');
-        }
+        if (code) assignInput(ACTIONS[teclas.sel][0], teclas.col, code);
+        return;
+      }
+      // the mouse: a click on a row's cap chooses it and waits for the new input
+      if (mouse.click && hit.has('Mouse0')) {
+        const row = Math.round((mouse.y - 42) / 18);
+        if (row >= 0 && row < ACTIONS.length && mouse.x >= 140 && mouse.x <= 580) {
+          teclas.sel = row; teclas.col = mouse.x >= 500 ? 1 : 0; teclas.wait = true; sfx('menu');
+        } else if (row === ACTIONS.length && mouse.x >= 140 && mouse.x <= 580) { teclas.sel = row; restoreBinds(); }
+        else if (mouse.y >= H - 22) scene = teclas.from; // "Voltar"
         return;
       }
       if (navY()) { teclas.sel = clamp(teclas.sel + navY(), 0, ACTIONS.length); sfx('menu'); }
+      if (navX()) { teclas.col = clamp(teclas.col + navX(), 0, 1); sfx('menu'); }
       if (pressed('Enter')) {
-        if (teclas.sel === ACTIONS.length) { for (const [id, , def] of ACTIONS) binds[id] = def; saveBinds(); sfx('chime'); }
-        else { teclas.wait = true; hit.clear(); }
+        if (teclas.sel === ACTIONS.length) restoreBinds();
+        else { teclas.wait = true; }
       }
-      if (pressed('Escape')) scene = teclas.from;
+      if (pressed('Escape') || hit.has('Mouse2')) scene = teclas.from;
     },
     draw() {
       if (teclas.from === 'pause') drawPlay(); else drawMountains(true);
       ctx.fillStyle = 'rgba(8,10,8,0.86)'; ctx.fillRect(0, 0, W, H);
-      textS('Teclas', W / 2, 20, 16, C.ui);
+      textS('Teclas', W / 2, 12, 14, C.ui);
+      text('Tecla', 440, 26, 9, C.uiDim); text('Mouse / extra', 540, 26, 9, C.uiDim);
       ACTIONS.forEach(([id, label], i) => {
         const y = 42 + i * 18, sel = i === teclas.sel;
-        if (sel) { ctx.fillStyle = 'rgba(111,216,210,0.16)'; ctx.fillRect(140, y - 8, 360, 16); }
+        if (sel) { ctx.fillStyle = 'rgba(111,216,210,0.16)'; ctx.fillRect(140, y - 8, 440, 16); }
         text(label, 156, y, 11, sel ? C.learn : C.ui, 'left');
-        keycap(470, y, sel && teclas.wait ? '...' : keyLabel(binds[id]), sel);
+        keycap(440, y, sel && teclas.wait && teclas.col === 0 ? '...' : keyLabel(binds[id]), sel && teclas.col === 0);
+        keycap(540, y, sel && teclas.wait && teclas.col === 1 ? '...' : (binds2[id] ? keyLabel(binds2[id]) : '—'), sel && teclas.col === 1);
       });
       const ry = 42 + ACTIONS.length * 18, rsel = teclas.sel === ACTIONS.length;
-      if (rsel) { ctx.fillStyle = 'rgba(111,216,210,0.16)'; ctx.fillRect(140, ry - 8, 360, 16); }
+      if (rsel) { ctx.fillStyle = 'rgba(111,216,210,0.16)'; ctx.fillRect(140, ry - 8, 440, 16); }
       text('Restaurar o padrão', 156, ry, 11, rsel ? C.learn : C.uiDim, 'left');
-      text(teclas.wait ? 'Aperte a nova tecla (Esc cancela)' : 'Setas: escolher   Enter: trocar   Esc: voltar', W / 2, H - 10, 10, C.ui);
+      if (teclas.msgT > 0) text(teclas.msg, W / 2, H - 24, 9, C.amberHi);
+      text(teclas.wait ? (teclas.col === 1 ? 'Aperte uma tecla ou botão do mouse (Esc cancela, Backspace limpa)' : 'Aperte uma tecla ou botão do mouse (Esc cancela)')
+        : 'Setas: escolher   Enter ou clique: trocar   Esc ou clique direito: voltar', W / 2, H - 10, 10, C.ui);
     },
   },
   results: {
@@ -2064,7 +2127,7 @@ const scenes = {
 // ---- Loop: fixed step, frame time clamped ---------------------------------------------
 function step() {
   if (scene !== 'teclas' && tapped('mute')) { setMuted(!muted); hit.delete(binds.mute); }
-  scenes[scene].update(STEP); hit.clear();
+  scenes[scene].update(STEP); hit.clear(); mouse.click = false;
 }
 let last, acc = 0, ALPHA = 1;
 function tick() {

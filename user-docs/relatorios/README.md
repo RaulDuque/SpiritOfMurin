@@ -21,6 +21,9 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-25 | [2026-11-25-ciclo-mil-caminhos-SOLUCAO.md](2026-11-25-ciclo-mil-caminhos-SOLUCAO.md) | **Solução** da descoberta (ponte, vale, túmulo, pegadas, revanche). Abrir só depois de jogar |
 | 2026-11-25 | [2026-11-25-meditar-e-continuar.md](2026-11-25-meditar-e-continuar.md) | Meditar e continuar a jornada: ponto de meditação nas pedras gêmeas, gravação local (formato 1), Continuar e Novo jogo no título, testes fechando o navegador de verdade (Edge e Chrome), limitações. Sem spoiler |
 | 2026-11-25 | [prompts/05-meditar-continuar.md](prompts/05-meditar-continuar.md) | Pedido do criador para a etapa "Meditar e continuar a jornada" (texto integral) |
+| 2026-11-25 | [../futuro-do game/opiniao-claude.md](../futuro-do%20game/opiniao-claude.md) | Opinião do Claude sobre o futuro do jogo: mundo gerado por semente + lugares feitos à mão, prólogo, Godot com C# |
+| 2026-11-25 | [2026-11-25-controles-mouse.md](2026-11-25-controles-mouse.md) | Controles no mouse (esquerdo = corte, direito = passo), tela de Teclas com coluna de mouse, cliques nos menus não vazam para o jogo; testes e regressões |
+| 2026-11-25 | [prompts/06-controles-mouse.md](prompts/06-controles-mouse.md) | Pedido do criador para os controles no mouse e o rumo das próximas etapas (texto integral) |
 
 ## Prompts de imagem do criador
 

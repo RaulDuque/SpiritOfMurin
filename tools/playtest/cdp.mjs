@@ -19,7 +19,7 @@ const KEYS = {
   KeyW: ['w', 87], KeyA: ['a', 65], KeyS: ['s', 83], KeyD: ['d', 68], KeyJ: ['j', 74], KeyK: ['k', 75],
   KeyL: ['l', 76], KeyE: ['e', 69], KeyH: ['h', 72], KeyI: ['i', 73], KeyM: ['m', 77], KeyP: ['p', 80],
   KeyO: ['o', 79], KeyN: ['n', 78], Space: [' ', 32], Enter: ['Enter', 13], Escape: ['Escape', 27], Tab: ['Tab', 9],
-  ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40],
+  ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40], Backspace: ['Backspace', 8], KeyU: ['u', 85],
 };
 
 export async function launch({ url, port = 9333, width = 1280, height = 720, profile: profileDir = null, browser = process.env.PLAYTEST_BROWSER }) {
@@ -63,6 +63,13 @@ export async function launch({ url, port = 9333, width = 1280, height = 720, pro
     async up(code) { const [key, vk] = KEYS[code]; await send('Input.dispatchKeyEvent', { type: 'keyUp', code, key, windowsVirtualKeyCode: vk }); },
     async tap(code, ms = 60) { await g.down(code); await sleep(ms); await g.up(code); },
     async hold(codes, ms) { for (const c of codes) await g.down(c); await sleep(ms); for (const c of codes) await g.up(c); },
+    // a mouse click at window pixels (x, y); button: 'left' | 'middle' | 'right'
+    async click(x, y, button = 'left', ms = 50) {
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
+      await send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button, clickCount: 1 });
+      await sleep(ms);
+      await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button, clickCount: 1 });
+    },
     async shot(path) { const r = await send('Page.captureScreenshot', { format: 'png' }); writeFileSync(path, Buffer.from(r.data, 'base64')); },
     sleep, send,
     // closes the browser the way a person does (Browser.close), so storage is flushed to disk
