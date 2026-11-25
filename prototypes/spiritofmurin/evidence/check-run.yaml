@@ -1,0 +1,156 @@
+# The one-shot's small check (check-run/1).
+# Written by one-shot-check.sh --record: the results are /prototype's reading of
+# evidence/self-check.tsv; never edited by hand.
+kind: check-run/1
+engine: web
+browser: "HeadlessChrome/158.0.0.0"
+time: "2026-11-24 23:15:57"
+checks:
+  - id: boots
+    result: pass
+    evidence:
+      - "evidence/self-check.tsv"
+  - id: shot
+    result: pass
+    evidence:
+      - "evidence/play.png"
+  - id: outlines
+    result: pass
+    evidence:
+      - "evidence/figures.png"
+  - id: brief-words
+    result: pass
+    evidence:
+      - "evidence/brief-words.tsv"
+  - id: emoji
+    result: pass
+    evidence:
+      - "evidence/self-check.tsv"
+  - id: nearest-game
+    result: pass
+    evidence:
+      - "evidence/nearest-game.txt"
+brief_checklist:
+  - id: L1
+    result: pass
+    evidence: "evidence/play.png"
+    item: "Look: pixel art \"Todo Golpe Deixa Marca\": o rastro do golpe do jogador tem a mesma forma do corte gravado na pedra do túmulo. Mood: descoberta contida, montanha calma quebrada por rajadas curtas e nítidas de combate. Camera and scale: visão de cima 3/4, resolução nativa 640×360, escala inteira, sem suavização, câmera sem subpixel. Shapes: personagens angulosos de pose exagerada; cada guarda com silhueta própria, legível em 1–2 quadros (guarda fechada = lâmina cruzada na frente do corpo); arquitetura retilínea e pesada; cortes na pedra retos e limpos entre rochas orgânicas. Values: jogador e inimigos com o maior contraste; chão e fundo numa faixa estreita. Palette: terra e jade dessaturados no ambiente; ciano-branco = conhecimento que se aprende (pegadas, cortes, inscrições, a anotação do manual); vermelho-ocre = intenção hostil e telegraph; âmbar = tesouro; a cor do qi do jogador é azul-jade; sombras mais frias, luzes mais quentes. Detail: nas silhuetas das guardas, nas marcas do túmulo e no rastro do golpe; nada de detalhe atrás da luta. Rules: uma densidade de pixel, contorno escuro de 1 px nos personagens, sombreamento em 2 tons. Signature: o rastro ciano-branco que o passo lateral e o corte deixam no chão, igual às marcas do túmulo. O qi nunca cobre a silhueta do inimigo em guarda. Every figure drawn, no emoji, no plain circles."
+  - id: L2
+    result: pass
+    evidence: "index.html:184"
+    item: "References: Castlevania: Symphony of the Night (o comando aprendido executado no meio da luta; voltar e \"agora eu consigo passar\"), Zelda visto de cima (o portão visto antes da chave), Sifu e jogos de duelo marcial (guarda e postura legíveis), manhwa de cultivação (o legado de mestres de outras eras)."
+  - id: L3
+    result: pass
+    evidence: "index.html:1245"
+    item: "View: 2D · Camera: visão de cima 3/4 que segue o jogador; com a trava, enquadra o jogador e o alvo."
+  - id: F1
+    result: pass
+    evidence: "index.html:303"
+    item: "Combate encadeado com trava no alvo: corte em cadeia de 3 (J), onda de qi (K, gasta qi), passo (L), cancelamentos entre eles com janelas e buffer; comandos relativos ao alvo; impacto com hitstop, tremor de tela e som"
+  - id: F2
+    result: pass
+    evidence: "index.html:442"
+    item: "Guarda fechada legível: golpes frontais são aparados (faísca, empurrão), o flanco e as costas não; o inimigo gira para manter a guarda com velocidade limitada; ataques telegrafados em vermelho-ocre"
+  - id: F3
+    result: pass
+    evidence: "evidence/figures.png"
+    item: "2 tipos de inimigo, cada um atacando de um jeito: o Discípulo da Guarda Fechada (ponte) e o Espadachim Sênior (acampamento), que alterna a guarda fechada com uma postura de ataque"
+  - id: F4
+    result: pass
+    evidence: "index.html:617"
+    item: "A cadeia de descoberta: corpo de discípulo com meio manual → anotação na margem → túmulo da mestra → pegadas ciano-brancas ao lado do corte na pedra → aprender o passo lateral, com um momento de revelação (pausa, som, nome)"
+  - id: F5
+    result: pass
+    evidence: "index.html:184"
+    item: "Portão de conhecimento: a fenda vista no começo só se atravessa com o passo lateral e leva a um tesouro âmbar ou a um atalho"
+  - id: F6
+    result: pass
+    evidence: "index.html:419"
+    item: "Passo da Lâmina Silenciosa: passo lateral + corte + qi dentro da janela é reconhecido, nomeado na tela com som próprio e registrado; o resultado é diferente (o qi segue o corte e quebra a guarda)"
+  - id: F7
+    result: pass
+    evidence: "index.html:1308"
+    item: "Registro de técnicas (Tab): cada técnica e combinação com o lugar onde foi aprendida ou descoberta; derrota volta ao início da área mantendo tudo"
+  - id: S1
+    result: pass
+    evidence: "index.html:303"
+    item: "combate encadeado (passo, corte, qi, cancelamentos) · in the slice"
+  - id: S2
+    result: pass
+    evidence: "index.html:518"
+    item: "posturas e guardas dos inimigos · in the slice"
+  - id: S3
+    result: pass
+    evidence: "index.html:617"
+    item: "descoberta de técnicas pela exploração (manual, túmulo, marcas) · in the slice"
+  - id: S4
+    result: pass
+    evidence: "index.html:419"
+    item: "combinação nomeada e registrada · in the slice"
+  - id: S5
+    result: pass
+    evidence: "index.html:201"
+    item: "portão de conhecimento · in the slice *(guessed)*"
+  - id: M1
+    result: pass
+    evidence: "evidence/play.png"
+    item: "O espadachim começa numa trilha de montanha."
+  - id: M2
+    result: pass
+    evidence: "evidence/play.png"
+    item: "Andando com WASD, ele passa por uma fenda na rocha larga demais para atravessar; do outro lado brilha algo âmbar (o portão é visto logo)."
+  - id: M3
+    result: pass
+    evidence: "index.html:181"
+    item: "A trilha chega a uma ponte guardada pelo Discípulo da Guarda Fechada."
+  - id: M4
+    result: pass
+    evidence: "index.html:539"
+    item: "Uma fala curta: \"Sua lâmina não passa pela minha guarda.\""
+  - id: M5
+    result: pass
+    evidence: "index.html:442"
+    item: "O jogador trava no alvo com Espaço e ataca com J: cada corte frontal é aparado, com faíscas e um empurrão para trás."
+  - id: M6
+    result: pass
+    evidence: "index.html:525"
+    item: "Tentar dar a volta andando não adianta, porque o discípulo gira e mantém a guarda de frente."
+  - id: M7
+    result: pass
+    evidence: "index.html:1088"
+    item: "Quando o golpe dele brilha em vermelho-ocre, o jogador recua com S ou com o passo curto."
+  - id: M8
+    result: pass
+    evidence: "index.html:451"
+    item: "Em menos de um minuto ele entende que, de frente, essa guarda não cai, e vê a trilha lateral que desce para o vale."
+  - id: C1
+    result: pass
+    evidence: "index.html:442"
+    item: "A primeira dificuldade real chega em menos de 1 minuto: o Discípulo da Guarda Fechada não pode ser vencido de frente."
+  - id: C2
+    result: pass
+    evidence: "index.html:499"
+    item: "Perder custa pouco: volta ao início da área com a vida cheia, mantendo o manual, o passo aprendido e as técnicas registradas."
+  - id: C3
+    result: pass
+    evidence: "index.html:332"
+    item: "Depois do túmulo, o passo lateral abre o flanco do discípulo por uma janela curta antes de ele girar."
+  - id: C4
+    result: pass
+    evidence: "index.html:550"
+    item: "O duelo final é contra o Espadachim Sênior, que alterna a guarda fechada com uma postura de ataque (vermelho-ocre) e gira mais rápido."
+  - id: C5
+    result: pass
+    evidence: "index.html:471"
+    item: "Ele exige ler qual postura está ativa e escolher entre recuar e contornar."
+  - id: C6
+    result: not_run
+    mark: not assessed
+    why: "a feel line: only play can say if it is neither too easy nor a wall"
+    item: "Nunca fácil demais, nunca um muro sem resposta."
+measures:
+  - id: step-time
+    value: 0.700
+    unit: ms
+    by: browser
+    detail: "mean 0.015 ms, slowest 0.700 ms, 218 steps"

@@ -1,0 +1,44 @@
+time	2026-11-24 23:15:57
+keep	lines	0	pinned	0
+briefword	2D	unlisted	no shot at prototypes/spiritofmurin/evidence/play.png
+checklist	L1	unlisted	-	Look: pixel art "Todo Golpe Deixa Marca": o rastro do golpe do jogador tem a mesma forma do corte gravado na pedra do túmulo. Mood: descoberta contida, montanha calma quebrada por rajadas curtas e nítidas de combate. Camera and scale: visão de cima 3/4, resolução nativa 640×360, escala inteira, sem suavização, câmera sem subpixel. Shapes: personagens angulosos de pose exagerada; cada guarda com silhueta própria, legível em 1–2 quadros (guarda fechada = lâmina cruzada na frente do corpo); arquitetura retilínea e pesada; cortes na pedra retos e limpos entre rochas orgânicas. Values: jogador e inimigos com o maior contraste; chão e fundo numa faixa estreita. Palette: terra e jade dessaturados no ambiente; ciano-branco = conhecimento que se aprende (pegadas, cortes, inscrições, a anotação do manual); vermelho-ocre = intenção hostil e telegraph; âmbar = tesouro; a cor do qi do jogador é azul-jade; sombras mais frias, luzes mais quentes. Detail: nas silhuetas das guardas, nas marcas do túmulo e no rastro do golpe; nada de detalhe atrás da luta. Rules: uma densidade de pixel, contorno escuro de 1 px nos personagens, sombreamento em 2 tons. Signature: o rastro ciano-branco que o passo lateral e o corte deixam no chão, igual às marcas do túmulo. O qi nunca cobre a silhueta do inimigo em guarda. Every figure drawn, no emoji, no plain circles.	
+checklist	L2	unlisted	-	References: Castlevania: Symphony of the Night (o comando aprendido executado no meio da luta; voltar e "agora eu consigo passar"), Zelda visto de cima (o portão visto antes da chave), Sifu e jogos de duelo marcial (guarda e postura legíveis), manhwa de cultivação (o legado de mestres de outras eras).	
+checklist	L3	unlisted	-	View: 2D · Camera: visão de cima 3/4 que segue o jogador; com a trava, enquadra o jogador e o alvo.	
+checklist	F1	unlisted	-	Combate encadeado com trava no alvo: corte em cadeia de 3 (J), onda de qi (K, gasta qi), passo (L), cancelamentos entre eles com janelas e buffer; comandos relativos ao alvo; impacto com hitstop, tremor de tela e som	
+checklist	F2	unlisted	-	Guarda fechada legível: golpes frontais são aparados (faísca, empurrão), o flanco e as costas não; o inimigo gira para manter a guarda com velocidade limitada; ataques telegrafados em vermelho-ocre	
+checklist	F3	unlisted	-	2 tipos de inimigo, cada um atacando de um jeito: o Discípulo da Guarda Fechada (ponte) e o Espadachim Sênior (acampamento), que alterna a guarda fechada com uma postura de ataque	
+checklist	F4	unlisted	-	A cadeia de descoberta: corpo de discípulo com meio manual → anotação na margem → túmulo da mestra → pegadas ciano-brancas ao lado do corte na pedra → aprender o passo lateral, com um momento de revelação (pausa, som, nome)	
+checklist	F5	unlisted	-	Portão de conhecimento: a fenda vista no começo só se atravessa com o passo lateral e leva a um tesouro âmbar ou a um atalho	
+checklist	F6	unlisted	-	Passo da Lâmina Silenciosa: passo lateral + corte + qi dentro da janela é reconhecido, nomeado na tela com som próprio e registrado; o resultado é diferente (o qi segue o corte e quebra a guarda)	
+checklist	F7	unlisted	-	Registro de técnicas (Tab): cada técnica e combinação com o lugar onde foi aprendida ou descoberta; derrota volta ao início da área mantendo tudo	
+checklist	S1	unlisted	-	combate encadeado (passo, corte, qi, cancelamentos) · in the slice	
+checklist	S2	unlisted	-	posturas e guardas dos inimigos · in the slice	
+checklist	S3	unlisted	-	descoberta de técnicas pela exploração (manual, túmulo, marcas) · in the slice	
+checklist	S4	unlisted	-	combinação nomeada e registrada · in the slice	
+checklist	S5	unlisted	-	portão de conhecimento · in the slice *(guessed)*	
+checklist	M1	unlisted	-	O espadachim começa numa trilha de montanha.	
+checklist	M2	unlisted	-	Andando com WASD, ele passa por uma fenda na rocha larga demais para atravessar; do outro lado brilha algo âmbar (o portão é visto logo).	
+checklist	M3	unlisted	-	A trilha chega a uma ponte guardada pelo Discípulo da Guarda Fechada.	
+checklist	M4	unlisted	-	Uma fala curta: "Sua lâmina não passa pela minha guarda."	
+checklist	M5	unlisted	-	O jogador trava no alvo com Espaço e ataca com J: cada corte frontal é aparado, com faíscas e um empurrão para trás.	
+checklist	M6	unlisted	-	Tentar dar a volta andando não adianta, porque o discípulo gira e mantém a guarda de frente.	
+checklist	M7	unlisted	-	Quando o golpe dele brilha em vermelho-ocre, o jogador recua com S ou com o passo curto.	
+checklist	M8	unlisted	-	Em menos de um minuto ele entende que, de frente, essa guarda não cai, e vê a trilha lateral que desce para o vale.	
+checklist	C1	unlisted	-	A primeira dificuldade real chega em menos de 1 minuto: o Discípulo da Guarda Fechada não pode ser vencido de frente.	
+checklist	C2	unlisted	-	Perder custa pouco: volta ao início da área com a vida cheia, mantendo o manual, o passo aprendido e as técnicas registradas.	
+checklist	C3	unlisted	-	Depois do túmulo, o passo lateral abre o flanco do discípulo por uma janela curta antes de ele girar.	
+checklist	C4	unlisted	-	O duelo final é contra o Espadachim Sênior, que alterna a guarda fechada com uma postura de ataque (vermelho-ocre) e gira mais rápido.	
+checklist	C5	unlisted	-	Ele exige ler qual postura está ativa e escolher entre recuar e contornar.	
+checklist	C6	unlisted	-	Nunca fácil demais, nunca um muro sem resposta.	
+browser	HeadlessChrome/158.0.0.0
+scene	play	0	title
+scene	play	1	play
+measure	step-time	play	0.015	0.700	218
+lane	play	stop	3.6	66
+uncaught	play	0
+text	play	canvas	198,53,221,69	24.0	15.74	inside	qi
+text	play	canvas	1124,691,1265,707	24.0	13.71	inside	Tab: registro
+text	play	canvas	493,644,782,662	27.0	14.37	inside	Nenhum alvo por perto.
+screen	play	drawn
+shot	play	prototypes/spiritofmurin/evidence/play.png
+responds	changed	4

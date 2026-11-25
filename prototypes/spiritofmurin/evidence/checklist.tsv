@@ -1,0 +1,29 @@
+L1	pass	evidence/play.png	pixel art top-down 3/4 at 640x360 whole-number scale; ciano-white step and cut marks, red-ochre telegraphs, amber lantern, jade qi; every figure drawn with a 1px dark outline (figures.png)
+L2	pass	index.html:184	references built as values: gap seen before the step that crosses it (index.html:184, :335), stance guard and parry (index.html:442), a command learned and executed mid-fight named by the game (index.html:419)
+L3	pass	index.html:1245	camera follows the player and frames player and target when locked
+F1	pass	index.html:303	cut chain of 3, qi wave with cost, step, cancel windows and input buffer, target-relative commands (index.html:295), hitstop and shake (index.html:462), Web Audio sounds
+F2	pass	index.html:442	frontal hits parried with sparks and push back; flanks land; limited turn rate (index.html:525); red-ochre telegraph outline and ground wedge (index.html:1088)
+F3	pass	evidence/figures.png	two enemy kinds with their own silhouettes; Senior alternates closed guard and attack stance (index.html:550)
+F4	pass	index.html:617	corpse gives half manual with margin note, door opens with it, slab lights footprints (index.html:646), learning with pause, sound and name (index.html:655, :1225)
+F5	pass	index.html:184	the gap is solid except during the learned long step (index.html:201, :335); beyond it the amber lantern and inscription (index.html:191)
+F6	pass	index.html:419	side step -> cut -> qi within the window becomes the Silent Blade: name on screen, own sound, registry entry, guard-breaking wave
+F7	pass	index.html:1308	registry lists each technique and where it was learned; defeat returns to the area start keeping everything (index.html:499)
+S1	pass	index.html:303	built for real
+S2	pass	index.html:518	guards, turn rates, windups, Senior stances
+S3	pass	index.html:617	manual, tomb seal, cut and footprints
+S4	pass	index.html:419	recognized, named and registered
+S5	pass	index.html:201	the gap opens only to the learned step
+M1	pass	evidence/play.png	start on the mountain trail
+M2	pass	evidence/play.png	the gap is in view from the trail; the amber lantern beyond it at index.html:191
+M3	pass	index.html:181	the path reaches the bridge; the disciple stands at its north end (index.html:276)
+M4	pass	index.html:539	his line on first approach
+M5	pass	index.html:442	frontal cuts parried, sparks, push back
+M6	pass	index.html:525	he turns 300 degrees per second, faster than walking around him
+M7	pass	index.html:1088	his strike glows red-ochre before it lands; S and the short step back retreat
+M8	pass	index.html:451	after three parries the game says the guard does not fall head-on; the east path is in view (index.html:183)
+C1	pass	index.html:442	nothing frontal lands on the disciple before the side step is learned
+C2	pass	index.html:499	defeat returns to the area start with full health; manual, steps and registry kept
+C3	pass	index.html:332	the side step blinds the target for a short window before he turns back
+C4	pass	index.html:550	the Senior turns faster (sen_turn) and alternates closed guard and red-ochre attack stance
+C5	pass	index.html:471	closed guard needs the flank; the attack stance is open but does not flinch until its recovery
+C6	not_assessed	-	a feel line: only play can say if it is neither too easy nor a wall
