@@ -1,0 +1,27 @@
+file: assets/art/characters/char_swordsman_idle_s_00.png
+size: 64x64 (spec 64x64)
+mode: RGBA
+alpha values: [0, 255] (spec: only 0 and 255)
+colours used: 15; outside pal_master_64: 0 
+colour counts: contorno de ator 150, túnica brilho 131, calça 84, calça sombra 66, túnica sombra 35, pele brilho 25, faixa jade gasto sombra 23, faixa jade gasto 21, fio e ponta 16, aço 15, pele sombra 14, túnica tom 14, contato sob os pés 8, bronze da guarda 4, pele 3
+figure rows (without contact shade): 11-61; height to the pivot row 59: 49 px
+row 59 opaque columns: [31, 32, 33, 36, 37, 38, 39, 40]
+pivot column 32 at row 59 is opaque (foot on the pivot); columns 31-33 opaque: [31, 32, 33]
+body pixels below row 59: rows [60, 61]
+contact shade pixels: 8 on rows [60, 62]
+outline pixels with no transparent 4-neighbour (inside the figure): 4
+blade (steel pixels): 31 px in 1 connected piece(s); cols 44-52 rows 40-55
+
+file: assets/art/characters/char_disciple_guard_s_00.png
+size: 64x64 (spec 64x64)
+mode: RGBA
+alpha values: [0, 255] (spec: only 0 and 255)
+colours used: 15; outside pal_master_64: 0 
+colour counts: contorno de ator 164, corpo ardósia 135, palha 126, palha sombra 70, calça 61, corpo sombra 56, palha brilho 33, pele brilho 21, calça sombra 15, fio e ponta 12, contato sob os pés 12, aço 11, pele sombra 9, bronze da guarda 4, pele 2
+figure rows (without contact shade): 17-59; height to the pivot row 59: 43 px
+row 59 opaque columns: [18, 19, 20, 21, 22, 23, 42, 43, 44, 45, 46]
+pivot column 32 at row 59 is EMPTY (ground between the feet); left foot 18-23, right foot 42-46; midpoint 32.5
+body pixels below row 59: rows none
+contact shade pixels: 12 on rows [60]
+outline pixels with no transparent 4-neighbour (inside the figure): 27
+blade (steel pixels): 23 px in 1 connected piece(s); cols 22-33 rows 29-40

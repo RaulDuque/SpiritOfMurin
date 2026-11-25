@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Poses de aprovação</title>
+<style>
+  :root { --bg: #1d1b17; --panel: #26231d; --ink: #e8e0cc; --dim: #a89f8a; --line: #3a362d; --accent: #d8c7a0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 19px; margin: 40px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+  h3 { font-size: 15px; margin: 0 0 6px; }
+  p, li { color: var(--dim); }
+  strong { color: var(--ink); }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .card.rec { border-color: var(--accent); }
+  .pair { display: flex; gap: 8px; align-items: flex-end; }
+  .pair figure { margin: 0; text-align: center; }
+  .pair figcaption { font-size: 12px; color: var(--dim); }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; border-radius: 4px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .tog button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; font: inherit; }
+  .tog button[aria-pressed="true"] { border-color: var(--accent); background: #3a3328; }
+  .gray canvas.sim { filter: grayscale(1); }
+  .deut canvas.sim { filter: url(#deuteranopia); }
+  .prot canvas.sim { filter: url(#protanopia); }
+  .tag { display: inline-block; font-size: 12px; padding: 1px 6px; border-radius: 4px; background: #3a3328; color: var(--accent); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--dim); }
+  .chip i { width: 22px; height: 22px; border-radius: 4px; display: inline-block; border: 1px solid #0006; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="deuteranopia"><feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/></filter>
+  <filter id="protanopia"><feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/></filter>
+</svg>
+<main>
+  <h1>Poses de aprovação: escolhas antes dos prompts</h1>
+  <p>SpiritOfMurin · 2026-11-25 · /asset-spec, ASSET-001 (protagonista em repouso) e ASSET-002 (discípulo em guarda), direção S. Os esquemas seguem as medidas do art bible num quadro de 64×64, sobre um trecho de bambuzal, à esquerda em tamanho real (1×) e à direita ampliados 3×. São esquemas de medida, não a arte final: servem para ver a pose e a leitura.</p>
+  <div class="row tog" id="simtog">
+    <button data-mode="" aria-pressed="true">Cor normal</button>
+    <button data-mode="gray" aria-pressed="false">Escala de cinza</button>
+    <button data-mode="deut" aria-pressed="false">Deuteranopia (simulada)</button>
+    <button data-mode="prot" aria-pressed="false">Protanopia (simulada)</button>
+  </div>
+
+  <h2>1. Espada do protagonista em repouso</h2>
+  <p>As medidas do art bible não cabem juntas: com a mão entre o quadril e a coxa, uma lâmina de 22 px a ~27° toca o chão. Uma medida precisa ceder. A linha clara fina marca o chão (linha 59). Atrás de cada lâmina passa um colmo de bambu, que é o teste 3.</p>
+  <div class="grid" id="swords"></div>
+
+  <h2>2. Discípulo do chapéu de palha, pose de GUARDA (ASSET-002): o braço livre</h2>
+  <p>Esta seção é só sobre o <strong>discípulo do chapéu de palha</strong>, o inimigo da guarda fechada, na <strong>pose de guarda</strong>. Não é sobre o protagonista: a espada dele já está decidida (seção 1, opção A). O art bible diz que o antebraço "cruza o peito acompanhando a lâmina", mas não diz se é o braço livre (espada de uma mão) ou se as duas mãos seguram o cabo (espada de duas mãos).</p>
+  <div class="grid" id="arms"></div>
+
+  <h2>3. Cores do discípulo (proposta do diretor de arte)</h2>
+  <p>O art bible fixa só o valor: corpo escuro e chapéu e perneiras claros. Esta é a proposta de matiz. O corpo é frio, para não cair na terra do chão nem no âmbar.</p>
+  <div class="card"><div class="chips" id="dchips"></div></div>
+
+  <h2>4. Os dois lado a lado: teste do preto chapado (teste 2)</h2>
+  <p>Mesmo trecho de chão, com o protagonista à esquerda e o discípulo à direita, primeiro em cor e depois só a silhueta em preto. Usa a espada A e o braço livre sobre o peito.</p>
+  <div class="card"><div class="pair" id="duo"></div></div>
+</main>
+<script>
+// ---- Pixel helpers ----------------------------------------------------------------------
+function P(g, c, x, y, w = 1, h = 1) { g.fillStyle = c; g.fillRect(x, y, w, h); }
+const OUT = [22, 20, 15];
+// Adds a 1 px outer outline in #16140f around every opaque pixel (Section 3.2).
+function outline(g) {
+  const d = g.getImageData(0, 0, 64, 64), a = d.data, src = new Uint8ClampedArray(a);
+  const op = (x, y) => x >= 0 && y >= 0 && x < 64 && y < 64 && src[(y * 64 + x) * 4 + 3] > 0;
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
+    const i = (y * 64 + x) * 4;
+    if (src[i + 3] === 0 && (op(x - 1, y) || op(x + 1, y) || op(x, y - 1) || op(x, y + 1))) {
+      a[i] = OUT[0]; a[i + 1] = OUT[1]; a[i + 2] = OUT[2]; a[i + 3] = 255;
+    }
+  }
+  g.putImageData(d, 0, 0);
+}
+function sprite(draw) { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); draw(g); outline(g); return c; }
+function silhouette(src) {
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  g.drawImage(src, 0, 0); g.globalCompositeOperation = 'source-in'; P(g, '#000', 0, 0, 64, 64); return c;
+}
+
+// ---- Colours (art bible Section 4.4 and the art director's disciple proposal) -------------
+const T = { hi: '#d6d2bf', mid: '#b3ad97', sh: '#8a846f' };       // ivory tunic
+const SASH = '#4f7a64', SASH_SH = '#3a5a4b';                      // worn jade
+const PANTS = '#3b3a3e', BOOT = '#2a2722', HAIR = '#2b2a2a', SKIN = '#b8906e', SKIN_SH = '#93705a';
+const STEEL = '#9aa0a0', EDGE = '#e4e6e0', TIP = '#f2f3ee', BRONZE = '#6a5a3a', GRIP = '#2a2118';
+const DB = '#555d5e', DB_SH = '#3f4647', STRAW = '#b0a382', STRAW_HI = '#c4b893', STRAW_SH = '#8f8466';
+
+// ---- Protagonist at rest, direction S (Section 3, 4.1) -----------------------------------
+function protagonist(sword) {
+  return sprite(g => {
+    // legs first: back (support) leg under the hip, front leg 3 px to the sword side and 2 px lower
+    P(g, PANTS, 28, 38, 3, 20); P(g, BOOT, 27, 57, 5, 3);            // back foot sole on row 59
+    P(g, PANTS, 33, 38, 3, 12); P(g, PANTS, 34, 50, 3, 9); P(g, BOOT, 33, 59, 5, 3); // front foot sole row 61
+    // split hem: two panels, the pants show between them
+    P(g, T.mid, 26, 38, 5, 12); P(g, T.hi, 26, 38, 2, 12);
+    P(g, T.mid, 33, 38, 5, 11); P(g, T.sh, 36, 38, 2, 11);
+    // torso, light from the upper left; the near shoulder sits 1 px lower
+    P(g, T.mid, 25, 25, 10, 10); P(g, T.hi, 25, 25, 4, 10); P(g, T.mid, 35, 26, 3, 9); P(g, T.sh, 36, 26, 2, 9);
+    for (let i = 0; i < 9; i++) P(g, T.sh, 35 - i, 26 + i);           // cross collar diagonal
+    P(g, SASH, 25, 35, 13, 2); P(g, SASH_SH, 25, 37, 13, 1);          // sash 3 px
+    // free arm: sleeve against the body with a 1 px separation in the tunic's dark tone, hand on the sash
+    P(g, T.hi, 22, 26, 3, 9); P(g, T.sh, 24, 27, 1, 8); P(g, SKIN, 23, 35, 3, 2);
+    // sword arm: elbow 1-2 px out, a gap of at least 1x5 px between arm and torso
+    const handY = sword === 'A' ? 33 : 38;
+    P(g, T.mid, 37, 25, 3, 3);
+    P(g, T.mid, 39, 27, 3, handY - 27); P(g, T.sh, 41, 27, 1, handY - 27);
+    P(g, SKIN, 40, handY, 3, 2);
+    // head 10 px, bun, short ribbon in worn jade, 1 px eyes
+    P(g, SKIN, 28, 17, 8, 7); P(g, SKIN_SH, 34, 17, 2, 7); P(g, HAIR, 27, 14, 10, 4); P(g, HAIR, 27, 17, 1, 4); P(g, HAIR, 36, 17, 1, 3);
+    P(g, HAIR, 30, 11, 4, 3); P(g, SASH, 28, 12, 2, 1); P(g, SASH, 27, 13, 1, 2);
+    P(g, '#16140f', 30, 19); P(g, '#16140f', 33, 19);
+    P(g, SKIN_SH, 30, 24, 4, 1);                                      // neck
+    // the sword
+    const blade = (x0, y0, n, slope) => {
+      for (let i = 0; i < n; i++) {
+        const x = slope === 1 ? x0 + i : x0 + Math.floor(i / 2), y = y0 + i;
+        P(g, STEEL, x, y); P(g, i === n - 1 ? TIP : EDGE, x + 1, y);
+      }
+    };
+    P(g, GRIP, 39, handY - 3, 1, 1); P(g, GRIP, 40, handY - 2, 1, 2); // grip rises above the hand
+    P(g, BRONZE, 40, handY + 2, 4, 1);                                // 4 px cross guard
+    if (sword === 'A') blade(42, handY + 3, 20, 2);                   // 1:2, tip 5 px above the ground
+    if (sword === 'B') blade(42, handY + 3, 16, 1);                   // 1:1 (45°)
+    if (sword === 'C') blade(42, handY + 3, 14, 2);                   // 1:2, shorter blade
+  });
+}
+
+// ---- Closed-guard disciple, direction S (Section 3, 4.2) ---------------------------------
+function disciple(arm) {
+  return sprite(g => {
+    // legs: knees out, at least 5 px of ground between the feet, light leggings, dark feet
+    P(g, DB, 27, 46, 3, 5); P(g, DB, 35, 46, 3, 5);
+    P(g, STRAW, 26, 51, 3, 7); P(g, STRAW, 36, 51, 3, 7); P(g, STRAW_SH, 28, 51, 1, 7); P(g, STRAW_SH, 38, 51, 1, 7);
+    P(g, BOOT, 25, 58, 4, 2); P(g, BOOT, 36, 58, 4, 2);
+    // torso with glued elbows: a ~14 px block, short tunic to mid thigh
+    P(g, DB, 25, 27, 14, 20); P(g, DB_SH, 35, 27, 4, 20); P(g, DB_SH, 27, 29, 1, 10); P(g, DB_SH, 36, 29, 1, 10);
+    // chin under the brim
+    P(g, SKIN, 30, 24, 4, 3); P(g, SKIN_SH, 33, 24, 1, 3);
+    // straw hat: low cone, 21 px brim tilted 2 px lower on the side he faces (screen left)
+    for (let r = 0; r < 5; r++) P(g, r < 2 ? STRAW_HI : STRAW, 32 - r - 1, 17 + r, 2 * r + 3, 1);
+    for (let x = 22; x <= 42; x++) { const drop = x < 25 ? 2 : x < 29 ? 1 : 0; P(g, STRAW, x, 22 + drop); P(g, STRAW_SH, x, 23 + drop); }
+    // free arm: forearm across the chest, parallel to and behind the blade; or both hands on the hilt
+    if (arm === 'free') { for (let i = 0; i < 7; i++) P(g, DB_SH, 28 + i, 34 - i + 6, 2, 1); P(g, SKIN, 27, 39, 2, 2); }
+    // the blade: 45°, hilt at the right hip, tip past the left shoulder below the brim;
+    // outlined on both sides where it crosses the body (Section 4.4)
+    for (let i = 0; i < 14; i++) {
+      const x = 36 - i, y = 40 - i;
+      if (x >= 25 && y >= 27) { P(g, '#16140f', x - 1, y); P(g, '#16140f', x + 2, y); }
+      P(g, i === 13 ? TIP : EDGE, x, y); P(g, STEEL, x + 1, y);
+    }
+    P(g, BRONZE, 38, 40); P(g, BRONZE, 37, 41); P(g, BRONZE, 36, 42); P(g, BRONZE, 39, 39); // cross guard
+    P(g, GRIP, 38, 42, 2, 1); P(g, GRIP, 39, 43, 2, 1); P(g, GRIP, 40, 44, 2, 1);         // grip and pommel past the hip
+    P(g, SKIN, 38, 43, 2, 2);
+    if (arm === 'both') P(g, SKIN, 39, 41, 2, 2);
+  });
+}
+
+// ---- Ground: bamboo grove crop with a stalk behind the blade (test 3) --------------------
+function grove(g, w, h, stalks) {
+  P(g, '#4c5a3e', 0, 0, w, h);
+  for (let i = 0; i < 60; i++) { const x = (i * 37) % w, y = (i * 23) % h; P(g, i % 3 ? '#46533a' : '#56643f', x, y, 3, 2); }
+  stalks.forEach((sx, i) => {
+    P(g, '#3f5a35', sx, 0, 3, h); P(g, '#5b7546', sx, 0, 1, h);
+    for (let ny = 3 + i * 4; ny < h; ny += 7 + (i % 3) * 2) P(g, '#2f4529', sx, ny, 3, 1);
+  });
+}
+function shadow(g, ox, oy, feet) {
+  // runtime ellipse (translucent) plus 1 px contact under each foot (Section 3.2)
+  g.fillStyle = 'rgba(8,10,8,0.38)'; g.beginPath(); g.ellipse(ox + 32, oy + 60, 11, 2.5, 0, 0, Math.PI * 2); g.fill();
+  feet.forEach(([x, w, y]) => P(g, '#262c21', ox + x, oy + y, w, 1));
+}
+function scene(fig, feet, stalks, w = 72) {
+  const c = document.createElement('canvas'); c.width = w; c.height = 68; c.className = 'sim';
+  const g = c.getContext('2d'); grove(g, w, 68, stalks);
+  const ox = Math.round((w - 64) / 2);
+  shadow(g, ox, 2, feet); g.drawImage(fig, ox, 2);
+  return c;
+}
+function show(canvas, scale) {
+  const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height; c.className = 'sim';
+  c.getContext('2d').drawImage(canvas, 0, 0);
+  c.style.width = canvas.width * scale + 'px'; c.style.height = canvas.height * scale + 'px';
+  return c;
+}
+function card(parent, title, note, canvas, rec) {
+  const d = document.createElement('div'); d.className = 'card' + (rec ? ' rec' : '');
+  d.innerHTML = `<h3>${title}</h3>`;
+  const pair = document.createElement('div'); pair.className = 'pair';
+  const f1 = document.createElement('figure'); f1.appendChild(show(canvas, 1)); f1.insertAdjacentHTML('beforeend', '<figcaption>1×</figcaption>');
+  const f2 = document.createElement('figure'); f2.appendChild(show(canvas, 3)); f2.insertAdjacentHTML('beforeend', '<figcaption>3×</figcaption>');
+  pair.append(f1, f2); d.appendChild(pair);
+  d.insertAdjacentHTML('beforeend', `<p>${note}</p>`);
+  parent.appendChild(d);
+}
+function groundLine(c) { const g = c.getContext('2d'); g.globalAlpha = 0.3; P(g, '#d8c7a0', 0, 61, c.width, 1); g.globalAlpha = 1; return c; }
+
+const PFEET = [[27, 5, 60], [33, 5, 62]];
+const DFEET = [[25, 4, 60], [36, 4, 60]];
+const SW = [
+  ['A', '<span class="tag">Recomendada</span> A: mão na altura da faixa', 'Mão sobe ~5 px e o resto se mantém: lâmina de 22 px a ~27°, ponta 5 px acima do chão. Pose um pouco mais armada.'],
+  ['B', 'B: lâmina a 45°', 'Mão no lugar (entre quadril e coxa), lâmina mais aberta. Perde os ~27° e fica parecida com a diagonal do discípulo.'],
+  ['C', 'C: lâmina mais curta', 'Mão e ângulo no lugar, lâmina de ~16 px só no repouso. A espada muda de tamanho entre estados.'],
+];
+SW.forEach(([k, t, n]) => card(document.getElementById('swords'), t, n, groundLine(scene(protagonist(k), PFEET, [8, 50, 62])), k === 'A'));
+
+card(document.getElementById('arms'), '<span class="tag">Interpretação do diretor</span> Braço livre sobre o peito', 'A mão da espada segura o cabo no quadril e o antebraço livre fica deitado no peito, atrás da lâmina e paralelo a ela.', scene(disciple('free'), DFEET, [6, 26, 62]), true);
+card(document.getElementById('arms'), 'Duas mãos no cabo', 'As duas mãos seguram o cabo no quadril. O peito fica só com a lâmina, que é mais limpo, mas os cotovelos se fecham menos.', scene(disciple('both'), DFEET, [6, 26, 62]));
+
+[['Corpo (ardósia escura)', DB], ['Sombra do corpo', DB_SH], ['Chapéu e perneiras (palha apagada)', STRAW], ['Brilho do chapéu', STRAW_HI], ['Sombra da palha', STRAW_SH], ['Chão do vale (para comparar)', '#4c5a3e']]
+  .forEach(([n, c]) => document.getElementById('dchips').insertAdjacentHTML('beforeend', `<span class="chip"><i style="background:${c}"></i>${n} ${c}</span>`));
+
+(function duo() {
+  const host = document.getElementById('duo');
+  const pa = protagonist('A'), di = disciple('free');
+  [[pa, di, 'cor'], [silhouette(pa), silhouette(di), 'preto chapado']].forEach(([a, b, cap]) => {
+    const c = document.createElement('canvas'); c.width = 136; c.height = 68; c.className = 'sim';
+    const g = c.getContext('2d'); grove(g, 136, 68, [70, 120]);
+    if (cap === 'cor') { shadow(g, 2, 2, PFEET); shadow(g, 70, 2, DFEET); }
+    g.drawImage(a, 2, 2); g.drawImage(b, 70, 2);
+    const f = document.createElement('figure'); f.appendChild(show(c, 3)); f.insertAdjacentHTML('beforeend', `<figcaption>${cap}, 3×</figcaption>`);
+    host.appendChild(f);
+  });
+})();
+
+document.querySelectorAll('#simtog button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#simtog button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  document.body.classList.remove('gray', 'deut', 'prot');
+  if (b.dataset.mode) document.body.classList.add(b.dataset.mode);
+}));
+</script>
+</body>
+</html>

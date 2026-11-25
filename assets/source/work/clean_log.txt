@@ -1,0 +1,14 @@
+[swordsman] source char_swordsman_idle_s_00.png 1254x1254, background [123.0, 123.0, 123.0], figure bbox x 417-934 y 123-1095
+[swordsman] enclosed background holes removed: none
+[swordsman] feet (x0, x1, sole y): [(499, 581, np.int64(1057)), (600, 715, np.int64(1095))]
+[swordsman] pivot source (540, 1057), scale 19.08 source px per sprite px, height 49 px (rows 11-59)
+[swordsman] blade redrawn: 16 px long at 1:2, from cell (45, 40) to tip (52, 55)
+[swordsman] stray steel pixels off the blade recoloured: 9
+[swordsman] wrote D:\Progr\SpiritOfMurin\assets\art\characters\char_swordsman_idle_s_00.png
+[disciple] source char_disciple_guard_s_00.png 1254x1254, background [125.0, 125.0, 124.0], figure bbox x 258-960 y 169-1141
+[disciple] enclosed background holes removed: none
+[disciple] feet (x0, x1, sole y): [(273, 423, np.int64(1141)), (790, 940, np.int64(1141))]
+[disciple] pivot source (606, 1141), scale 22.63 source px per sprite px, height 43 px (rows 17-59)
+[disciple] blade redrawn: 12 px long at 1:1, from cell (33, 40) to tip (22, 29)
+[disciple] stray steel pixels off the blade recoloured: 5
+[disciple] wrote D:\Progr\SpiritOfMurin\assets\art\characters\char_disciple_guard_s_00.png
