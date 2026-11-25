@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paleta mestra 64</title>
+<style>
+:root { --bg:#1d1b17; --panel:#26231d; --ink:#e8e0cc; --dim:#a89f8a; --line:#3a362d; --accent:#d8c7a0; }
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 64px} h1{font-size:24px;margin:0 0 4px}
+h2{font-size:19px;margin:36px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px} h3{font-size:14px;margin:0 0 8px}
+p,li{color:var(--dim)} strong{color:var(--ink)}
+.groups{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}
+.sw{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12.5px;color:var(--dim)}
+.sw i{width:30px;height:30px;border-radius:4px;flex:none;border:1px solid #0006}
+.sw b{color:var(--ink);font-weight:500}
+.new{font-size:11px;padding:0 5px;border-radius:4px;background:#3a3328;color:var(--accent)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;align-items:flex-end}
+.tog button{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer;font:inherit}
+.tog button[aria-pressed="true"]{border-color:var(--accent);background:#3a3328}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;border-radius:4px;max-width:100%}
+.gray .sim{filter:grayscale(1)} .deut .sim{filter:url(#deuteranopia)} .prot .sim{filter:url(#protanopia)}
+.strip{display:flex;height:40px;border-radius:6px;overflow:hidden} .strip i{flex:1}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<filter id="deuteranopia"><feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/></filter>
+<filter id="protanopia"><feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/></filter></svg>
+<main>
+<h1>Paleta mestra de 64 cores: rascunho para aprovar</h1>
+<p>SpiritOfMurin · 2026-11-25 · <strong>61 cores em uso, 3 de reserva</strong>. 32 cores vêm do art bible; as 29 marcadas <span class="new">nova</span> completam as rampas e são propostas agora. Ao lado de cada cor: L* (luminosidade, 0 a 100) e saturação.</p>
+<div class="row tog" id="simtog">
+<button data-mode="" aria-pressed="true">Cor normal</button><button data-mode="gray" aria-pressed="false">Escala de cinza</button>
+<button data-mode="deut" aria-pressed="false">Deuteranopia (simulada)</button><button data-mode="prot" aria-pressed="false">Protanopia (simulada)</button></div>
+<h2>1. A paleta inteira numa tira</h2>
+<p>Da esquerda para a direita, na ordem do arquivo. As listras no fim são as vagas de reserva.</p>
+<div class="card sim"><div class="strip" id="strip"></div></div>
+<h2>2. Uma cena feita só com a paleta</h2>
+<p>Trilha, bambuzal, rio, pedras e a entrada do túmulo com um arco gravado em ciano, mais o protagonista em repouso e o discípulo em guarda (os esquemas da prancha das poses). À esquerda em tamanho real, à direita ampliada 3×. Serve para ver se o mundo fica abafado e se os atores e o ciano se destacam.</p>
+<div class="card"><div class="row" id="scene"></div></div>
+<h2>3. As cores por família</h2>
+<div class="groups" id="groups"></div>
+<h2>4. O que a conferência automática encontrou</h2>
+<div class="card"><ul id="notes"></ul></div>
+</main>
+<script>
+const ROWS = [{"group":"linha","name":"contorno de ator","hex":"#16140f","src":"bible","L":6.4,"hue":43,"sat":32,"notes":[]},{"group":"linha","name":"contato sob os pés","hex":"#262c21","src":"new","L":17.1,"hue":93,"sat":25,"notes":[]},{"group":"linha","name":"neutro escuro","hex":"#4a4640","src":"new","L":29.9,"hue":36,"sat":14,"notes":[]},{"group":"linha","name":"neutro médio","hex":"#7a756b","src":"new","L":49.4,"hue":40,"sat":12,"notes":[]},{"group":"musgo","name":"musgo sombra","hex":"#2f4529","src":"new","L":26.8,"hue":107,"sat":41,"notes":[]},{"group":"musgo","name":"bambu","hex":"#3f5a35","src":"new","L":35.3,"hue":104,"sat":41,"notes":[]},{"group":"musgo","name":"chão do vale","hex":"#4c5a3e","src":"bible","L":36.4,"hue":90,"sat":31,"notes":[]},{"group":"musgo","name":"musgo claro","hex":"#56643f","src":"new","L":40.3,"hue":83,"sat":37,"notes":[]},{"group":"musgo","name":"bambu brilho","hex":"#5b7546","src":"new","L":46.2,"hue":93,"sat":40,"notes":[]},{"group":"terra","name":"terra sombra","hex":"#4a3c2c","src":"new","L":26.4,"hue":32,"sat":41,"notes":[]},{"group":"terra","name":"terra","hex":"#6b5a40","src":"new","L":39.3,"hue":36,"sat":40,"notes":[]},{"group":"terra","name":"caminho","hex":"#86704f","src":"bible","L":48.5,"hue":36,"sat":41,"notes":[]},{"group":"terra","name":"caminho claro","hex":"#9a8562","src":"new","L":56.6,"hue":38,"sat":36,"notes":[]},{"group":"pedra","name":"pedra sombra","hex":"#3c3b37","src":"new","L":24.8,"hue":48,"sat":8,"notes":[]},{"group":"pedra","name":"pedra escura","hex":"#55534c","src":"new","L":35.3,"hue":47,"sat":11,"notes":[]},{"group":"pedra","name":"pedra","hex":"#706d63","src":"new","L":46,"hue":46,"sat":12,"notes":[]},{"group":"pedra","name":"rocha","hex":"#8a877a","src":"bible","L":56.2,"hue":49,"sat":12,"notes":[]},{"group":"agua","name":"água funda","hex":"#323c45","src":"new","L":24.8,"hue":208,"sat":28,"notes":[]},{"group":"agua","name":"água","hex":"#44515c","src":"new","L":33.7,"hue":208,"sat":26,"notes":[]},{"group":"agua","name":"brilho da água","hex":"#5a6a74","src":"new","L":43.9,"hue":203,"sat":22,"notes":[]},{"group":"tumulo","name":"túmulo sombra","hex":"#333139","src":"new","L":20.8,"hue":255,"sat":14,"notes":[]},{"group":"tumulo","name":"túmulo","hex":"#3a3a3f","src":"bible","L":24.6,"hue":240,"sat":8,"notes":[]},{"group":"tumulo","name":"túmulo claro","hex":"#514f58","src":"new","L":34.1,"hue":253,"sat":10,"notes":[]},{"group":"pele","name":"pele sombra","hex":"#93705a","src":"new","L":50.1,"hue":23,"sat":39,"notes":[]},{"group":"pele","name":"pele","hex":"#b8906e","src":"new","L":62.7,"hue":28,"sat":40,"notes":[]},{"group":"pele","name":"pele brilho","hex":"#d0aa86","src":"new","L":72.1,"hue":29,"sat":36,"notes":[]},{"group":"jogador","name":"túnica sombra","hex":"#8a846f","src":"bible","L":55.1,"hue":47,"sat":20,"notes":[]},{"group":"jogador","name":"túnica tom","hex":"#b3ad97","src":"bible","L":70.7,"hue":47,"sat":16,"notes":[]},{"group":"jogador","name":"túnica brilho","hex":"#d6d2bf","src":"bible","L":84,"hue":50,"sat":11,"notes":[]},{"group":"jogador","name":"faixa jade gasto sombra","hex":"#3a5a4b","src":"bible","L":35.4,"hue":152,"sat":36,"notes":[]},{"group":"jogador","name":"faixa jade gasto","hex":"#4f7a64","src":"bible","L":47.6,"hue":149,"sat":35,"notes":[]},{"group":"jogador","name":"calça sombra","hex":"#2c2b2f","src":"new","L":17.8,"hue":255,"sat":9,"notes":[]},{"group":"jogador","name":"calça","hex":"#3b3a3e","src":"new","L":24.7,"hue":255,"sat":6,"notes":[]},{"group":"discipulo","name":"corpo sombra","hex":"#3f4647","src":"bible","L":29.1,"hue":188,"sat":11,"notes":[]},{"group":"discipulo","name":"corpo ardósia","hex":"#555d5e","src":"bible","L":38.8,"hue":187,"sat":10,"notes":[]},{"group":"discipulo","name":"palha sombra","hex":"#8f8466","src":"bible","L":55.4,"hue":44,"sat":29,"notes":[]},{"group":"discipulo","name":"palha","hex":"#b0a382","src":"bible","L":67.3,"hue":43,"sat":26,"notes":[]},{"group":"discipulo","name":"palha brilho","hex":"#c4b893","src":"bible","L":74.9,"hue":45,"sat":25,"notes":[]},{"group":"senior","name":"índigo sombra","hex":"#2c2f47","src":"new","L":20.1,"hue":233,"sat":38,"notes":[]},{"group":"senior","name":"índigo-ardósia","hex":"#3d4160","src":"bible","L":28.4,"hue":233,"sat":36,"notes":[]},{"group":"arma","name":"aço sombra","hex":"#8c9292","src":"new","L":60.1,"hue":180,"sat":4,"notes":[]},{"group":"arma","name":"aço","hex":"#b4b9b7","src":"new","L":74.7,"hue":156,"sat":3,"notes":[]},{"group":"arma","name":"fio e ponta","hex":"#d6d9d3","src":"new","L":86.3,"hue":90,"sat":3,"notes":[]},{"group":"arma","name":"bronze da guarda","hex":"#6a5a3a","src":"new","L":39,"hue":40,"sat":45,"notes":[]},{"group":"ciano","name":"ciano halo","hex":"#6fd8d2","src":"bible","L":80.3,"hue":177,"sat":49,"notes":[]},{"group":"ciano","name":"ciano-branco","hex":"#d4fbf6","src":"bible","L":95.8,"hue":172,"sat":16,"notes":[]},{"group":"ocre","name":"ocre","hex":"#c8502a","src":"bible","L":49.7,"hue":14,"sat":79,"notes":[]},{"group":"ocre","name":"ocre claro","hex":"#e8834c","src":"bible","L":64.9,"hue":21,"sat":67,"notes":[]},{"group":"ambar","name":"âmbar sombra","hex":"#a8742a","src":"new","L":52.9,"hue":35,"sat":75,"notes":[]},{"group":"ambar","name":"âmbar","hex":"#e2a640","src":"bible","L":72.1,"hue":38,"sat":72,"notes":[]},{"group":"ambar","name":"âmbar claro","hex":"#ffd27a","src":"bible","L":86.4,"hue":40,"sat":52,"notes":["sinal fora de L* 50–88 / sat ≥ 60%"]},{"group":"qi","name":"qi escuro","hex":"#24603f","src":"bible","L":36.2,"hue":147,"sat":63,"notes":[]},{"group":"qi","name":"qi médio","hex":"#3f9e6a","src":"bible","L":58.6,"hue":147,"sat":60,"notes":[]},{"group":"qi","name":"qi claro","hex":"#9be3b0","src":"bible","L":84.5,"hue":138,"sat":32,"notes":["sinal fora de L* 50–88 / sat ≥ 60%"]},{"group":"ui","name":"tinta da UI","hex":"#2a2118","src":"bible","L":13.5,"hue":30,"sat":43,"notes":[]},{"group":"ui","name":"aguada","hex":"#6b5a45","src":"bible","L":39.4,"hue":33,"sat":36,"notes":[]},{"group":"ui","name":"pergaminho sombra","hex":"#b5a078","src":"bible","L":66.8,"hue":39,"sat":34,"notes":[]},{"group":"ui","name":"pergaminho","hex":"#d8c7a0","src":"bible","L":80.7,"hue":42,"sat":26,"notes":[]},{"group":"ui","name":"pergaminho claro","hex":"#e6d9b8","src":"bible","L":87,"hue":43,"sat":20,"notes":[]},{"group":"ui","name":"selo","hex":"#a8382a","src":"bible","L":40.1,"hue":7,"sat":75,"notes":[]},{"group":"ui","name":"vida do jogador","hex":"#7a3a32","src":"bible","L":32.7,"hue":7,"sat":59,"notes":[]}];
+const GROUPS = {"linha":"Linha e neutros","musgo":"Musgo (mundo)","terra":"Terra (mundo)","pedra":"Pedra (mundo)","agua":"Água (mundo)","tumulo":"Túmulo (mundo)","pele":"Pele","jogador":"Protagonista","discipulo":"Discípulo","senior":"Sênior","arma":"Armas","ciano":"Ciano-branco: conhecimento","ocre":"Vermelho-ocre: intenção hostil","ambar":"Âmbar: alquimia e tesouro","qi":"Jade do qi","ui":"Interface"};
+// ---- Pixel helpers ----------------------------------------------------------------------
+function P(g, c, x, y, w = 1, h = 1) { g.fillStyle = c; g.fillRect(x, y, w, h); }
+const OUT = [22, 20, 15];
+// Adds a 1 px outer outline in #16140f around every opaque pixel (Section 3.2).
+function outline(g) {
+  const d = g.getImageData(0, 0, 64, 64), a = d.data, src = new Uint8ClampedArray(a);
+  const op = (x, y) => x >= 0 && y >= 0 && x < 64 && y < 64 && src[(y * 64 + x) * 4 + 3] > 0;
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
+    const i = (y * 64 + x) * 4;
+    if (src[i + 3] === 0 && (op(x - 1, y) || op(x + 1, y) || op(x, y - 1) || op(x, y + 1))) {
+      a[i] = OUT[0]; a[i + 1] = OUT[1]; a[i + 2] = OUT[2]; a[i + 3] = 255;
+    }
+  }
+  g.putImageData(d, 0, 0);
+}
+function sprite(draw) { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); draw(g); outline(g); return c; }
+function silhouette(src) {
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  g.drawImage(src, 0, 0); g.globalCompositeOperation = 'source-in'; P(g, '#000', 0, 0, 64, 64); return c;
+}
+
+// ---- Colours (art bible Section 4.4 and the art director's disciple proposal) -------------
+const T = { hi: '#d6d2bf', mid: '#b3ad97', sh: '#8a846f' };       // ivory tunic
+const SASH = '#4f7a64', SASH_SH = '#3a5a4b';                      // worn jade
+const PANTS = '#3b3a3e', BOOT = '#2a2722', HAIR = '#2b2a2a', SKIN = '#b8906e', SKIN_SH = '#93705a';
+const STEEL = '#9aa0a0', EDGE = '#e4e6e0', TIP = '#f2f3ee', BRONZE = '#6a5a3a', GRIP = '#2a2118';
+const DB = '#555d5e', DB_SH = '#3f4647', STRAW = '#b0a382', STRAW_HI = '#c4b893', STRAW_SH = '#8f8466';
+
+// ---- Protagonist at rest, direction S (Section 3, 4.1) -----------------------------------
+function protagonist(sword) {
+  return sprite(g => {
+    // legs first: back (support) leg under the hip, front leg 3 px to the sword side and 2 px lower
+    P(g, PANTS, 28, 38, 3, 20); P(g, BOOT, 27, 57, 5, 3);            // back foot sole on row 59
+    P(g, PANTS, 33, 38, 3, 12); P(g, PANTS, 34, 50, 3, 9); P(g, BOOT, 33, 59, 5, 3); // front foot sole row 61
+    // split hem: two panels, the pants show between them
+    P(g, T.mid, 26, 38, 5, 12); P(g, T.hi, 26, 38, 2, 12);
+    P(g, T.mid, 33, 38, 5, 11); P(g, T.sh, 36, 38, 2, 11);
+    // torso, light from the upper left; the near shoulder sits 1 px lower
+    P(g, T.mid, 25, 25, 10, 10); P(g, T.hi, 25, 25, 4, 10); P(g, T.mid, 35, 26, 3, 9); P(g, T.sh, 36, 26, 2, 9);
+    for (let i = 0; i < 9; i++) P(g, T.sh, 35 - i, 26 + i);           // cross collar diagonal
+    P(g, SASH, 25, 35, 13, 2); P(g, SASH_SH, 25, 37, 13, 1);          // sash 3 px
+    // free arm: sleeve against the body with a 1 px separation in the tunic's dark tone, hand on the sash
+    P(g, T.hi, 22, 26, 3, 9); P(g, T.sh, 24, 27, 1, 8); P(g, SKIN, 23, 35, 3, 2);
+    // sword arm: elbow 1-2 px out, a gap of at least 1x5 px between arm and torso
+    const handY = sword === 'A' ? 33 : 38;
+    P(g, T.mid, 37, 25, 3, 3);
+    P(g, T.mid, 39, 27, 3, handY - 27); P(g, T.sh, 41, 27, 1, handY - 27);
+    P(g, SKIN, 40, handY, 3, 2);
+    // head 10 px, bun, short ribbon in worn jade, 1 px eyes
+    P(g, SKIN, 28, 17, 8, 7); P(g, SKIN_SH, 34, 17, 2, 7); P(g, HAIR, 27, 14, 10, 4); P(g, HAIR, 27, 17, 1, 4); P(g, HAIR, 36, 17, 1, 3);
+    P(g, HAIR, 30, 11, 4, 3); P(g, SASH, 28, 12, 2, 1); P(g, SASH, 27, 13, 1, 2);
+    P(g, '#16140f', 30, 19); P(g, '#16140f', 33, 19);
+    P(g, SKIN_SH, 30, 24, 4, 1);                                      // neck
+    // the sword
+    const blade = (x0, y0, n, slope) => {
+      for (let i = 0; i < n; i++) {
+        const x = slope === 1 ? x0 + i : x0 + Math.floor(i / 2), y = y0 + i;
+        P(g, STEEL, x, y); P(g, i === n - 1 ? TIP : EDGE, x + 1, y);
+      }
+    };
+    P(g, GRIP, 39, handY - 3, 1, 1); P(g, GRIP, 40, handY - 2, 1, 2); // grip rises above the hand
+    P(g, BRONZE, 40, handY + 2, 4, 1);                                // 4 px cross guard
+    if (sword === 'A') blade(42, handY + 3, 20, 2);                   // 1:2, tip 5 px above the ground
+    if (sword === 'B') blade(42, handY + 3, 16, 1);                   // 1:1 (45°)
+    if (sword === 'C') blade(42, handY + 3, 14, 2);                   // 1:2, shorter blade
+  });
+}
+
+// ---- Closed-guard disciple, direction S (Section 3, 4.2) ---------------------------------
+function disciple(arm) {
+  return sprite(g => {
+    // legs: knees out, at least 5 px of ground between the feet, light leggings, dark feet
+    P(g, DB, 27, 46, 3, 5); P(g, DB, 35, 46, 3, 5);
+    P(g, STRAW, 26, 51, 3, 7); P(g, STRAW, 36, 51, 3, 7); P(g, STRAW_SH, 28, 51, 1, 7); P(g, STRAW_SH, 38, 51, 1, 7);
+    P(g, BOOT, 25, 58, 4, 2); P(g, BOOT, 36, 58, 4, 2);
+    // torso with glued elbows: a ~14 px block, short tunic to mid thigh
+    P(g, DB, 25, 27, 14, 20); P(g, DB_SH, 35, 27, 4, 20); P(g, DB_SH, 27, 29, 1, 10); P(g, DB_SH, 36, 29, 1, 10);
+    // chin under the brim
+    P(g, SKIN, 30, 24, 4, 3); P(g, SKIN_SH, 33, 24, 1, 3);
+    // straw hat: low cone, 21 px brim tilted 2 px lower on the side he faces (screen left)
+    for (let r = 0; r < 5; r++) P(g, r < 2 ? STRAW_HI : STRAW, 32 - r - 1, 17 + r, 2 * r + 3, 1);
+    for (let x = 22; x <= 42; x++) { const drop = x < 25 ? 2 : x < 29 ? 1 : 0; P(g, STRAW, x, 22 + drop); P(g, STRAW_SH, x, 23 + drop); }
+    // free arm: forearm across the chest, parallel to and behind the blade; or both hands on the hilt
+    if (arm === 'free') { for (let i = 0; i < 7; i++) P(g, DB_SH, 28 + i, 34 - i + 6, 2, 1); P(g, SKIN, 27, 39, 2, 2); }
+    // the blade: 45°, hilt at the right hip, tip past the left shoulder below the brim;
+    // outlined on both sides where it crosses the body (Section 4.4)
+    for (let i = 0; i < 14; i++) {
+      const x = 36 - i, y = 40 - i;
+      if (x >= 25 && y >= 27) { P(g, '#16140f', x - 1, y); P(g, '#16140f', x + 2, y); }
+      P(g, i === 13 ? TIP : EDGE, x, y); P(g, STEEL, x + 1, y);
+    }
+    P(g, BRONZE, 38, 40); P(g, BRONZE, 37, 41); P(g, BRONZE, 36, 42); P(g, BRONZE, 39, 39); // cross guard
+    P(g, GRIP, 38, 42, 2, 1); P(g, GRIP, 39, 43, 2, 1); P(g, GRIP, 40, 44, 2, 1);         // grip and pommel past the hip
+    P(g, SKIN, 38, 43, 2, 2);
+    if (arm === 'both') P(g, SKIN, 39, 41, 2, 2);
+  });
+}
+
+
+const strip = document.getElementById('strip');
+ROWS.forEach(r => { const i = document.createElement('i'); i.style.background = r.hex; i.title = r.name + ' ' + r.hex; strip.appendChild(i); });
+for (let k = ROWS.length; k < 64; k++) { const i = document.createElement('i'); i.style.background = 'repeating-linear-gradient(45deg,#26231d 0 4px,#1d1b17 4px 8px)'; i.title = 'reserva'; strip.appendChild(i); }
+const gh = document.getElementById('groups');
+Object.entries(GROUPS).forEach(([g, title]) => {
+  const items = ROWS.filter(r => r.group === g); if (!items.length) return;
+  const d = document.createElement('div'); d.className = 'card sim';
+  d.innerHTML = '<h3>' + title + '</h3>' + items.map(r => '<div class="sw"><i style="background:' + r.hex + '"></i><span><b>' + r.name + '</b> ' + r.hex + ' · L* ' + Math.round(r.L) + ' · sat ' + r.sat + '% ' + (r.src === 'new' ? '<span class="new">nova</span>' : '') + '</span></div>').join('');
+  gh.appendChild(d);
+});
+const notes = document.getElementById('notes');
+const flagged = ROWS.filter(r => r.notes.length);
+notes.innerHTML = flagged.map(r => '<li><strong>' + r.name + ' ' + r.hex + '</strong>: ' + r.notes.join('; ') + '.</li>').join('') +
+ '<li>Os brilhos das rampas de sinal (âmbar claro, qi claro) ficam abaixo de 60% de saturação: no topo de uma rampa a saturação cai (Seção 4.8). Os dois valores já estavam no art bible.</li>' +
+ '<li>A saturação é medida em HSV. Com ela, os valores do próprio art bible cumprem as faixas (o qi médio dá 60%); em HSL dariam 43%.</li>' +
+ '<li>Água: puxada para azul-acinzentado (matiz ~205°) e saturação ≤ 28%, longe do ciano.</li>' +
+ '<li>Sombra do túmulo: L* ~21, dentro da faixa do mundo (20–60) e ainda lida como quase-preto.</li>' +
+ '<li>Aço: o fio mais claro fica em L* 86, abaixo do limite de 88 que só o ciano-branco pode passar.</li>';
+const H = Object.fromEntries(ROWS.map(r => [r.name, r.hex]));
+function shadowAt(g, ox, oy, feet) {
+  g.fillStyle = 'rgba(8,10,8,0.38)'; g.beginPath(); g.ellipse(ox + 32, oy + 60, 11, 2.5, 0, 0, Math.PI * 2); g.fill();
+  feet.forEach(([x, w, y]) => P(g, H['contato sob os pés'], ox + x, oy + y, w, 1));
+}
+(function () {
+  const W = 200, HT = 112, c = document.createElement('canvas'); c.width = W; c.height = HT; c.className = 'sim';
+  const g = c.getContext('2d');
+  P(g, H['chão do vale'], 0, 0, W, HT);
+  for (let i = 0; i < 120; i++) { const x = (i * 53) % W, y = (i * 29) % HT; P(g, i % 3 ? H['musgo sombra'] : H['musgo claro'], x, y, 3, 2); }
+  for (let y = 0; y < HT; y++) { const x = 70 + Math.round(Math.sin(y / 14) * 8); P(g, H['caminho'], x, y, 22, 1); P(g, H['terra'], x, y, 2, 1); P(g, H['caminho claro'], x + 6, y, 3, 1); }
+  for (let y = 80; y < HT; y++) P(g, H['água'], 120 + (y - 80), y, W, 1);
+  for (let i = 0; i < 18; i++) P(g, H['brilho da água'], 140 + (i * 13) % 60, 86 + (i * 7) % 24, 4, 1);
+  for (let y = 80; y < HT; y++) P(g, H['água funda'], 150 + (y - 80), y, 6, 1);
+  [[114, 76], [124, 84], [134, 92]].forEach(([x, y]) => { P(g, H['pedra'], x, y, 8, 5); P(g, H['rocha'], x + 1, y, 5, 2); P(g, H['pedra sombra'], x, y + 4, 8, 1); });
+  [6, 12, 17, 180, 186, 192].forEach((sx, i) => { P(g, H['bambu'], sx, 0, 3, 70); P(g, H['bambu brilho'], sx, 0, 1, 70); for (let ny = 3 + i * 4; ny < 70; ny += 8) P(g, H['musgo sombra'], sx, ny, 3, 1); P(g, H['contato sob os pés'], sx - 1, 70, 5, 1); });
+  P(g, H['túmulo'], 150, 4, 30, 26); P(g, H['túmulo claro'], 150, 4, 30, 3); P(g, H['túmulo sombra'], 158, 12, 14, 18);
+  for (let a = 0; a < 14; a++) { const t = Math.PI * (0.1 + a / 16); P(g, H['ciano-branco'], 165 + Math.round(5 * Math.cos(t)), 24 - Math.round(6 * Math.sin(t))); }
+  shadowAt(g, 8, 28, [[27, 5, 60], [33, 5, 62]]); g.drawImage(protagonist('A'), 8, 28);
+  shadowAt(g, 74, 26, [[25, 4, 60], [36, 4, 60]]); g.drawImage(disciple('free'), 74, 26);
+  const host = document.getElementById('scene');
+  const b = document.createElement('canvas'); b.width = W; b.height = HT; b.className = 'sim'; b.getContext('2d').drawImage(c, 0, 0); b.style.width = W * 3 + 'px';
+  host.append(c, b);
+})();
+document.querySelectorAll('#simtog button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#simtog button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  document.body.classList.remove('gray', 'deut', 'prot'); if (b.dataset.mode) document.body.classList.add(b.dataset.mode);
+}));
+</script></body></html>

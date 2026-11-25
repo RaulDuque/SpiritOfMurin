@@ -1,0 +1,65 @@
+GIMP Palette
+Name: pal_master_64
+Columns: 8
+# SpiritOfMurin master palette - art bible Section 4.8 - approved 2026-11-25 - 61 colours + 3 reserve slots
+ 22  20  15	linha: contorno de ator
+ 38  44  33	linha: contato sob os pés
+ 74  70  64	linha: neutro escuro
+122 117 107	linha: neutro médio
+ 47  69  41	musgo: musgo sombra
+ 63  90  53	musgo: bambu
+ 76  90  62	musgo: chão do vale
+ 86 100  63	musgo: musgo claro
+ 91 117  70	musgo: bambu brilho
+ 74  60  44	terra: terra sombra
+107  90  64	terra: terra
+134 112  79	terra: caminho
+154 133  98	terra: caminho claro
+ 60  59  55	pedra: pedra sombra
+ 85  83  76	pedra: pedra escura
+112 109  99	pedra: pedra
+138 135 122	pedra: rocha
+ 50  60  69	agua: água funda
+ 68  81  92	agua: água
+ 90 106 116	agua: brilho da água
+ 51  49  57	tumulo: túmulo sombra
+ 58  58  63	tumulo: túmulo
+ 81  79  88	tumulo: túmulo claro
+147 112  90	pele: pele sombra
+184 144 110	pele: pele
+208 170 134	pele: pele brilho
+138 132 111	jogador: túnica sombra
+179 173 151	jogador: túnica tom
+214 210 191	jogador: túnica brilho
+ 58  90  75	jogador: faixa jade gasto sombra
+ 79 122 100	jogador: faixa jade gasto
+ 44  43  47	jogador: calça sombra
+ 59  58  62	jogador: calça
+ 63  70  71	discipulo: corpo sombra
+ 85  93  94	discipulo: corpo ardósia
+143 132 102	discipulo: palha sombra
+176 163 130	discipulo: palha
+196 184 147	discipulo: palha brilho
+ 44  47  71	senior: índigo sombra
+ 61  65  96	senior: índigo-ardósia
+140 146 146	arma: aço sombra
+180 185 183	arma: aço
+214 217 211	arma: fio e ponta
+106  90  58	arma: bronze da guarda
+111 216 210	ciano: ciano halo
+212 251 246	ciano: ciano-branco
+200  80  42	ocre: ocre
+232 131  76	ocre: ocre claro
+168 116  42	ambar: âmbar sombra
+226 166  64	ambar: âmbar
+255 210 122	ambar: âmbar claro
+ 36  96  63	qi: qi escuro
+ 63 158 106	qi: qi médio
+155 227 176	qi: qi claro
+ 42  33  24	ui: tinta da UI
+107  90  69	ui: aguada
+181 160 120	ui: pergaminho sombra
+216 199 160	ui: pergaminho
+230 217 184	ui: pergaminho claro
+168  56  42	ui: selo
+122  58  50	ui: vida do jogador

@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escolhas visuais</title>
+<style>
+  :root {
+    --bg: #1d1b17; --panel: #26231d; --ink: #e8e0cc; --dim: #a89f8a; --line: #3a362d; --accent: #d8c7a0;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 19px; margin: 40px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+  h3 { font-size: 15px; margin: 0 0 6px; }
+  p, li { color: var(--dim); }
+  strong { color: var(--ink); }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .card.rec { border-color: #7a3a32; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; width: 100%; height: auto; display: block; border-radius: 4px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .tog button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; font: inherit; }
+  .tog button[aria-pressed="true"] { border-color: var(--accent); background: #3a3328; }
+  .gray canvas.sim { filter: grayscale(1); }
+  .deut canvas.sim { filter: url(#deuteranopia); }
+  .prot canvas.sim { filter: url(#protanopia); }
+  .sw { display: flex; flex-direction: column; gap: 4px; }
+  .sw .chips { display: flex; gap: 4px; }
+  .sw .chip { width: 36px; height: 36px; border-radius: 4px; border: 1px solid #0006; }
+  .sw small { color: var(--dim); font-size: 12px; }
+  .before { background: #3a2420; border-left: 3px solid #a8382a; padding: 8px 12px; border-radius: 4px; }
+  .after { background: #20302a; border-left: 3px solid #4f7a64; padding: 8px 12px; border-radius: 4px; }
+  .before p, .after p { margin: 4px 0; color: var(--ink); }
+  .ref { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; }
+  .ref img { width: 100%; border-radius: 6px; image-rendering: pixelated; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  td, th { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { color: var(--accent); font-weight: 600; }
+  .tag { display: inline-block; font-size: 12px; padding: 1px 6px; border-radius: 4px; background: #3a3328; color: var(--accent); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="deuteranopia"><feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/></filter>
+  <filter id="protanopia"><feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/></filter>
+</svg>
+<main>
+  <h1>Escolhas visuais do art bible</h1>
+  <p>SpiritOfMurin · 2026-11-25 · apoio às decisões pendentes da revisão final (AD-ART-BIBLE). Tudo aqui é desenhado em pixels nativos e ampliado 3×, como no jogo.</p>
+
+  <h2>1. Cor dos losangos de vida do jogador</h2>
+  <p>HUD de tinta no canto, sobre um trecho de bambuzal. Cada quadro mostra 3 losangos cheios e 2 vazios, a barra de qi com a marca de limiar (Seção 7.8) e, à direita, uma lâmina inimiga com o lampejo <strong>ocre</strong> da intenção de ataque, para comparar a vida com o ocre. Use os botões para ver em escala de cinza e com simulação de daltonismo.</p>
+  <div class="row tog" id="simtog">
+    <button data-mode="" aria-pressed="true">Cor normal</button>
+    <button data-mode="gray" aria-pressed="false">Escala de cinza</button>
+    <button data-mode="deut" aria-pressed="false">Deuteranopia (simulada)</button>
+    <button data-mode="prot" aria-pressed="false">Protanopia (simulada)</button>
+  </div>
+  <div class="grid" id="hudgrid"></div>
+  <p><span class="tag">Escolha do criador</span> vermelho escuro gasto, tom A <code>#7a3a32</code> (seção 1b). A vida fica só no HUD, em forma de losango e num canto fixo; o ocre fica só em atores no mundo. A simulação de daltonismo é aproximada: confira também com o Color Oracle.</p>
+
+  <h2>1b. Os dois tons de vermelho, lado a lado</h2>
+  <p>Mesmo HUD, ampliado 4×. Os botões acima (cinza, daltonismo) também valem aqui.</p>
+  <div class="grid" id="redgrid" style="grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));"></div>
+
+  <h2>2. As sete famílias de cor (Seção 4.1)</h2>
+  <div class="grid" id="palette"></div>
+
+  <h2>3. Protagonista: sua referência e as medidas de repouso</h2>
+  <div class="ref">
+    <div class="card">
+      <h3>Referência do criador</h3>
+      <img src="../assets/protagonista/image.png" alt="Referência do protagonista: espadachim de túnica marfim, faixa e fita jade, espada fora do corpo">
+      <p><strong>Tomar:</strong> túnica marfim de gola cruzada, faixa jade (reduzida ao jade gasto), fita no cabelo, espaço entre a espada e o corpo, calça carvão, barra dividida.</p>
+      <p><strong>Traduzir:</strong> os pés estão abertos como numa guarda e a lâmina está quase horizontal. O repouso pede base estreita com peso atrás e lâmina a ~27° da vertical, com a ponta perto do chão. O verde da faixa e da fita é mais vivo que o jade gasto.</p>
+    </div>
+    <div class="card">
+      <h3>Repouso pela bíblia (esquema, direção S, 1 px = 1 px nativo)</h3>
+      <canvas id="pose" width="128" height="64" class="sim"></canvas>
+      <p>À esquerda, o repouso da Seção 3, 4.1: pé de trás sob o quadril, pé da frente 3 px para o lado e 2–3 px para baixo, base de 9–10 px, lâmina de 22 px a ~27° fora da perna. À direita, a guarda da Seção 5.4: base de 14 px, joelhos flexionados, lâmina erguida diante do tronco. A sua imagem está mais próxima da guarda.</p>
+    </div>
+  </div>
+
+  <h2>4. Correções de texto (Seções 1 e 2)</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Seção 1, exemplo dos três estados</h3>
+      <div class="before"><p>Antes: "repouso com <strong>pés juntos</strong> e lâmina baixa <strong>junto ao corpo</strong>…"</p></div>
+      <div class="after"><p>Depois: "repouso com <strong>pé à frente, peso atrás</strong> e lâmina baixa a ~27°, <strong>fora da silhueta da perna</strong>… Pés juntos não são repouso de combatente: ficam reservados ao NPC neutro (Seção 5.2)."</p></div>
+    </div>
+    <div class="card">
+      <h3>Seção 2, duelo do discípulo</h3>
+      <div class="before"><p>Antes: lampejo ocre "quando ele <strong>fecha a guarda</strong> ou contra-ataca".</p></div>
+      <div class="after"><p>Depois: lampejo ocre "<strong>só quando ele prepara o contra-ataque</strong>… fechar a guarda nunca acende ocre". O quadro-resumo passa a dizer "lampejo ocre só no contra-ataque".</p></div>
+    </div>
+  </div>
+</main>
+<script>
+// Pixel helpers: everything is drawn at native resolution and scaled by CSS.
+function px(ctx, c, x, y, w = 1, h = 1) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
+
+function drawGrove(ctx, w, h) {
+  px(ctx, '#4c5a3e', 0, 0, w, h);
+  // ground patches and dapples
+  for (let i = 0; i < 40; i++) { const x = (i * 37) % w, y = (i * 23) % h; px(ctx, i % 3 ? '#46533a' : '#56643f', x, y, 3, 2); }
+  // bamboo stalks: vertical, 3 px, irregular nodes, no outline (Section 3, Principle 5)
+  const stalks = [8, 15, 150, 158, 171, 186];
+  stalks.forEach((sx, i) => {
+    px(ctx, '#3f5a35', sx, 0, 3, h); px(ctx, '#5b7546', sx, 0, 1, h);
+    for (let ny = 4 + i * 3; ny < h; ny += 7 + (i % 3) * 2) px(ctx, '#2f4529', sx, ny, 3, 1);
+  });
+}
+
+function diamond(ctx, x, y, full, c, empty) {
+  px(ctx, '#16140f', x - 1, y - 5, 4, 12); px(ctx, '#16140f', x - 3, y - 3, 8, 8); px(ctx, '#16140f', x - 5, y - 1, 12, 4);
+  const f = full ? c : empty;
+  px(ctx, f, x, y - 4, 2, 10); px(ctx, f, x - 2, y - 2, 6, 6); px(ctx, f, x - 4, y, 10, 2);
+}
+
+function drawHud(ctx, life) {
+  // ink-brush backing, translucent tinta (Section 7.1)
+  ctx.globalAlpha = 0.82;
+  px(ctx, '#2a2118', 4, 4, 100, 32); px(ctx, '#2a2118', 104, 8, 5, 24); px(ctx, '#2a2118', 2, 8, 2, 24);
+  ctx.globalAlpha = 1;
+  for (let i = 0; i < 5; i++) diamond(ctx, 14 + i * 14, 14, i < 3, life, '#2a2118');
+  // qi bar in the qi ramp with a cost threshold notch (Section 7.8)
+  px(ctx, '#16140f', 9, 25, 84, 7); px(ctx, '#1f2a24', 10, 26, 82, 5);
+  px(ctx, '#3f9e6a', 10, 26, 52, 5); px(ctx, '#9be3b0', 10, 26, 52, 1);
+  px(ctx, '#d8c7a0', 40, 24, 1, 9); // threshold notch
+}
+
+function drawEnemyBlade(ctx) {
+  // a 45° enemy blade with the ocre intent flash running its edge (Sections 4.3, 5.4)
+  for (let i = 0; i < 16; i++) {
+    px(ctx, '#16140f', 150 + i, 58 - i, 2, 2);
+    px(ctx, i > 4 ? '#e8834c' : '#c8502a', 150 + i, 57 - i, 1, 1);
+  }
+}
+
+const OPTIONS = [
+  { name: 'Antes: verde do protótipo', hex: '#4fb889', note: 'Quase a rampa do qi. Proibido pela Seção 4.3.' },
+  { name: 'Vermelho escuro gasto', hex: '#7a3a32', note: 'Escolha do criador. L* ~32, saturação baixa, longe da faixa de sinal do ocre.', rec: true },
+  { name: 'Jade gasto da faixa', hex: '#4f7a64', note: 'Liga a vida à faixa. Contraste menor sobre a tinta.' },
+  { name: 'Branco-osso', hex: '#c9c2ad', note: 'O mais legível; neutro, sem família semântica.' },
+];
+
+const grid = document.getElementById('hudgrid');
+OPTIONS.forEach(o => {
+  const card = document.createElement('div'); card.className = 'card' + (o.rec ? ' rec' : '');
+  const cv = document.createElement('canvas'); cv.width = 200; cv.height = 72; cv.className = 'sim';
+  const ctx = cv.getContext('2d'); drawGrove(ctx, 200, 72); drawHud(ctx, o.hex); drawEnemyBlade(ctx);
+  card.innerHTML = `<h3>${o.name} <small style="color:var(--dim)">${o.hex}</small></h3>`;
+  card.appendChild(cv);
+  const p = document.createElement('p'); p.textContent = o.note; card.appendChild(p);
+  grid.appendChild(card);
+});
+
+const REDS = [
+  { name: 'A: vermelho escuro gasto', hex: '#7a3a32', note: 'Mais discreto. Contraste menor sobre a tinta do HUD.' },
+  { name: 'B: vermelho gasto, um passo mais claro', hex: '#8e463b', note: 'Mais legível. Ainda escuro e pouco saturado, fora da faixa do ocre.' },
+];
+const redgrid = document.getElementById('redgrid');
+REDS.forEach(o => {
+  const card = document.createElement('div'); card.className = 'card';
+  const cv = document.createElement('canvas'); cv.width = 120; cv.height = 44; cv.className = 'sim';
+  const ctx = cv.getContext('2d'); drawGrove(ctx, 120, 44); drawHud(ctx, o.hex);
+  card.innerHTML = `<h3>${o.name} <small style="color:var(--dim)">${o.hex}</small></h3>`;
+  card.appendChild(cv);
+  const sw = document.createElement('div'); sw.className = 'row';
+  sw.innerHTML = `<div class="chip" style="width:48px;height:48px;border-radius:4px;background:${o.hex}"></div><div class="chip" style="width:48px;height:48px;border-radius:4px;background:#e8834c" title="ocre #e8834c"></div><small style="align-self:center;color:var(--dim)">o tom ao lado do ocre (#e8834c) da intenção hostil</small>`;
+  card.appendChild(sw);
+  const p = document.createElement('p'); p.textContent = o.note; card.appendChild(p);
+  redgrid.appendChild(card);
+});
+
+const FAMILIES = [
+  { name: 'Terra-musgo: o mundo', chips: ['#4c5a3e', '#86704f', '#8a877a', '#3a3a3f'] },
+  { name: 'Ciano-branco: conhecimento', chips: ['#d4fbf6', '#6fd8d2'] },
+  { name: 'Vermelho-ocre: intenção hostil', chips: ['#c8502a', '#e8834c'] },
+  { name: 'Âmbar: alquimia e tesouro', chips: ['#e2a640', '#ffd27a'] },
+  { name: 'Jade do qi: o que o jogador emite', chips: ['#24603f', '#3f9e6a', '#9be3b0'] },
+  { name: 'Tinta', chips: ['#16140f', '#2a2118'] },
+  { name: 'Pergaminho e selo (só UI)', chips: ['#d8c7a0', '#a8382a'] },
+  { name: 'Protagonista: túnica, faixa gasta', chips: ['#d6d2bf', '#b3ad97', '#8a846f', '#4f7a64', '#3a5a4b'] },
+  { name: 'Sênior: índigo-ardósia', chips: ['#3d4160'] },
+];
+const pal = document.getElementById('palette');
+FAMILIES.forEach(f => {
+  const d = document.createElement('div'); d.className = 'card sw';
+  d.innerHTML = `<h3>${f.name}</h3><div class="chips">${f.chips.map(c => `<div class="chip" style="background:${c}" title="${c}"></div>`).join('')}</div><small>${f.chips.join(' · ')}</small>`;
+  pal.appendChild(d);
+});
+
+// Schematic rest vs guard silhouettes (Section 3, 4.1 and Section 5.4), feet on row 59.
+(function () {
+  const ctx = document.getElementById('pose').getContext('2d');
+  px(ctx, '#4c5a3e', 0, 0, 128, 64);
+  function figure(ox, guard) {
+    const k = guard ? 2 : 0; // knees bent: -2 px height
+    const top = 13 + k;
+    // head 10 px
+    px(ctx, '#16140f', ox + 26, top - 1, 12, 12); px(ctx, '#2b2a2a', ox + 27, top, 10, 10);
+    px(ctx, '#2b2a2a', ox + 30, top - 3, 4, 3); // bun
+    // torso / tunic
+    px(ctx, '#16140f', ox + 24, top + 11, 16, 15); px(ctx, '#d6d2bf', ox + 25, top + 12, 14, 13);
+    // cross collar diagonal
+    for (let i = 0; i < 8; i++) px(ctx, '#8a846f', ox + 27 + i, top + 12 + i, 1, 1);
+    // sash
+    px(ctx, '#4f7a64', ox + 25, top + 22, 14, 3);
+    // legs (split hem shows them), base width differs by state
+    const back = ox + 29, front = guard ? ox + 37 : ox + 34;
+    const backL = guard ? ox + 23 : back;
+    px(ctx, '#16140f', backL - 1, top + 25, 5, 59 - (top + 25) + 1); px(ctx, '#2a2722', backL, top + 25, 3, 59 - (top + 25));
+    px(ctx, '#16140f', front - 1, top + 25, 5, 59 - (top + 25) + 1); px(ctx, '#2a2722', front, top + 25, 3, 59 - (top + 25));
+    // feet contact shadows, one per foot
+    px(ctx, '#2a3324', backL, 60, 4, 1); px(ctx, '#2a3324', front, 60, 4, 1);
+    // blade, 2 px (core + light edge)
+    if (!guard) { // rest: low, ~27° from vertical (1:2), outside the leg
+      for (let i = 0; i < 20; i++) { const x = ox + 41 + Math.floor(i / 2), y = top + 24 + i; px(ctx, '#9aa0a0', x, y); px(ctx, '#e4e6e0', x + 1, y); }
+      px(ctx, '#6a5a3a', ox + 39, top + 22, 4, 2); // guard of the sword
+    } else { // guard: raised 1:1 in front of the torso
+      for (let i = 0; i < 16; i++) { const x = ox + 36 + i, y = top + 22 - i; px(ctx, '#16140f', x, y + 1); px(ctx, '#e4e6e0', x, y); }
+    }
+  }
+  figure(0, false); figure(64, true);
+  // baseline guide at row 59
+  ctx.globalAlpha = 0.35; px(ctx, '#d8c7a0', 0, 59, 128, 1); ctx.globalAlpha = 1;
+})();
+
+document.querySelectorAll('#simtog button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#simtog button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  document.body.classList.remove('gray', 'deut', 'prot');
+  if (b.dataset.mode) document.body.classList.add(b.dataset.mode);
+}));
+</script>
+</body>
+</html>

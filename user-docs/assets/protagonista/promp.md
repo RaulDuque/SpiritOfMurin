@@ -1,0 +1,7 @@
+Crie um único sprite de corpo inteiro para o protagonista de SpiritOfMurin, um RPG 2D de cultivação Murim com câmera de cima em 3/4. Use o espadachim da imagem de referência como modelo. Entregue uma única pose de repouso em fundo transparente, com o corpo inteiro, a fita e a ponta da espada dentro do quadro.
+
+É um jovem adulto de porte esguio e atlético. O cabelo preto está preso em um coque alto, com duas pontas de fita jade que caem para trás do ombro. Veste túnica marfim de gola cruzada, punhos escuros, faixa jade na cintura, calça carvão e botas simples. A barra da túnica se divide acima dos joelhos, deixando visível a posição de cada perna.
+
+A câmera vê levemente o topo da cabeça e dos ombros. O espadachim olha para a direita da tela, com o tronco em três quartos, um pé adiantado e o peso na perna de trás. Segura uma espada chinesa reta e estreita, de guarda pequena em latão. A lâmina aponta para baixo e para fora. Deixe um espaço vazio bem visível entre a espada e a túnica. A mão livre repousa junto ao quadril.
+
+Desenhe para uma grade lógica de 64×64 pixels, com o personagem medindo aproximadamente 46–48 pixels do coque à sola. Use pixel art de bordas duras, contorno escuro de 1 pixel e poucas massas de luz e sombra. Simplifique primeiro as dobras e os detalhes do rosto. Preserve a gola cruzada, a fita jade, os dois pés e a linha contínua da espada. A pose precisa ser reconhecível em escala de cinza e no tamanho real do jogo.
