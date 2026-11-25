@@ -1,0 +1,172 @@
+[
+ {
+  "name": "first time: the title has no saved journey and starts the current way",
+  "ok": true,
+  "detail": "{\"scene\":\"title\",\"save\":\"none\",\"sel\":0,\"confirm\":false}"
+ },
+ {
+  "name": "Enter starts the first journey",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "the side step is learned on the normal route",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "a one-time reward was taken before meditating",
+  "ok": true,
+  "detail": "{\"inv\":{\"prata\":1},\"pot\":false,\"ground\":0}"
+ },
+ {
+  "name": "the meditation spot is reached and offers E",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "nothing was saved before meditating",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "meditating writes the journey and confirms only after it",
+  "ok": true,
+  "detail": "Meditação gravada. | Se cair em duelo, volta à trilha. Se fechar o jogo, volta a esta pedra."
+ },
+ {
+  "name": "the confirmation says what death and closing do",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after closing and reopening, the title offers Continuar, highlighted",
+  "ok": true,
+  "detail": "{\"scene\":\"title\",\"save\":\"ok\",\"sel\":0,\"confirm\":false}"
+ },
+ {
+  "name": "Novo jogo asks for confirmation first",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "cancelling Novo jogo keeps the journey",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Esc also cancels and keeps the journey",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Continuar puts the player at the meditation stone",
+  "ok": true,
+  "detail": "49.1,33.4"
+ },
+ {
+  "name": "the journey comes back as meditated",
+  "ok": true,
+  "detail": "inventory, book, quests, hp, qi, doors, rewards"
+ },
+ {
+  "name": "the player is ready for commands",
+  "ok": true,
+  "detail": "moved 33 px"
+ },
+ {
+  "name": "the book shows the side step page",
+  "ok": true,
+  "detail": "Passo Lateral"
+ },
+ {
+  "name": "the side step lands on the flank in the rematch",
+  "ok": true,
+  "detail": "6 hits, 4 on the flank, 5 parried"
+ },
+ {
+  "name": "the rematch is won after continuing",
+  "ok": true,
+  "detail": "try 1, hp 3"
+ },
+ {
+  "name": "no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "the save is unchanged by playing without meditating",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "loading a second time does not duplicate items or reopen rewards",
+  "ok": true,
+  "detail": "{\"prata\":1}"
+ },
+ {
+  "name": "an unsaved victory is not kept: the journey resumes at the last meditation",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "the half manual stays collected",
+  "ok": true,
+  "detail": "Ele não carrega mais nada."
+ },
+ {
+  "name": "no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "confirmed Novo jogo erases the journey and starts at the trail",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "confirmed Novo jogo keeps the custom keys",
+  "ok": true,
+  "detail": "{\"cut\":\"KeyU\"}"
+ },
+ {
+  "name": "no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "damaged data: the title explains and the game stays playable",
+  "ok": true,
+  "detail": "{\"scene\":\"title\",\"save\":\"invalid\",\"sel\":0,\"confirm\":false}"
+ },
+ {
+  "name": "damaged data: Enter starts a new journey",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "blocked storage: a useful message and no false confirmation",
+  "ok": true,
+  "detail": "A meditação não foi gravada: o navegador bloqueou o armazenamento. | O jogo continua, mas fechar agora perde o progresso desde o início."
+ },
+ {
+  "name": "blocked storage: the game keeps playing",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "no page errors",
+  "ok": true,
+  "detail": ""
+ }
+]

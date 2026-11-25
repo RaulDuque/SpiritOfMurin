@@ -24,6 +24,7 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-25 | [../futuro-do game/opiniao-claude.md](../futuro-do%20game/opiniao-claude.md) | Opinião do Claude sobre o futuro do jogo: mundo gerado por semente + lugares feitos à mão, prólogo, Godot com C# |
 | 2026-11-25 | [2026-11-25-controles-mouse.md](2026-11-25-controles-mouse.md) | Controles no mouse (esquerdo = corte, direito = passo), tela de Teclas com coluna de mouse, cliques nos menus não vazam para o jogo; testes e regressões |
 | 2026-11-25 | [prompts/06-controles-mouse.md](prompts/06-controles-mouse.md) | Pedido do criador para os controles no mouse e o rumo das próximas etapas (texto integral) |
+| 2026-11-25 | [2026-11-25-passar-atras-do-cenario.md](2026-11-25-passar-atras-do-cenario.md) | Colisão só na base de pedras soltas, pinheiros e bambus; silhueta do personagem atrás do cenário; testes e regressões |
 
 ## Prompts de imagem do criador
 

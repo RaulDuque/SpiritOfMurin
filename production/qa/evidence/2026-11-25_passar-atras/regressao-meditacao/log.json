@@ -1,0 +1,61 @@
+[
+ {
+  "label": "profile",
+  "path": "C:\\Users\\Raul\\AppData\\Local\\Temp\\som-jornada-DPFyNW",
+  "url": "file:///D:/Progr/SpiritOfMurin/prototypes/spiritofmurin/index.html"
+ },
+ {
+  "label": "pot and pickups before meditating",
+  "got": {
+   "inv": {
+    "prata": 1
+   },
+   "pot": false,
+   "ground": 0
+  }
+ },
+ {
+  "label": "journey at meditation",
+  "saved": {
+   "inv": {
+    "prata": 1
+   },
+   "invOrder": [
+    "prata"
+   ],
+   "reg": [
+    "Corte",
+    "Estocada",
+    "Onda de Qi",
+    "Passo curto",
+    "Metade de um manual",
+    "Passo Lateral",
+    "Passo longo"
+   ],
+   "quests": [
+    "guarda",
+    "manual:ok"
+   ],
+   "hp": 5,
+   "qi": 100,
+   "learnedSide": true,
+   "hasManual": true,
+   "doorOpen": true,
+   "chestOpen": false,
+   "potsBroken": 1,
+   "herbsTaken": 0,
+   "enemiesAlive": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ]
+  },
+  "bytes": 4019
+ },
+ {
+  "label": "session 1 closed (Browser.close)"
+ }
+]

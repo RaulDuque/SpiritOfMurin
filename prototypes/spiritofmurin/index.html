@@ -270,9 +270,22 @@ function solidTile(t, cross) {
   if (t === DOOR) return !state.doorOpen;
   return false;
 }
+// A lone boulder: a rock tile with no rock beside it (the cliffs and borders stay walls).
+const isBoulder = (tx, ty) => tileXY(tx, ty) === ROCK && tileXY(tx - 1, ty) !== ROCK && tileXY(tx + 1, ty) !== ROCK && tileXY(tx, ty - 1) !== ROCK && tileXY(tx, ty + 1) !== ROCK;
+// Tall scenery blocks only at its foot (art bible 6.5: base and body): you can walk behind a
+// pine, a boulder or a row of bamboo, and the body hides you (the silhouette shows through).
+const BASE = { pine: { h: 11, hw: 7 }, boulder: { h: 13, hw: 12 }, bamboo: { h: 7, hw: 16 } };
+function solidAt(px, py, cross) {
+  const tx = Math.floor(px / TS), ty = Math.floor(py / TS), t = tileXY(tx, ty);
+  if (!solidTile(t, cross)) return false;
+  const b = t === PINE ? BASE.pine : t === BAMBOO ? BASE.bamboo : (t === ROCK && isBoulder(tx, ty)) ? BASE.boulder : null;
+  if (!b) return true;
+  const lx = px - tx * TS, ly = py - ty * TS;
+  return ly >= TS - b.h && Math.abs(lx - 16) <= b.hw;
+}
 const PROBE = [[-1, 0], [1, 0], [0, -1], [0, 1], [-0.7, -0.7], [0.7, -0.7], [-0.7, 0.7], [0.7, 0.7], [0, 0]];
 function blocked(x, y, r, cross) {
-  for (const [ox, oy] of PROBE) if (solidTile(tileAt(x + ox * r, y + oy * r), cross)) return true;
+  for (const [ox, oy] of PROBE) if (solidAt(x + ox * r, y + oy * r, cross)) return true;
   return false;
 }
 function moveEnt(e, dx, dy, cross = false) {
@@ -1025,7 +1038,7 @@ function updatePlay(dt) {
   for (const w of state.waves) {
     w.x += w.vx * dt; w.y += w.vy * dt; w.went += Math.hypot(w.vx, w.vy) * dt;
     if (w.lamina && rng() < 0.6) state.parts.push({ x: w.x, y: w.y, vx: -w.vx * 0.1, vy: -w.vy * 0.1, life: 0.3, max: 0.3, c: C.qiHi, size: 1 });
-    if (solidTile(tileAt(w.x, w.y + 12), true) && tileAt(w.x, w.y + 12) !== WATER) { w.went = 1e9; burst(w.x, w.y, 6, C.qi, 60, 0.25, 1); }
+    if (solidAt(w.x, w.y + 12, true) && tileAt(w.x, w.y + 12) !== WATER) { w.went = 1e9; burst(w.x, w.y, 6, C.qi, 60, 0.25, 1); }
     for (const e of state.enemies) {
       if (!e.alive || w.hitSet.has(e)) continue;
       if (Math.hypot(e.x - w.x, e.y - 12 - w.y) < (w.lamina ? 22 : 16)) {
@@ -1329,6 +1342,16 @@ function drawGround(t, tx, ty, X, Y) {
     if (hv % 7 === 0) { ctx.fillStyle = '#44444a'; ctx.fillRect(X + 6 + hv % 16, Y + 10, 5, 1); }
   }
 }
+// Is the player standing where a tall thing drawn after them covers them?
+function behindScenery(p) {
+  const px = Math.floor(p.x / TS), py = Math.floor(p.y / TS);
+  for (let ty = py; ty <= py + 2; ty++) for (let tx = px - 1; tx <= px + 1; tx++) {
+    const t = tileXY(tx, ty), bottom = (ty + 1) * TS;
+    const h = t === PINE ? 64 : t === BAMBOO ? 48 : (t === ROCK && isBoulder(tx, ty)) ? 30 : 0;
+    if (h && bottom > p.y && bottom - h < p.y && p.y - 44 < bottom && Math.abs(tx * TS + 16 - p.x) < 22) return true;
+  }
+  return false;
+}
 function drawTall(t, tx, ty, X, Y) {
   const hv = hash(tx, ty);
   if (t === PINE) { // a layered mountain pine
@@ -1533,9 +1556,10 @@ function drawWorld(cx, cy) {
       if (e.stagger > 0) { const k = Math.floor(state.t * 10) % 2; ctx.fillStyle = k ? C.learn : C.learnGlow; ctx.fillRect(Math.round(X - 8), Math.round(Y - 52), 3, 1); ctx.fillRect(Math.round(X + 5), Math.round(Y - 50), 3, 1); ctx.fillRect(Math.round(X - 1), Math.round(Y - 54), 2, 2); }
     } });
   }
-  list.push({ y: p.y, f: () => {
-    for (const g of p.ghosts) { ctx.globalAlpha = g.life / 0.22 * 0.45; drawFighter(g.x - cx, g.y - cy, g.face, 'player', 'step', { ghost: true, t: state.t }); }
-    ctx.globalAlpha = 1;
+  let sil = 1;
+  const playerItem = { y: p.y, f: () => {
+    if (sil === 1) for (const g of p.ghosts) { ctx.globalAlpha = g.life / 0.22 * 0.45; drawFighter(g.x - cx, g.y - cy, g.face, 'player', 'step', { ghost: true, t: state.t }); }
+    ctx.globalAlpha = sil;
     if (p.dead) { drawDead(p.x - cx, p.y - cy, 'player', false); return; }
     if (p.inv > 0 && !(p.act && (p.act.kind === 'side' || p.act.kind === 'dash')) && Math.floor(state.t * 20) % 2) return;
     shadow(p.x - cx, p.y - cy);
@@ -1547,9 +1571,11 @@ function drawWorld(cx, cy) {
     else if (a && a.kind === 'recoil') pose = 'stagger';
     drawFighter(p.x - cx, p.y - cy, p.face, 'player', pose, { t: state.t, walk: p.walk, swing, flash: p.flash > 0 });
     if (a && a.kind === 'qi' && !a.fired) { ctx.fillStyle = a.lamina ? C.learn : C.qiHi; ctx.fillRect(Math.round(p.x - cx + Math.cos(p.face) * 12) - 2, Math.round(p.y - cy - 22 + Math.sin(p.face) * 6) - 2, 4, 4); }
-  } });
+  } };
+  list.push(playerItem);
   list.sort((a, b) => a.y - b.y);
   for (const it of list) it.f();
+  if (!p.dead && behindScenery(p)) { sil = 0.4; playerItem.f(); sil = 1; ctx.globalAlpha = 1; }
   // light into the tomb
   if (cx < 57 * TS && cx + W > 45 * TS && cy < 31 * TS && cy + H > 21 * TS) {
     ctx.fillStyle = 'rgba(255,236,190,0.06)'; ctx.beginPath();

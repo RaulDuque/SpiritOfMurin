@@ -1,0 +1,122 @@
+[
+ {
+  "name": "a click on the title starts the game and is consumed",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "left click cuts, and clicks in sequence chain up to three",
+  "ok": true,
+  "detail": "cut numbers seen: 1,2,3; actions cut,cut,cut"
+ },
+ {
+  "name": "on the bridge, a left click meets the guard like J",
+  "ok": true,
+  "detail": "action,action,parry"
+ },
+ {
+  "name": "right click steps (same rule as L)",
+  "ok": true,
+  "detail": "step"
+ },
+ {
+  "name": "right click does not open the browser menu",
+  "ok": true,
+  "detail": "[true]"
+ },
+ {
+  "name": "K still casts the qi wave",
+  "ok": true,
+  "detail": "qi"
+ },
+ {
+  "name": "the side step is learned on the normal route",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "a click closes a text panel without attacking",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "locked: side key + right click is the side step",
+  "ok": true,
+  "detail": "3 side steps"
+ },
+ {
+  "name": "side step + left click lands on the flank",
+  "ok": true,
+  "detail": "3 flank"
+ },
+ {
+  "name": "the on-screen hint names both inputs of the step",
+  "ok": true,
+  "detail": "L/Mouse dir."
+ },
+ {
+  "name": "clicks inside the book never reach the game",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Teclas: click a row, then a mouse button assigns it",
+  "ok": true,
+  "detail": "Mouse1"
+ },
+ {
+  "name": "clicks in Teclas and the pause never reach the game",
+  "ok": true,
+  "detail": "pause; "
+ },
+ {
+  "name": "the new mouse binding works in play (middle = qi)",
+  "ok": true,
+  "detail": "qi"
+ },
+ {
+  "name": "no page errors (session 1)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after closing the browser, the remap is kept",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after reopening: middle = qi, J and left = cut, L and right = step",
+  "ok": true,
+  "detail": "qi,cut,step,cut,step"
+ },
+ {
+  "name": "no page errors (session 2)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "earlier custom keys are kept, mouse defaults added",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "the earlier journey still offers Continuar",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "a click on Continuar resumes the journey without attacking",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "the custom key still works (U = qi)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "no page errors (session 3)",
+  "ok": true,
+  "detail": ""
+ }
+]

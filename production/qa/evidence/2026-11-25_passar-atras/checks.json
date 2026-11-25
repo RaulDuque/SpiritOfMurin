@@ -1,0 +1,67 @@
+[
+ {
+  "name": "the grove is bamboo",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "walks into the upper part of a bamboo row (behind the stalks)",
+  "ok": true,
+  "detail": "35.49,22.17"
+ },
+ {
+  "name": "the silhouette shows behind the bamboo",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "walks along the row inside the grove",
+  "ok": true,
+  "detail": "34.50,22.28"
+ },
+ {
+  "name": "the foot of the bamboo still blocks",
+  "ok": true,
+  "detail": "stopped at y 22.56"
+ },
+ {
+  "name": "there is a pine at 25,22",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "walks behind the pine",
+  "ok": true,
+  "detail": "25.55,22.13"
+ },
+ {
+  "name": "the trunk still blocks",
+  "ok": true,
+  "detail": "stopped at y 22.40"
+ },
+ {
+  "name": "there is a lone boulder at 33,29",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "walks behind the boulder",
+  "ok": true,
+  "detail": "33.50,29.27"
+ },
+ {
+  "name": "the foot of the boulder still blocks",
+  "ok": true,
+  "detail": "stopped at y 29.32"
+ },
+ {
+  "name": "cliffs and borders are still full walls",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "no page errors",
+  "ok": true,
+  "detail": ""
+ }
+]
