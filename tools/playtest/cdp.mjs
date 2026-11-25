@@ -19,12 +19,15 @@ const KEYS = {
   KeyW: ['w', 87], KeyA: ['a', 65], KeyS: ['s', 83], KeyD: ['d', 68], KeyJ: ['j', 74], KeyK: ['k', 75],
   KeyL: ['l', 76], KeyE: ['e', 69], KeyH: ['h', 72], KeyI: ['i', 73], KeyM: ['m', 77], KeyP: ['p', 80],
   KeyO: ['o', 79], KeyN: ['n', 78], Space: [' ', 32], Enter: ['Enter', 13], Escape: ['Escape', 27], Tab: ['Tab', 9],
+  ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40],
 };
 
-export async function launch({ url, port = 9333, width = 1280, height = 720 }) {
-  const exe = BROWSERS.find(existsSync);
+export async function launch({ url, port = 9333, width = 1280, height = 720, profile: profileDir = null, browser = process.env.PLAYTEST_BROWSER }) {
+  // PLAYTEST_BROWSER=edge (or chrome) picks the browser; default: Chrome, else Edge
+  const exe = browser ? BROWSERS.find(b => b.toLowerCase().includes(browser === 'edge' ? 'msedge' : 'chrome')) : BROWSERS.find(existsSync);
   if (!exe) throw new Error('no Chrome or Edge found');
-  const profile = mkdtempSync(join(tmpdir(), 'som-playtest-'));
+  // a fixed profile folder keeps localStorage between launches (close and reopen); default: a fresh one
+  const profile = profileDir || mkdtempSync(join(tmpdir(), 'som-playtest-'));
   const proc = spawn(exe, [
     '--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`,
     `--window-size=${width},${height}`, '--force-device-scale-factor=1', '--hide-scrollbars',
@@ -61,8 +64,20 @@ export async function launch({ url, port = 9333, width = 1280, height = 720 }) {
     async tap(code, ms = 60) { await g.down(code); await sleep(ms); await g.up(code); },
     async hold(codes, ms) { for (const c of codes) await g.down(c); await sleep(ms); for (const c of codes) await g.up(c); },
     async shot(path) { const r = await send('Page.captureScreenshot', { format: 'png' }); writeFileSync(path, Buffer.from(r.data, 'base64')); },
-    sleep,
-    async close() { try { ws.close(); } catch { /* gone */ } proc.kill(); },
+    sleep, send,
+    // closes the browser the way a person does (Browser.close), so storage is flushed to disk
+    async close() {
+      try {
+        const v = await (await fetch(`http://127.0.0.1:${port}/json/version`)).json();
+        const bws = new WebSocket(v.webSocketDebuggerUrl);
+        await new Promise((res, rej) => { bws.onopen = res; bws.onerror = rej; });
+        bws.send(JSON.stringify({ id: 1, method: 'Browser.close' }));
+        await new Promise(res => { proc.once('exit', res); setTimeout(res, 8000); });
+      } catch { /* already gone */ }
+      try { ws.close(); } catch { /* gone */ }
+      if (proc.exitCode === null) proc.kill();
+    },
+    profile,
   };
   return g;
 }

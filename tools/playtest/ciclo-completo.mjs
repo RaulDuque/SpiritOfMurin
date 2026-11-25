@@ -67,17 +67,17 @@ try {
   check('the bridge disciple speaks on first sight', !!s.speech, s.speech || '');
   await shot('ponte-primeira-vista');
   await g.tap('Space'); await g.sleep(100);
-  let parries = 0, saw = new Set();
+  let parries = 0, frontHits = 0, saw = new Set();
   for (let i = 0; i < 4; i++) {
     await g.hold(['KeyW'], 220); await g.tap('KeyJ'); await g.sleep(120);
     if (i === 1) await shot('ponte-corte-aparado');
     await g.sleep(200);
     s = await bot.st(); saw.add(allText(s));
-    for (const ev of await bot.events()) if (ev.type === 'parry') parries++;
+    for (const ev of await bot.events()) { if (ev.type === 'parry') parries++; if (ev.type === 'hit') frontHits++; }
     const fx = await g.eval(`game.state.fx.filter(f => f.type === 'word').map(f => f.s)`); fx.forEach(w => saw.add('word:' + w));
   }
   log.push({ label: 'what the player read during the frontal attempt', saw: [...saw] });
-  check('frontal cuts are parried', parries >= 3, `${parries} parries`);
+  check('frontal cuts are parried, none lands', parries >= 2 && frontHits === 0, `${parries} parries, ${frontHits} landed (4 cuts; one may fall short after the push back)`);
   // ---------------- 2. retreat and keep exploring
   await g.tap('Space');
   await bot.goTo(29 * TS + 16, 27 * TS);

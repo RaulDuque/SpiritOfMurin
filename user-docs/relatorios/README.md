@@ -19,6 +19,8 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-25 | [2026-11-25-antes-depois-bambuzal.html](2026-11-25-antes-depois-bambuzal.html) | (Histórico: o criador escolheu a aparência original) Prancha lado a lado (abrir no navegador): antes e depois no bambuzal, recortes 4×, original × sprite, conferência automática |
 | 2026-11-25 | [2026-11-25-ciclo-mil-caminhos.md](2026-11-25-ciclo-mil-caminhos.md) | Fim do experimento dos sprites (fica a aparência original) e primeiro ciclo de "Mil Caminhos do Dao": o que existia, o que mudou, o que foi verificado jogando, endereço e controles. **Sem a solução do túmulo** |
 | 2026-11-25 | [2026-11-25-ciclo-mil-caminhos-SOLUCAO.md](2026-11-25-ciclo-mil-caminhos-SOLUCAO.md) | **Solução** da descoberta (ponte, vale, túmulo, pegadas, revanche). Abrir só depois de jogar |
+| 2026-11-25 | [2026-11-25-meditar-e-continuar.md](2026-11-25-meditar-e-continuar.md) | Meditar e continuar a jornada: ponto de meditação nas pedras gêmeas, gravação local (formato 1), Continuar e Novo jogo no título, testes fechando o navegador de verdade (Edge e Chrome), limitações. Sem spoiler |
+| 2026-11-25 | [prompts/05-meditar-continuar.md](prompts/05-meditar-continuar.md) | Pedido do criador para a etapa "Meditar e continuar a jornada" (texto integral) |
 
 ## Prompts de imagem do criador
 
