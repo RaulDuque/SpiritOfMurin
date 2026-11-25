@@ -23,11 +23,15 @@ Vamos começar com uma região pequena que eu possa jogar no meu PC. Meu primeir
 
 Diretriz principal: o jogador precisa perceber uma diferença clara entre lutar antes e depois de aprender o passo lateral. A descoberta deve mudar o que ele consegue fazer, não apenas aumentar seu dano. Mantenha o protótipo pequeno, mas realmente jogável. Priorize a qualidade dos controles, o impacto dos golpes, a inteligência das posturas e a liberdade de experimentar sequências.
 
+After play: a aparencia e e algo basico e sem refinamento  eo jogo e divertido e vazio e um caminho um ponton de partida , falta  algumas coisa que eu espera como um mapa e um forma de poder  trocar teclas alem de drops ao derrotar inimigos, um invetario mais claro e um livro de registro de tecnicas que me mostra todas as minhas tecnicas se eu acerta o combo ele fica la salvo me mostando a sequencia  tipo  pergamnho que me mostr auma sequencia para usar uma tecnica, (uma que quebra a defesa ) de forma geral esta aprovado e um  começo
+After play: (mapa) tanto a 1 quanto a 2 um mapa que so mostra por onde eu  ja passei se eu pegar uma missao marca no mapa onde eu peguei e  um dica visual da direçao mas que nao fica marcado  e sem viagem rapida
+After play: (inimigos para os drops) Sim, mais discípulos
+
 **Pitch:** Um espadachim cultivador perde para uma guarda que não sabe vencer, segue meio manual até o túmulo da mestra, lê nas pegadas da pedra o passo que faltava e volta para vencer essa guarda com as próprias mãos.
 
 **Genre:** aventura de ação em visão de cima + ação de personagem (duelo Murim) *(inferred (strong))*
 
-**Controls:** WASD anda · J corte (encadeia até 3) · K feitiçaria de qi (gasta qi) · L passo: antes do túmulo, um passo curto para frente ou para trás em relação ao alvo, sem invencibilidade *(inferred (strong))*; depois do túmulo, A/D + L dá o passo lateral que contorna o alvo · Espaço trava/destrava no alvo; com a trava, "frente" é em direção ao inimigo · E examina corpos, marcas e inscrições *(guessed)* · Tab abre o Registro de técnicas *(guessed)*
+**Controls:** todas as teclas podem ser trocadas na tela Teclas (O no título ou na pausa) · padrão: WASD anda · J corte (encadeia até 3) · K feitiçaria de qi (gasta qi) · L passo: antes do túmulo, para frente ou para trás em relação ao alvo; depois, lado + L contorna o alvo e, sem trava, direção + L dá o passo longo · Espaço trava/destrava no alvo · E examina e pega · H usa bálsamo · Tab Livro de Técnicas · I inventário · M mapa · N som · P pausa
 
 **Question:** Lutar depois de aprender o passo lateral parece claramente diferente de lutar antes, e encadear passo, corte e qi com as mãos é divertido?
 
@@ -65,6 +69,12 @@ A primeira dificuldade real chega em menos de 1 minuto: o Discípulo da Guarda F
 - [x] Portão de conhecimento: a fenda vista no começo só se atravessa com o passo lateral e leva a um tesouro âmbar ou a um atalho
 - [x] Passo da Lâmina Silenciosa: passo lateral + corte + qi dentro da janela é reconhecido, nomeado na tela com som próprio e registrado; o resultado é diferente (o qi segue o corte e quebra a guarda)
 - [x] Registro de técnicas (Tab): cada técnica e combinação com o lugar onde foi aprendida ou descoberta; derrota volta ao início da área mantendo tudo
+- [x] Visual mais refinado: chão com relva e bordas, pinheiros, pedras arredondadas, névoa no rio, folhas, vaga-lumes, brasas no acampamento, escuridão no túmulo, vinheta, personagens que respiram
+- [x] Mapa da região que mostra só por onde você passou; missões marcam onde foram pegas e um traço indica a direção, sem marcar o destino; sem viagem rápida
+- [x] Troca de teclas, guardada no navegador
+- [x] Drops ao derrotar inimigos, potes que se quebram, ervas para colher, um baú além da fenda; inventário em pergaminho com itens usáveis (bálsamo, pedra de qi)
+- [x] Livro de Técnicas em pergaminho: cada técnica com a sequência de teclas desenhada; a combinação descoberta fica registrada com a sequência e o selo "feita por você"; a inscrição da fenda abre uma página rasgada com a sequência incompleta
+- [x] Mais discípulos da Guarda Fechada (mesmo tipo) guardando ervas, o baú e o acampamento
 
 ## Your systems
 - combate encadeado (passo, corte, qi, cancelamentos) · in the slice
@@ -76,9 +86,13 @@ A primeira dificuldade real chega em menos de 1 minuto: o Discípulo da Guarda F
 - reinos de cultivo · later
 - fornalha e alquimia · later
 - discípulo que lança qi · later
+- mapa e missões · in the slice
+- troca de teclas · in the slice
+- drops e inventário · in the slice
+- livro de técnicas · in the slice
 
 ## Keep
--
+- o jogo é divertido; aprovado como começo *(you said)*
 
 ## Avoid
 - Esquiva lateral ou bloqueio perfeito antes do túmulo: no começo, só movimentação e recuo
@@ -86,13 +100,14 @@ A primeira dificuldade real chega em menos de 1 minuto: o Discípulo da Guarda F
 - Terceiro tipo de inimigo neste protótipo
 - Textos longos que interrompem o jogo; marcadores apontando o caminho
 - Emoji ou formas simples no lugar de figuras desenhadas
+- Viagem rápida; marcar no mapa o lugar exato do objetivo
 
 ## Out of scope
 - Fornalha, pílula e alquimia: próxima etapa (add it as a feature)
 - Discípulo que lança qi à distância: próxima etapa (add it as a feature)
 - Níveis e experiência; reinos de cultivo e avanços: grow it
 - Um chefe com fases: change it after play
-- Vários túmulos e masmorras, mapa do mundo e viagem rápida: grow it
+- Vários túmulos e masmorras: grow it
 - NPCs que citam as artes do jogador: add it as a feature
 - Novas técnicas com o tempo, além do passo lateral: add it as a feature
 

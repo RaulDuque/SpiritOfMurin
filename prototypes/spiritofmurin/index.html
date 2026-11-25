@@ -29,8 +29,11 @@ const W = 640, H = 360;         // native pixel resolution, scaled by whole numb
 const PIXEL = true;             // pixel look: whole-number scale, no smoothing
 const FONT = '"Courier New", Courier, monospace';
 const TITLE = 'SpiritOfMurin';
-const CONTROLS = ['WASD: andar', 'J: corte (aperte de novo para encadear)', 'K: feitiçaria de qi',
-  'L: passo', 'Espaço: travar no alvo', 'E: examinar   Tab: registro de técnicas', 'P: pausa   M: som'];
+function controlsList() {
+  return [`${K('up')}${K('left')}${K('down')}${K('right')}: andar`, `${K('cut')}: corte (aperte de novo para encadear)`, `${K('qi')}: feitiçaria de qi`,
+    `${K('step')}: passo   ${K('lock')}: travar no alvo`, `${K('use')}: examinar/pegar   ${K('heal')}: bálsamo`,
+    `${K('book')}: livro   ${K('bag')}: inventário   ${K('map')}: mapa`, `${K('pause')}: pausa   ${K('mute')}: som   O: teclas`];
+}
 const clock = window.GAME_CLOCK || { now: () => performance.now() / 1000 }; // a check may inject one
 const CHEAP = params.get('render') === 'cheap';
 let seed;
@@ -90,8 +93,37 @@ const pressed = code => hit.has(code);
 addEventListener('keydown', e => {
   startAudio();
   if (!e.repeat) { down.add(e.code); hit.add(e.code); }
-  if (e.code === 'Space' || e.code === 'Tab' || e.code.startsWith('Arrow')) e.preventDefault();
+  if (e.code === 'Space' || e.code === 'Tab' || e.code.startsWith('Arrow') || Object.values(binds).includes(e.code)) e.preventDefault();
 });
+
+// ---- Key bindings: changed on the Teclas screen, remembered in this browser --------------
+const ACTIONS = [
+  ['up', 'Andar: cima', 'KeyW'], ['down', 'Andar: baixo', 'KeyS'], ['left', 'Andar: esquerda', 'KeyA'], ['right', 'Andar: direita', 'KeyD'],
+  ['cut', 'Corte', 'KeyJ'], ['qi', 'Feitiçaria de qi', 'KeyK'], ['step', 'Passo', 'KeyL'], ['lock', 'Travar no alvo', 'Space'],
+  ['use', 'Examinar / pegar', 'KeyE'], ['heal', 'Usar bálsamo', 'KeyH'], ['book', 'Livro de técnicas', 'Tab'], ['bag', 'Inventário', 'KeyI'],
+  ['map', 'Mapa', 'KeyM'], ['mute', 'Som', 'KeyN'], ['pause', 'Pausa', 'KeyP'],
+];
+const BIND_KEY = 'spiritofmurin.teclas';
+let binds = {};
+function loadBinds() {
+  binds = {}; for (const [id, , def] of ACTIONS) binds[id] = def;
+  try { const s = JSON.parse(localStorage.getItem(BIND_KEY) || 'null'); if (s) for (const id in s) if (id in binds && typeof s[id] === 'string') binds[id] = s[id]; } catch (e) { /* no storage: defaults */ }
+}
+function saveBinds() { try { localStorage.setItem(BIND_KEY, JSON.stringify(binds)); } catch (e) { /* not kept */ } }
+loadBinds();
+const held = id => down.has(binds[id]);
+const tapped = id => hit.has(binds[id]);
+const KEYNAMES = { Space: 'Espaço', Tab: 'Tab', Enter: 'Enter', ShiftLeft: 'Shift', ShiftRight: 'Shift dir.', ControlLeft: 'Ctrl', ControlRight: 'Ctrl dir.',
+  AltLeft: 'Alt', ArrowUp: 'Seta cima', ArrowDown: 'Seta baixo', ArrowLeft: 'Seta esq.', ArrowRight: 'Seta dir.', Comma: ',', Period: '.',
+  Semicolon: ';', Slash: '/', Quote: "'", BracketLeft: '[', BracketRight: ']', Minus: '-', Equal: '=', Backslash: '\\', CapsLock: 'Caps', Backspace: 'Apagar' };
+function keyLabel(code) {
+  if (!code) return '?';
+  if (code.startsWith('Key')) return code.slice(3);
+  if (code.startsWith('Digit')) return code.slice(5);
+  if (code.startsWith('Numpad')) return 'Num ' + code.slice(6);
+  return KEYNAMES[code] || code;
+}
+const K = id => keyLabel(binds[id]);
 addEventListener('keyup', e => down.delete(e.code));
 addEventListener('pointerdown', () => startAudio());
 addEventListener('blur', () => down.clear());
@@ -154,6 +186,11 @@ function sfx(n) {
     case 'wrong': tone(180, 0.2, 'triangle', 0.08); break;
     case 'die': tone(196, 0.5, 'triangle', 0.2); tone(147, 0.8, 'triangle', 0.18, 0.25); break;
     case 'win': [262, 330, 392, 523, 659, 784].forEach((f, i) => tone(f, 0.6, 'triangle', 0.12, i * 0.12)); break;
+    case 'pickup': tone(988, 0.08, 'square', 0.05); tone(1318, 0.12, 'square', 0.05, 0.06); break;
+    case 'quest': tone(523, 0.3, 'triangle', 0.1); tone(784, 0.4, 'triangle', 0.1, 0.12); noise(0.1, 0.08, 5000, 1); break;
+    case 'pot': noise(0.18, 0.3, 1400, 0.8); tone(330, 0.06, 'square', 0.06); break;
+    case 'menu': tone(880, 0.05, 'square', 0.04); break;
+    case 'page2': noise(0.2, 0.1, 4200, 0.7); break;
   }
 }
 
@@ -170,7 +207,7 @@ function hash(x, y) { let h = (x * 374761393 + y * 668265263) | 0; h = Math.imul
 // ---- The region -------------------------------------------------------------------------
 const TS = 32, MW = 60, MH = 40;
 const G = 0, ROCK = 1, WATER = 2, CHASM = 3, BRIDGE = 4, PATH = 5, TFLOOR = 6, TWALL = 7, BAMBOO = 8,
-  GATE = 9, CAMP = 10, DOOR = 11, TENT = 12, STELE = 13, CUTWALL = 14;
+  GATE = 9, CAMP = 10, DOOR = 11, TENT = 12, STELE = 13, CUTWALL = 14, PINE = 15;
 let map;
 function buildMap() {
   map = new Uint8Array(MW * MH);
@@ -189,6 +226,8 @@ function buildMap() {
   rect(3, 34, 6, 37, BAMBOO); rect(4, 21, 6, 23, BAMBOO); rect(52, 33, 56, 37, BAMBOO); rect(2, 2, 4, 4, BAMBOO); rect(54, 9, 56, 11, BAMBOO);
   for (const [x, y] of [[24, 30], [33, 29], [18, 34], [39, 24], [9, 32], [19, 37], [44, 26], [31, 24], [11, 10], [36, 4], [21, 5]]) set(x, y, ROCK);
   set(17, 32, STELE);
+  for (const [x, y] of [[25, 22], [26, 27], [32, 22], [37, 31], [34, 37], [24, 35], [11, 35], [15, 21], [19, 29], [3, 8], [5, 11], [12, 3],
+    [52, 7], [56, 6], [44, 12], [33, 9], [24, 9], [46, 37], [56, 30], [47, 34]]) if (map[y * MW + x] === G || map[y * MW + x] === CAMP) set(x, y, PINE);
 }
 function tileAt(px, py) {
   const tx = Math.floor(px / TS), ty = Math.floor(py / TS);
@@ -197,7 +236,7 @@ function tileAt(px, py) {
 }
 function tileXY(tx, ty) { return (tx < 0 || ty < 0 || tx >= MW || ty >= MH) ? ROCK : map[ty * MW + tx]; }
 function solidTile(t, cross) {
-  if (t === ROCK || t === TWALL || t === BAMBOO || t === TENT || t === STELE || t === CUTWALL || t === WATER) return true;
+  if (t === ROCK || t === TWALL || t === BAMBOO || t === TENT || t === STELE || t === CUTWALL || t === WATER || t === PINE) return true;
   if (t === CHASM) return !cross;
   if (t === GATE) return !state.gateOpen;
   if (t === DOOR) return !state.doorOpen;
@@ -238,7 +277,28 @@ const SPOTS = {
   door: { x: 51 * TS, y: 31.2 * TS, r: 36 },
   slab: { x: 51 * TS, y: 22.7 * TS, r: 34 },
   stele: { x: 17.5 * TS, y: 33.4 * TS, r: 34 },
+  chest: { x: 6 * TS, y: 27.6 * TS, r: 30 },
 };
+const POTS = [[12, 11.5], [13, 11.6], [45, 11.4], [31.2, 36.4], [46, 32.4], [25.5, 20.8], [20, 10.5], [36, 11.6]];
+const HERBS = [[40, 27.5], [42.5, 26.6], [43.6, 28.6], [7.5, 25], [9.5, 22.4], [33.5, 36.2], [26.5, 25.6], [52, 34.6]];
+
+// ---- Items, missions --------------------------------------------------------------------
+const ITEMS = {
+  balsamo: { name: 'Bálsamo de Ervas', desc: () => `Recupera 2 de vida. Use no inventário ou com ${K('heal')}.`, use: true },
+  pedra: { name: 'Pedra de Qi', desc: () => 'Uma pedra de jade cheia de qi. Devolve todo o qi.', use: true },
+  erva: { name: 'Erva Espiritual', desc: () => 'Uma erva que guarda qi. Fica guardada para a fornalha.' },
+  prata: { name: 'Taéis de Prata', desc: () => 'A moeda das seitas. Ainda não há onde gastar.' },
+  faixa: { name: 'Faixa da Seita', desc: () => 'A faixa dos discípulos da Guarda Fechada. Cada uma, um duelo vencido.' },
+  pingente: { name: 'Pingente de Jade', desc: () => 'Do Espadachim Sênior. A prova da sua vitória.' },
+};
+const QUESTS = {
+  guarda: { name: 'A guarda fechada', desc: 'O discípulo da ponte apara tudo o que vem de frente. Deve haver um jeito.', to: { x: 51 * TS, y: 26 * TS } },
+  manual: { name: 'O manual dividido', desc: 'A anotação na margem fala do túmulo da mestra, entre as pedras gêmeas.', to: { x: 51 * TS, y: 26 * TS } },
+  senior: { name: 'O Espadachim Sênior', desc: 'Além do portão, o mestre do acampamento espera.', to: { x: 29 * TS, y: 7 * TS } },
+  lamina: { name: 'A lâmina que segue o passo', desc: '“O qi caminha atrás da lâmina que segue o passo.”', to: null },
+};
+const LANDMARKS = [['Trilha da Montanha', 29, 34], ['Ponte do Rio Nublado', 29, 18], ['Acampamento', 29, 6], ['Vale de Bambus', 40, 30],
+  ['Túmulo da Mestra', 51, 25], ['Além da Fenda', 10, 30]];
 
 // ---- Fighters ---------------------------------------------------------------------------
 function makePlayer() {
@@ -262,14 +322,27 @@ function reset() {
   seed = Number(params.get('seed')) || CONFIG.seed;
   buildMap();
   const dis = makeEnemy('disciple', 29 * TS, 15.8 * TS);
+  Object.assign(dis, { bridge: true, leash: 300, drops: [['faixa', 1], ['balsamo', 1]] });
   const sen = makeEnemy('senior', 29 * TS, 7 * TS);
+  sen.drops = [['pingente', 1], ['prata', 5]];
   const sta = makeEnemy('statue', STATUE.x, STATUE.y);
+  const d2 = makeEnemy('disciple', 41.5 * TS, 25.6 * TS);
+  Object.assign(d2, { aggroR: 120, leash: 240, line: 'Essas ervas são da seita. Volte por onde veio.', drops: [['faixa', 1], ['erva', 2], ['pedra', 1]] });
+  const d3 = makeEnemy('disciple', 9.5 * TS, 27.4 * TS);
+  Object.assign(d3, { aggroR: 130, leash: 240, line: 'Ninguém atravessa a fenda. Como você chegou aqui?', drops: [['faixa', 1], ['balsamo', 1], ['prata', 3]] });
+  const d4 = makeEnemy('disciple', 44.5 * TS, 10.6 * TS);
+  Object.assign(d4, { aggroR: 110, leash: 200, line: 'O sênior não precisa de você. Eu bastarei.', drops: [['faixa', 1], ['pedra', 1]] });
   state = {
     t: 0, score: 0, gained: '',
-    p: makePlayer(), enemies: [dis, sen, sta], dis, sen, statue: sta,
+    seen: new Uint8Array(MW * MH), seenAt: -1, quests: [], inv: {}, invOrder: [], pickups: [], amb: [],
+    pots: POTS.map(([x, y]) => ({ x: x * TS, y: y * TS, alive: true })),
+    herbs: HERBS.map(([x, y]) => ({ x: x * TS, y: y * TS, taken: false })),
+    chestOpen: false, bookSel: 0, bagSel: 0,
+    p: makePlayer(), enemies: [dis, sen, sta, d2, d3, d4], dis, sen, statue: sta,
     waves: [], parts: [], fx: [], trails: [], toasts: [], banner: null, area: '', panel: null, speech: null,
     reg: [
       { name: 'Corte', kind: 'técnica', key: 'J', where: 'Sua arte de origem.' },
+      { name: 'Estocada', kind: 'técnica', key: 'frente + J', where: 'Sua arte de origem: com o alvo travado, avança a lâmina.' },
       { name: 'Onda de Qi', kind: 'técnica', key: 'K', where: 'Sua arte de origem.' },
       { name: 'Passo curto', kind: 'técnica', key: 'L', where: 'Sua arte de origem: só para frente ou para trás.' },
     ],
@@ -278,6 +351,37 @@ function reset() {
     buf: null, hist: [], dying: 0, won: false, winT: 0, parryCount: 0, flags: {}, reveal: 0, comboShow: null,
     cam: { x: START.x, y: START.y - 60 },
   };
+}
+function gainItem(id, n = 1, quiet = false) {
+  if (!state.inv[id]) { state.inv[id] = 0; if (!state.invOrder.includes(id)) state.invOrder.push(id); }
+  state.inv[id] += n;
+  if (!quiet) toast(`+${n} ${ITEMS[id].name}`, 2.2);
+  sfx('pickup'); events.push({ type: 'item', id, n });
+}
+function useItem(id) {
+  const p = state.p;
+  if (!state.inv[id]) { toast(`Nenhum ${ITEMS[id].name.toLowerCase()}.`, 2); sfx('fizzle'); return false; }
+  if (id === 'balsamo') { if (p.hp >= tune.player_hp) { toast('Sua vida já está cheia.', 2); return false; } p.hp = Math.min(tune.player_hp, p.hp + 2); burst(p.x, p.y - 18, 10, '#7fe0a8', 60, 0.5, 2); }
+  else if (id === 'pedra') { p.qi = tune.qi_max; burst(p.x, p.y - 18, 12, C.qiHi, 70, 0.5, 2); }
+  else return false;
+  state.inv[id]--; sfx('chime'); toast(`Usou ${ITEMS[id].name}.`, 2); events.push({ type: 'use', id });
+  return true;
+}
+function dropItems(x, y, list) {
+  list.forEach(([id, n], i) => {
+    const a = (i / list.length) * Math.PI * 2 + 0.6;
+    state.pickups.push({ id, n, r: 3, x: x + Math.cos(a) * 6, y: y + Math.sin(a) * 4, vx: Math.cos(a) * 60, vy: Math.sin(a) * 40, z: 2, vz: 120, t: 0 });
+  });
+}
+function takeQuest(id, x, y) {
+  if (state.quests.some(q => q.id === id)) return;
+  state.quests.push({ id, x, y, done: false });
+  toast(`Nova missão: ${QUESTS[id].name}  (${K('map')}: mapa)`, 4); sfx('quest');
+  events.push({ type: 'quest', id });
+}
+function doneQuest(id) {
+  const q = state.quests.find(q => q.id === id);
+  if (q && !q.done) { q.done = true; toast(`Missão cumprida: ${QUESTS[id].name}`, 3.5); }
 }
 function toast(s, t = 3.2) { state.toasts.push({ s, t }); if (state.toasts.length > 3) state.toasts.shift(); }
 function once(flag, fn) { if (!state.flags[flag]) { state.flags[flag] = true; fn(); } }
@@ -376,6 +480,7 @@ function advanceAction(dt) {
           if (p.act !== a) return; // parried: recoil replaced the cut
         }
       }
+      for (const pt of state.pots) if (pt.alive && Math.hypot(pt.x - p.x, pt.y - p.y) <= a.range + 8 && angDiff(p.face, angTo(p, pt)) <= (a.arc / 2) * DEG) breakPot(pt);
     }
     if (a.t >= end) p.act = null;
   } else if (a.kind === 'qi') {
@@ -426,6 +531,7 @@ function triggerLamina() {
   for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; state.parts.push({ x: p.x, y: p.y - 14, vx: Math.cos(a) * 140, vy: Math.sin(a) * 100, life: 0.5, max: 0.5, c: C.learn, size: 2 }); }
   if (first) addReg({ name: 'Passo da Lâmina Silenciosa', kind: 'combinação', key: 'passo lateral → corte → qi',
     where: `Descoberta por você: ${areaName(p.x, p.y)}. O qi segue o corte e quebra a guarda.` });
+  doneQuest('lamina');
   events.push({ type: 'combo', name: 'Passo da Lâmina Silenciosa', first });
 }
 
@@ -468,17 +574,27 @@ function strikeEnemy(e, src, dmg, o) {
   if (e.hp <= 0) killEnemy(e);
   return true;
 }
+function breakPot(pt) {
+  pt.alive = false; sfx('pot'); burst(pt.x, pt.y - 8, 12, '#a0643c', 90, 0.4, 2); burst(pt.x, pt.y - 8, 5, '#d9b48a', 50, 0.3, 1);
+  dropItems(pt.x, pt.y, [[rng() < 0.6 ? 'prata' : 'erva', 1]]);
+}
 function hyperArmor(e) { return e.type === 'senior' && e.stance === 'attack' && e.st !== 'recover'; }
 function killEnemy(e) {
   e.alive = false; e.st = 'dead'; e.hp = 0;
   burst(e.x, e.y - 16, 24, C.learn, 150, 0.6, 2);
   if (state.lock === e) state.lock = null;
   if (e.type === 'disciple') {
-    state.gateOpen = true; state.respawn = { ...CAMP_ENTRY }; sfx('gate');
-    toast('O guardião cai. O portão do acampamento se abre.', 4);
+    dropItems(e.x, e.y, e.drops || []);
+    if (e.bridge) {
+      state.gateOpen = true; state.respawn = { ...CAMP_ENTRY }; sfx('gate');
+      toast('O guardião cai. O portão do acampamento se abre.', 4);
+      doneQuest('guarda'); takeQuest('senior', 29 * TS, 13.5 * TS);
+    }
     events.push({ type: 'defeat', who: 'disciple' });
   } else if (e.type === 'senior') {
-    state.won = true; state.winT = 2.2; sfx('win');
+    state.won = true; state.winT = 2.6; sfx('win');
+    for (const [id, n] of e.drops) gainItem(id, n);
+    doneQuest('senior');
     events.push({ type: 'defeat', who: 'senior' });
   }
 }
@@ -524,7 +640,7 @@ function updateEnemy(e, dt) {
   const turn = (e.type === 'senior' ? tune.sen_turn : tune.dis_turn) * DEG * dt;
   const track = (k = 1) => { if (e.fooled <= 0) e.face = turnToward(e.face, want, turn * k); };
   const walkTo = (tx, ty, spd) => { const a = Math.atan2(ty - e.y, tx - e.x); moveEnt(e, Math.cos(a) * spd * dt, Math.sin(a) * spd * dt); e.walk += dt * spd / 20; };
-  const leashOut = e.type === 'disciple' ? Math.hypot(p.x - e.hx, p.y - e.hy) > 300 : p.y > 13.2 * TS;
+  const leashOut = e.type === 'disciple' ? Math.hypot(p.x - e.hx, p.y - e.hy) > (e.leash || 300) : p.y > 13.2 * TS;
 
   if (e.stagger > 0) { e.stagger -= dt; if (e.stagger <= 0) { e.st = 'guard'; e.cd = 0.4; } return; }
   if (p.dead) { if (e.st !== 'idle' && e.st !== 'return') e.st = 'return'; }
@@ -532,11 +648,12 @@ function updateEnemy(e, dt) {
   switch (e.st) {
     case 'idle':
       e.face = turnToward(e.face, Math.PI / 2, turn);
-      if (!p.dead && ((e.type === 'disciple' && d < 190 && p.y < 21 * TS) || (e.type === 'senior' && d < 230 && p.y < 13 * TS))) {
+      if (!p.dead && ((e.bridge && d < 190 && p.y < 21 * TS) || (e.type === 'disciple' && !e.bridge && d < e.aggroR) || (e.type === 'senior' && d < 230 && p.y < 13 * TS))) {
         e.st = 'guard'; e.aggro = true; e.cd = 0.9;
         if (!e.said) {
           e.said = true;
-          say(e, e.type === 'disciple' ? 'Sua lâmina não passa pela minha guarda.' : 'Você passou pelo meu discípulo. Mostre de onde vem esse passo.');
+          say(e, e.bridge ? 'Sua lâmina não passa pela minha guarda.' : e.type === 'senior' ? 'Você passou pelo meu discípulo. Mostre de onde vem esse passo.' : e.line);
+          if (e.bridge) takeQuest('guarda', e.x, e.y);
         }
       }
       break;
@@ -609,6 +726,7 @@ function nearSpot() {
   for (const [id, s] of Object.entries(SPOTS)) {
     if (Math.hypot(p.x - s.x, p.y - s.y) > s.r) continue;
     if (id === 'door' && state.doorOpen) continue;
+    if (id === 'chest' && state.chestOpen) continue;
     return id;
   }
   return null;
@@ -623,6 +741,7 @@ function interact(id) {
         'A página que ensinava o passo foi arrancada.',
         'Na margem, à mão: “O resto ficou no túmulo da mestra, entre as pedras gêmeas.”']);
       addReg({ name: 'Metade de um manual', kind: 'fragmento', key: '', where: 'Corpo de um discípulo, no Vale de Bambus. Falta a página do passo.' });
+      takeQuest('manual', SPOTS.corpse.x, SPOTS.corpse.y);
       events.push({ type: 'manual' });
     } else panel('O discípulo', ['Ele não carrega mais nada.'], C.uiDim);
   } else if (id === 'door') {
@@ -641,6 +760,11 @@ function interact(id) {
     state.steleRead = true;
     panel('Inscrição', ['“A lâmina que segue o passo não faz ruído.', 'O qi caminha atrás dela.”'], C.amberHi);
     addReg({ name: 'Inscrição da fenda', kind: 'fragmento', key: '', where: 'Além da Fenda: “O qi caminha atrás da lâmina que segue o passo.”' });
+    if (!state.comboFound) takeQuest('lamina', SPOTS.stele.x, SPOTS.stele.y);
+  } else if (id === 'chest') {
+    state.chestOpen = true; sfx('gate');
+    panel('Um baú esquecido', ['Alguém escondeu isto além da fenda, onde ninguém atravessa.'], C.amberHi);
+    dropItems(SPOTS.chest.x, SPOTS.chest.y + 10, [['balsamo', 2], ['pedra', 1], ['prata', 8]]);
   }
 }
 function updateFootprints() {
@@ -655,7 +779,9 @@ function updateFootprints() {
 function learnSide() {
   state.learnedSide = true; state.reveal = 3.2; sfx('learn');
   addReg({ name: 'Passo Lateral', kind: 'técnica', key: 'L + lado do alvo', where: 'Túmulo da Mestra do Vale Nublado: as pegadas ao lado do corte na pedra.' });
+  addReg({ name: 'Passo longo', kind: 'técnica', key: 'sem trava: direção + L', where: 'Nasce do passo lateral. Atravessa o que o passo curto não alcança.' });
   const r = state.reg.find(x => x.name === 'Passo curto'); if (r) r.where = 'Sua arte de origem: para frente ou para trás.';
+  doneQuest('manual');
   events.push({ type: 'learn', name: 'Passo Lateral' });
 }
 
@@ -675,16 +801,17 @@ function updatePlay(dt) {
   if (state.comboShow) { state.comboShow.t -= dt; if (state.comboShow.t <= 0) state.comboShow = null; }
   state.shake = Math.max(0, state.shake - dt * 30);
 
-  if (state.panel) { if (pressed('KeyE') || pressed('Enter') || pressed('Escape') || pressed('KeyJ')) state.panel = null; return; }
+  updateAmbient(dt);
+  if (state.panel) { if (tapped('use') || pressed('Enter') || pressed('Escape') || tapped('cut')) state.panel = null; return; }
   if (state.reveal > 0) {
     state.reveal -= dt;
-    if (state.reveal <= 0) { toast('Com o alvo travado: L + direção para o lado do inimigo.', 5); toast('Sem trava: L + direção dá um passo longo.', 5); }
+    if (state.reveal <= 0) { toast(`Com o alvo travado: ${K('step')} + direção para o lado do inimigo.`, 5); toast(`Sem trava: ${K('step')} + direção dá um passo longo.`, 5); }
     return;
   }
   // input: a press during the hitstop still lands in the buffer
-  let mx = (down.has('KeyD') ? 1 : 0) - (down.has('KeyA') ? 1 : 0), my = (down.has('KeyS') ? 1 : 0) - (down.has('KeyW') ? 1 : 0);
+  let mx = (held('right') ? 1 : 0) - (held('left') ? 1 : 0), my = (held('down') ? 1 : 0) - (held('up') ? 1 : 0);
   const ml = Math.hypot(mx, my); if (ml > 0) { mx /= ml; my /= ml; }
-  for (const k of ['J', 'K', 'L']) if (pressed('Key' + k)) state.buf = { k, t: tune.buffer_time + Math.max(0, state.hitstop), mx, my };
+  for (const [k, id] of [['J', 'cut'], ['K', 'qi'], ['L', 'step']]) if (tapped(id)) state.buf = { k, t: tune.buffer_time + Math.max(0, state.hitstop), mx, my };
 
   if (state.hitstop > 0) { state.hitstop -= dt; return; }
   if (state.won) { state.winT -= dt; if (state.winT <= 0) { finish(); } }
@@ -692,7 +819,7 @@ function updatePlay(dt) {
   if (state.dying > 0) { state.dying -= dt; for (const e of state.enemies) updateEnemy(e, dt); if (state.dying <= 0) respawn(); return; }
 
   if (state.buf) { state.buf.t -= dt; if (state.buf.t <= 0) state.buf = null; }
-  if (pressed('Space')) {
+  if (tapped('lock')) {
     if (state.lock) state.lock = null;
     else {
       let best = null, bd = 240;
@@ -701,7 +828,8 @@ function updatePlay(dt) {
     }
   }
   const tg = lockTarget(); if (state.lock && (!tg || dist(p, tg) > 330)) state.lock = null;
-  if (pressed('KeyE')) { const s = nearSpot(); if (s) { interact(s); return; } }
+  if (tapped('use')) { const s = nearSpot(); if (s) { interact(s); return; } }
+  if (tapped('heal')) useItem('balsamo');
 
   p.inv = Math.max(0, p.inv - dt); p.flash = Math.max(0, p.flash - dt);
   p.qi = Math.min(tune.qi_max, p.qi + tune.qi_regen * dt);
@@ -734,6 +862,7 @@ function updatePlay(dt) {
         if (!landed && !w.lamina) w.went = 1e9;
       }
     }
+    for (const pt of state.pots) if (pt.alive && Math.hypot(pt.x - w.x, pt.y - 12 - w.y) < 16) breakPot(pt);
   }
   state.waves = state.waves.filter(w => w.went < w.range);
   for (const e of state.enemies) updateEnemy(e, dt);
@@ -744,12 +873,43 @@ function updatePlay(dt) {
     if (d < min && d > 0.01) { const a = angTo(e, p); moveEnt(p, Math.cos(a) * (min - d), Math.sin(a) * (min - d), p.act && (p.act.kind === 'side' || p.act.kind === 'dash')); }
   }
   updateFootprints();
+  // drops fly out, settle and are picked up by walking over them
+  for (const it of state.pickups) {
+    it.t += dt;
+    if (it.z > 0 || it.vz > 0) { it.vz -= 420 * dt; it.z = Math.max(0, it.z + it.vz * dt); if (it.z === 0) it.vz = it.vz < -60 ? -it.vz * 0.35 : 0; moveEnt(it, it.vx * dt, it.vy * dt); it.r = 3; it.vx *= 0.96; it.vy *= 0.96; }
+    if (it.t > 0.45 && Math.hypot(p.x - it.x, p.y - it.y) < 18) { it.got = true; gainItem(it.id, it.n); burst(it.x, it.y - 6, 6, C.amberHi, 50, 0.3, 1); }
+  }
+  state.pickups = state.pickups.filter(it => !it.got);
+  for (const h of state.herbs) if (!h.taken && Math.hypot(p.x - h.x, p.y - h.y) < 16) { h.taken = true; gainItem('erva', 1); burst(h.x, h.y - 4, 8, '#9fe08a', 40, 0.4, 1); }
+  // the map remembers where you have walked
+  const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS), key = pty * MW + ptx;
+  if (key !== state.seenAt) {
+    state.seenAt = key;
+    for (let y = pty - 6; y <= pty + 6; y++) for (let x = ptx - 8; x <= ptx + 8; x++)
+      if (x >= 0 && y >= 0 && x < MW && y < MH && ((x - ptx) / 8) ** 2 + ((y - pty) / 6) ** 2 <= 1) state.seen[y * MW + x] = 1;
+  }
   // places
   const an = areaName(p.x, p.y);
   if (an !== state.area) { state.area = an; state.banner = { s: an, t: 2.4 }; }
   if (!state.learnedSide && p.x < 24 * TS && p.x > 22.6 * TS && p.y > 20 * TS) once('gap', () => toast('Larga demais para atravessar.'));
-  if (pressed('Tab')) { scene = 'registro'; return; }
-  if (pressed('KeyP') || pressed('Escape')) { scene = 'pause'; return; }
+  if (tapped('book')) { scene = 'livro'; sfx('page2'); return; }
+  if (tapped('bag')) { scene = 'bolsa'; sfx('page2'); return; }
+  if (tapped('map')) { scene = 'mapa'; sfx('page2'); return; }
+  if (tapped('pause') || pressed('Escape')) { scene = 'pause'; return; }
+}
+// ---- Ambient life: leaves, fireflies, embers (visual only, its own generator) -------------
+let vseed = 7;
+function vr() { vseed = (vseed * 1664525 + 1013904223) >>> 0; return vseed / 4294967296; }
+function updateAmbient(dt) {
+  const cam = state.cam;
+  for (const a of state.amb) { a.x += a.vx * dt; a.y += a.vy * dt; a.life -= dt; if (a.kind === 'leaf') a.vx += Math.sin(state.t * 2 + a.ph) * 8 * dt; }
+  state.amb = state.amb.filter(a => a.life > 0);
+  if (state.amb.length < 40) {
+    const x = cam.x - W / 2 + vr() * W, y = cam.y - H / 2 + vr() * H, t = tileAt(x, y), ty = y / TS;
+    if (ty > 19.5 && ty < 22 || (t === WATER && vr() < 0.5)) state.amb.push({ kind: 'fly', x, y, vx: (vr() - 0.5) * 12, vy: (vr() - 0.5) * 8, life: 3 + vr() * 3, max: 6, ph: vr() * 6 });
+    else if (ty < 13) { if (vr() < 0.3) state.amb.push({ kind: 'ember', x, y, vx: (vr() - 0.5) * 6, vy: -10 - vr() * 10, life: 2 + vr() * 2, max: 4, ph: 0 }); }
+    else if (t !== TFLOOR) state.amb.push({ kind: 'leaf', x, y: y - H / 2, vx: 10 + vr() * 12, vy: 14 + vr() * 10, life: 5 + vr() * 4, max: 9, ph: vr() * 6, c: vr() < 0.5 ? '#8fb35a' : '#b5a54e' });
+  }
 }
 function finish() {
   const p = state.p;
@@ -836,15 +996,18 @@ function drawFighter(x, y, face, kind, pose, o = {}) {
   // robe, flaring to the hem
   const top = y - 27 - h;
   const rows = 21 + h;
+  const hem = pose === 'walk' ? Math.round(Math.sin((o.walk || 0) * 2) * 1) : 0;
   for (let r = 0; r < rows; r++) {
-    const w = 12 + wd * 2 + Math.floor(r * 4 / rows) * 2, rx = x - w / 2 + lean * (1 - r / rows);
+    const w = 12 + wd * 2 + Math.floor(r * 4 / rows) * 2, rx = x - w / 2 + lean * (1 - r / rows) + (r > rows - 6 ? hem : 0);
     R(rx, top + r, w, 1, L.robe); R(rx + (s > 0 ? 0 : w - 3), top + r, 3, 1, L.shade);
+    if (r === 2 || r === rows - 1) R(rx + 3, top + r, w - 6, 1, r === 2 ? L.trim : L.shade); // collar line and hem
   }
   R(x - 6 - wd + lean, top + 9 + h, 12 + wd * 2, 2, L.sash);
   if (view !== 'up') { R(x - 1 + (view === 'side' ? s * 2 : 0) + lean, top, 2, 10, L.trim); }
   if (L.pads) { R(x - 10 - wd + lean, top, 6, 4, L.trim); R(x + 4 + wd + lean, top, 6, 4, L.trim); }
   // head
-  const hx = x + lean, hy = y - 38 - h;
+  const breath = (pose === 'idle' || pose === 'guard') && kind !== 'statue' && Math.sin((o.t || 0) * 2.4 + x * 0.37) > 0.55 ? 1 : 0;
+  const hx = x + lean, hy = y - 38 - h + breath;
   R(hx - 5, hy + 1, 10, 9, L.skin); R(hx - 4, hy, 8, 1, L.skin); R(hx - 4, hy + 10, 8, 1, L.skin);
   if (view === 'down') {
     R(hx - 5, hy, 10, 4, L.hair); R(hx - 6, hy + 1, 1, 4, L.hair); R(hx + 5, hy + 1, 1, 4, L.hair);
@@ -881,8 +1044,54 @@ function drawDead(x, y, kind, withPage) {
   if (withPage) { const gl = Math.floor(state.t * 3) % 2; ctx.fillStyle = gl ? C.learn : C.learnGlow; ctx.fillRect(x - 4, y - 12, 6, 5); ctx.fillStyle = C.learnDim; ctx.fillRect(x - 3, y - 10, 4, 1); }
 }
 
+// ---- Drawing: items and props ----------------------------------------------------------
+function drawItemIcon(id, x, y, s = 1) {
+  ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.scale(s, s);
+  if (id === 'prata') { R(-5, 0, 10, 3, '#c9ccd0'); R(-6, -2, 3, 3, '#e3e6ea'); R(3, -2, 3, 3, '#e3e6ea'); R(-2, -3, 4, 3, '#f4f6f7'); R(-5, 2, 10, 1, '#8e9196'); }
+  else if (id === 'balsamo') { R(-4, -2, 8, 7, '#8a5a3a'); R(-3, -4, 6, 2, '#a87048'); R(-2, -6, 4, 2, '#3f8f5a'); R(-3, 0, 6, 2, '#7fd08a'); R(2, -1, 1, 5, '#6a4128'); }
+  else if (id === 'pedra') { R(-1, -6, 2, 1, '#8fe8d8'); R(-3, -5, 6, 3, '#4fc0b0'); R(-4, -2, 8, 3, '#3aa89a'); R(-3, 1, 6, 2, '#2f8a80'); R(-1, 3, 2, 1, '#2f8a80'); R(-2, -4, 2, 2, '#d8fff6'); }
+  else if (id === 'erva') { R(0, -4, 1, 10, '#4f8a3a'); R(-4, -2, 4, 2, '#7fbf5a'); R(1, -4, 4, 2, '#7fbf5a'); R(-3, 1, 3, 2, '#6aa84a'); R(1, 2, 3, 2, '#6aa84a'); R(-1, -6, 3, 2, '#eef4d6'); }
+  else if (id === 'faixa') { R(-6, -2, 12, 4, '#a28f58'); R(-6, -2, 12, 1, '#c8b37a'); R(3, 2, 2, 5, '#a28f58'); R(0, 2, 2, 4, '#8f7c48'); }
+  else if (id === 'pingente') { R(0, -7, 1, 3, '#c79e4e'); R(-3, -4, 6, 1, '#5fc9a0'); R(-4, -3, 1, 6, '#5fc9a0'); R(3, -3, 1, 6, '#3fa880'); R(-3, 3, 6, 1, '#3fa880'); R(-1, 4, 2, 4, '#8f2d2d'); }
+  flush();
+  ctx.restore();
+}
+function drawPot(x, y) {
+  x = Math.round(x); y = Math.round(y);
+  ctx.fillStyle = 'rgba(8,10,8,0.35)'; ctx.fillRect(x - 7, y - 2, 14, 4);
+  R(x - 5, y - 12, 10, 11, '#9a5b36'); R(x - 6, y - 10, 12, 7, '#9a5b36'); R(x - 3, y - 15, 6, 3, '#b8774a'); R(x - 4, y - 16, 8, 1, '#6e3f24');
+  R(x + 2, y - 11, 3, 9, '#6e3f24'); R(x - 6, y - 8, 12, 1, '#d9b48a'); R(x - 4, y - 11, 1, 3, '#c98d5e');
+  flush();
+}
+function drawHerb(x, y, t) {
+  x = Math.round(x); y = Math.round(y);
+  const sw = Math.round(Math.sin(t * 2 + x) * 1);
+  R(x - 1, y - 7, 2, 7, '#3f7a34'); R(x - 6 + sw, y - 6, 5, 2, '#6aa84a'); R(x + 1 + sw, y - 8, 5, 2, '#7fbf5a'); R(x - 4 + sw, y - 3, 3, 2, '#5a9a42');
+  R(x - 1 + sw, y - 11, 3, 3, '#f2f7e0'); R(x + 4 + sw, y - 10, 2, 2, '#f2f7e0');
+  flush();
+  if (Math.floor(t * 2 + x) % 3 === 0) { ctx.fillStyle = 'rgba(220,255,210,0.5)'; ctx.fillRect(x, y - 13, 1, 1); }
+}
+function drawChest(x, y, open) {
+  x = Math.round(x); y = Math.round(y);
+  ctx.fillStyle = 'rgba(8,10,8,0.35)'; ctx.fillRect(x - 11, y - 2, 22, 4);
+  R(x - 10, y - 11, 20, 10, '#6d4a2c'); R(x - 10, y - 11, 20, 2, C.amber); R(x - 10, y - 3, 20, 1, '#4a3120');
+  if (open) { R(x - 10, y - 19, 20, 6, '#5a3c24'); R(x - 10, y - 19, 20, 1, C.amber); R(x - 8, y - 12, 16, 2, '#1c140c'); }
+  else { R(x - 10, y - 16, 20, 6, '#7d5634'); R(x - 10, y - 16, 20, 1, C.amberHi); R(x - 2, y - 12, 4, 4, C.amberHi); }
+  flush();
+  if (!open) { ctx.fillStyle = 'rgba(226,166,64,0.16)'; ctx.fillRect(x - 16, y - 24, 32, 26); }
+}
+let VIGNETTE = null;
+function vignette() {
+  if (!VIGNETTE) {
+    VIGNETTE = document.createElement('canvas'); VIGNETTE.width = W; VIGNETTE.height = H;
+    const v = VIGNETTE.getContext('2d'), g = v.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, W * 0.62);
+    g.addColorStop(0, 'rgba(6,10,8,0)'); g.addColorStop(1, 'rgba(6,10,8,0.5)'); v.fillStyle = g; v.fillRect(0, 0, W, H);
+  }
+  ctx.drawImage(VIGNETTE, 0, 0);
+}
+
 // ---- Drawing: the world ------------------------------------------------------------------
-const isTall = t => t === ROCK || t === TWALL || t === CUTWALL || t === BAMBOO || t === TENT || t === STELE || t === GATE || t === DOOR;
+const isTall = t => t === ROCK || t === TWALL || t === CUTWALL || t === BAMBOO || t === TENT || t === STELE || t === GATE || t === DOOR || t === PINE;
 const wallish = t => t === TWALL || t === CUTWALL || t === DOOR;
 function groundUnder(t, ty) {
   if (t === TWALL || t === CUTWALL || t === DOOR) return TFLOOR;
@@ -895,12 +1104,30 @@ function drawGround(t, tx, ty, X, Y) {
   if (t === G) {
     ctx.fillStyle = C.ground; ctx.fillRect(X, Y, TS, TS);
     if (hv % 3 === 0) { ctx.fillStyle = C.ground2; ctx.fillRect(X + hv % 18, Y + (hv >> 6) % 20, 10 + hv % 8, 6 + (hv >> 3) % 6); }
-    for (let i = 0; i < 3; i++) { const h2 = hash(tx * 7 + i, ty * 13 - i); if (h2 % 3 === 0) { const px = X + h2 % 29, py = Y + (h2 >> 5) % 29; ctx.fillStyle = C.tuft; ctx.fillRect(px, py, 1, 3); ctx.fillRect(px + 2, py + 1, 1, 2); ctx.fillStyle = C.tuftDark; ctx.fillRect(px + 1, py + 3, 2, 1); } }
-    if (hv % 23 === 0) { ctx.fillStyle = C.bloom; ctx.fillRect(X + 12, Y + 20, 2, 2); ctx.fillRect(X + 15, Y + 18, 1, 1); }
+    for (let i = 0; i < 5; i++) {
+      const h2 = hash(tx * 7 + i, ty * 13 - i); if (h2 % 3 === 2) continue;
+      const px = X + h2 % 29, py = Y + 3 + (h2 >> 5) % 27, sw = (h2 & 8) ? Math.round(Math.sin(state.t * 1.8 + tx + i) * 0.8) : 0;
+      ctx.fillStyle = C.tuftDark; ctx.fillRect(px - 1, py + 3, 5, 1);
+      ctx.fillStyle = C.tuft; ctx.fillRect(px + sw, py, 1, 3); ctx.fillRect(px + 2 + sw, py + 1, 1, 2); ctx.fillRect(px - 1 + sw, py + 1, 1, 2);
+      if (h2 % 5 === 0) { ctx.fillStyle = '#7d9158'; ctx.fillRect(px + 1 + sw, py - 1, 1, 2); }
+    }
+    if (hv % 13 === 0) { ctx.fillStyle = C.bloom; ctx.fillRect(X + 12, Y + 20, 2, 2); ctx.fillRect(X + 15, Y + 18, 1, 1); ctx.fillStyle = '#d6d8c4'; ctx.fillRect(X + 13, Y + 19, 1, 1); }
+    if (hv % 17 === 0) { ctx.fillStyle = '#6f6d62'; ctx.fillRect(X + 20, Y + 9, 3, 2); ctx.fillStyle = '#8a877a'; ctx.fillRect(X + 20, Y + 9, 2, 1); }
   } else if (t === PATH) {
     ctx.fillStyle = C.path; ctx.fillRect(X, Y, TS, TS);
     ctx.fillStyle = C.path2; for (let i = 0; i < 4; i++) { const h2 = hash(tx + i * 31, ty); ctx.fillRect(X + h2 % 30, Y + (h2 >> 6) % 30, 2, 1); }
     ctx.fillStyle = C.pebble; ctx.fillRect(X + hv % 28, Y + (hv >> 8) % 28, 2, 2);
+    ctx.fillStyle = '#6a5a3c'; if (hv % 4 === 0) ctx.fillRect(X + 4 + hv % 20, Y + 6 + (hv >> 4) % 18, 6, 1); // wheel ruts
+    // the grass creeps over the path's edges
+    const g = (a, b) => { const n = tileXY(tx + a, ty + b); return n === G || n === PINE || n === BAMBOO || n === ROCK; };
+    ctx.fillStyle = C.ground;
+    for (let i = 0; i < TS; i += 2) {
+      const h3 = hash(tx * 31 + i, ty * 17), d = 1 + (h3 % 4);
+      if (g(0, -1)) ctx.fillRect(X + i, Y, 2, d);
+      if (g(0, 1)) ctx.fillRect(X + i, Y + TS - d, 2, d);
+      if (g(-1, 0)) ctx.fillRect(X, Y + i, d, 2);
+      if (g(1, 0)) ctx.fillRect(X + TS - d, Y + i, d, 2);
+    }
   } else if (t === CAMP) {
     ctx.fillStyle = hv & 1 ? C.camp : C.camp2; ctx.fillRect(X, Y, TS, TS);
     ctx.fillStyle = C.path2; ctx.fillRect(X + hv % 26, Y + (hv >> 7) % 26, 3, 1);
@@ -931,6 +1158,23 @@ function drawGround(t, tx, ty, X, Y) {
 }
 function drawTall(t, tx, ty, X, Y) {
   const hv = hash(tx, ty);
+  if (t === PINE) { // a layered mountain pine
+    const cx0 = X + 16, by = Y + TS - 3;
+    ctx.fillStyle = 'rgba(8,10,8,0.32)'; ctx.fillRect(cx0 - 15, by - 3, 30, 6); ctx.fillRect(cx0 - 11, by - 5, 22, 9);
+    ctx.fillStyle = C.outline; ctx.fillRect(cx0 - 3, by - 12, 6, 13);
+    ctx.fillStyle = '#5a3e28'; ctx.fillRect(cx0 - 2, by - 12, 4, 12); ctx.fillStyle = '#3e2a1a'; ctx.fillRect(cx0 + 1, by - 12, 1, 12);
+    const sway = Math.round(Math.sin(state.t * 1.2 + hv) * 1);
+    for (let pass = 0; pass < 2; pass++) for (let i = 0; i < 4; i++) {
+      const w = 17 - i * 3 + (hv % 3), top = by - 24 - i * 11, rows = 15;
+      for (let r = 0; r < rows; r++) {
+        const rw = Math.max(1, Math.round(w * (r + 1) / rows)), xx = cx0 - rw + (i > 1 ? sway : 0), yy = top + r;
+        if (pass === 0) { ctx.fillStyle = C.outline; ctx.fillRect(xx - 1, yy - 1, rw * 2 + 2, 3); }
+        else { ctx.fillStyle = '#2f5a3a'; ctx.fillRect(xx, yy, rw * 2, 1); ctx.fillStyle = '#23462d'; ctx.fillRect(xx + rw, yy, rw, 1);
+          ctx.fillStyle = '#4c7c4a'; ctx.fillRect(xx + 1, yy, Math.max(1, Math.floor(rw / 3)), 1); if (r === rows - 1) { ctx.fillStyle = '#1d3a25'; ctx.fillRect(xx, yy, rw * 2, 1); } }
+      }
+    }
+    return;
+  }
   if (t === ROCK && tileXY(tx - 1, ty) !== ROCK && tileXY(tx + 1, ty) !== ROCK && tileXY(tx, ty - 1) !== ROCK && tileXY(tx, ty + 1) !== ROCK) {
     // a lone boulder: rounded, lit from above, cracked
     const cx0 = X + 16, by = Y + TS - 2, ht = 24 + hv % 6, hw = 13 + hv % 4;
@@ -1059,6 +1303,17 @@ function drawWorld(cx, cy) {
   }
   // the corpse
   list.push({ y: SPOTS.corpse.y - 1, f: () => drawDead(SPOTS.corpse.x - cx, SPOTS.corpse.y - cy, 'disciple', !state.hasManual) });
+  list.push({ y: SPOTS.chest.y, f: () => drawChest(SPOTS.chest.x - cx, SPOTS.chest.y - cy, state.chestOpen) });
+  const onScreen = (o, m = 40) => o.x - cx > -m && o.x - cx < W + m && o.y - cy > -m && o.y - cy < H + m;
+  for (const pt of state.pots) if (pt.alive && onScreen(pt)) list.push({ y: pt.y, f: () => drawPot(pt.x - cx, pt.y - cy) });
+  for (const h of state.herbs) if (!h.taken && onScreen(h)) list.push({ y: h.y, f: () => drawHerb(h.x - cx, h.y - cy, state.t) });
+  for (const it of state.pickups) list.push({ y: it.y, f: () => {
+    const X = Math.round(it.x - cx), Y = Math.round(it.y - cy), bob = it.z > 0 ? it.z : Math.sin(state.t * 4 + it.x) * 1.5;
+    ctx.fillStyle = 'rgba(8,10,8,0.35)'; ctx.fillRect(X - 4, Y - 1, 8, 2);
+    ctx.fillStyle = 'rgba(226,166,64,0.22)'; ctx.fillRect(X - 7, Y - 14 - bob, 14, 12);
+    drawItemIcon(it.id, X, Y - 8 - bob);
+    if (Math.floor(state.t * 3 + it.x) % 4 === 0) { ctx.fillStyle = C.amberHi; ctx.fillRect(X + 4, Y - 14 - Math.round(bob), 1, 1); }
+  } });
   const p = state.p, tg = lockTarget();
   for (const e of state.enemies) {
     list.push({ y: e.y, f: () => {
@@ -1144,6 +1399,23 @@ function drawWorld(cx, cy) {
   }
   for (const q of state.parts) { ctx.globalAlpha = Math.min(1, q.life / q.max * 1.4); ctx.fillStyle = q.c; ctx.fillRect(Math.round(q.x - cx), Math.round(q.y - cy), q.size, q.size); }
   ctx.globalAlpha = 1;
+  // mist over the river, then leaves, fireflies and embers
+  const ry = 17 * TS - cy;
+  if (ry > -100 && ry < H + 20) { for (let i = 0; i < 3; i++) { ctx.fillStyle = `rgba(210,228,222,${0.05 + 0.02 * i})`; ctx.fillRect(0, Math.round(ry + 10 + i * 22 + Math.sin(state.t * 0.6 + i) * 4), W, 10 - i * 2); } }
+  for (const a of state.amb) {
+    const X = Math.round(a.x - cx), Y = Math.round(a.y - cy), k = Math.min(1, a.life, (a.max - a.life) * 2);
+    ctx.globalAlpha = Math.max(0, k);
+    if (a.kind === 'leaf') { ctx.fillStyle = a.c; ctx.fillRect(X, Y, 2, 1); ctx.fillRect(X + (Math.sin(state.t * 5 + a.ph) > 0 ? 1 : 0), Y + 1, 1, 1); }
+    else if (a.kind === 'fly') { if (Math.sin(state.t * 3 + a.ph) > 0) { ctx.fillStyle = '#fff1b8'; ctx.fillRect(X, Y, 1, 1); ctx.fillStyle = 'rgba(255,241,184,0.25)'; ctx.fillRect(X - 1, Y - 1, 3, 3); } }
+    else { ctx.fillStyle = '#e8b070'; ctx.fillRect(X, Y, 1, 1); }
+  }
+  ctx.globalAlpha = 1;
+  // inside the tomb the dark closes in around you
+  if (areaName(p.x, p.y) === 'Túmulo da Mestra') {
+    const X = p.x - cx, Y = p.y - cy - 16, g = ctx.createRadialGradient(X, Y, 40, X, Y, 230);
+    g.addColorStop(0, 'rgba(4,6,10,0)'); g.addColorStop(1, 'rgba(4,6,10,0.62)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  vignette();
   // the lock: corner brackets on the target
   if (tg) {
     const X = Math.round(tg.x - cx), Y = Math.round(tg.y - cy - 22), s = 20 + (tg.type === 'senior' ? 3 : 0);
@@ -1175,14 +1447,26 @@ function diamond(x, y, full, c) {
 }
 function drawHUD() {
   const p = state.p;
+  // an ink-brush stroke behind the bars
+  ctx.fillStyle = 'rgba(12,14,11,0.72)';
+  ctx.fillRect(4, 4, 112, 32); ctx.fillRect(116, 8, 6, 24); ctx.fillRect(122, 13, 4, 14); ctx.fillRect(2, 8, 2, 24);
+  ctx.fillStyle = 'rgba(111,216,210,0.25)'; ctx.fillRect(6, 36, 100, 1);
+  // quick slot: the balm
+  ctx.fillStyle = 'rgba(12,14,11,0.72)'; ctx.fillRect(132, 6, 28, 28);
+  ctx.fillStyle = C.uiDim; ctx.fillRect(132, 6, 28, 1); ctx.fillRect(132, 33, 28, 1);
+  drawItemIcon('balsamo', 146, 18);
+  textS(String(state.inv.balsamo || 0), 157, 28, 9, C.ui, 'right');
+  text(K('heal'), 136, 11, 8, C.uiDim, 'left');
   for (let i = 0; i < tune.player_hp; i++) diamond(14 + i * 14, 14, i < p.hp, '#4fb889');
   ctx.fillStyle = C.outline; ctx.fillRect(9, 25, 84, 7);
   ctx.fillStyle = '#1f2a28'; ctx.fillRect(10, 26, 82, 5);
   ctx.fillStyle = p.qi >= tune.qi_cost ? C.qi : '#2f6c63'; ctx.fillRect(10, 26, Math.round(82 * p.qi / tune.qi_max), 5);
   ctx.fillStyle = C.qiHi; ctx.fillRect(10, 26, Math.round(82 * p.qi / tune.qi_max), 1);
   textS('qi', 98, 29, 9, C.ui, 'left');
-  ctx.fillStyle = C.panel; ctx.fillRect(W - 84, H - 18, 80, 14);
-  text('Tab: registro', W - 8, H - 11, 9, C.ui, 'right');
+  const hint = `${K('book')}: livro  ${K('bag')}: inventário  ${K('map')}: mapa`;
+  ctx.font = `bold 9px ${FONT}`; const hw = ctx.measureText(hint).width + 10;
+  ctx.fillStyle = C.panel; ctx.fillRect(Math.round(W - hw - 4), H - 18, Math.round(hw), 14);
+  text(hint, W - 8, H - 11, 9, C.ui, 'right');
   const tg = lockTarget();
   if (tg && tg.type !== 'statue') {
     text(NAMES[tg.type], W / 2, 12, 10, C.ui);
@@ -1262,13 +1546,187 @@ function drawPlay() {
   if (state.reveal > 0) drawReveal();
   drawPanel();
 }
-function drawMountains() {
+function drawMountains(fancy = false) {
   clear('#1b2321');
+  if (fancy) { // dusk sky, a pale moon, cranes of mist
+    for (let y = 0; y < 200; y += 4) { ctx.fillStyle = `rgb(${27 + y / 10 | 0},${35 + y / 12 | 0},${33 + y / 14 | 0})`; ctx.fillRect(0, y, W, 4); }
+    ctx.fillStyle = '#e8e2c8'; ctx.fillRect(470, 40, 26, 26); ctx.fillRect(466, 44, 34, 18); ctx.fillRect(474, 36, 18, 34);
+    ctx.fillStyle = '#d2cbb0'; ctx.fillRect(480, 48, 6, 4); ctx.fillRect(472, 56, 4, 3);
+    ctx.fillStyle = 'rgba(232,226,200,0.05)'; ctx.fillRect(460, 30, 46, 46); ctx.fillRect(454, 38, 58, 30); ctx.fillRect(468, 24, 30, 58);
+    for (let i = 0; i < 14; i++) { const h2 = hash(i, 3); const x = (h2 % W + state.t * (6 + i % 4)) % W, y = 86 + (h2 >> 8) % 110;
+      ctx.fillStyle = 'rgba(240,220,230,0.7)'; ctx.fillRect(Math.round(x), Math.round(y + Math.sin(state.t + i) * 4), 2, 1); }
+  }
   ctx.fillStyle = '#25302c'; for (let x = 0; x < W; x += 2) { const h2 = 120 + Math.sin(x * 0.013) * 40 + Math.sin(x * 0.041) * 14; ctx.fillRect(x, H - h2, 2, h2); }
   ctx.fillStyle = '#2f3d36'; for (let x = 0; x < W; x += 2) { const h2 = 80 + Math.sin(x * 0.021 + 2) * 26 + Math.sin(x * 0.07) * 8; ctx.fillRect(x, H - h2, 2, h2); }
   ctx.fillStyle = '#3a4a3c'; for (let x = 0; x < W; x += 2) { const h2 = 40 + Math.sin(x * 0.03 + 4) * 12; ctx.fillRect(x, H - h2, 2, h2); }
   ctx.fillStyle = 'rgba(200,220,210,0.05)'; ctx.fillRect(0, H - 150, W, 30); ctx.fillRect(0, H - 100, W, 18);
 }
+// ---- Menus: navigation, keycaps, parchment -------------------------------------------------
+const teclas = { from: 'title', sel: 0, wait: false };
+const navY = () => (pressed('ArrowUp') || tapped('up') ? -1 : 0) + (pressed('ArrowDown') || tapped('down') ? 1 : 0);
+const navX = () => (pressed('ArrowLeft') || tapped('left') ? -1 : 0) + (pressed('ArrowRight') || tapped('right') ? 1 : 0);
+function keycap(x, y, label, hi = false, ink = false) {
+  ctx.font = `bold 10px ${FONT}`; const w = Math.max(18, Math.round(ctx.measureText(label).width) + 10);
+  x = Math.round(x - w / 2); y = Math.round(y);
+  ctx.fillStyle = ink ? '#2a2118' : C.outline; ctx.fillRect(x - 1, y - 9, w + 2, 19);
+  ctx.fillStyle = ink ? '#efe4c8' : (hi ? C.learn : C.ui); ctx.fillRect(x, y - 8, w, 15);
+  ctx.fillStyle = ink ? '#c9b78f' : '#9b9584'; ctx.fillRect(x, y + 5, w, 2);
+  text(label, x + w / 2, y - 1, 10, '#1c1712');
+  return w;
+}
+function parchment(x, y, w, h) {
+  ctx.fillStyle = 'rgba(6,8,6,0.75)'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#0d0f0c'; ctx.fillRect(0, H - 18, W, 18); // the menu's own footer, over the game's hints
+  ctx.fillStyle = '#2a1d12'; ctx.fillRect(x - 6, y - 8, w + 12, 8); ctx.fillRect(x - 6, y + h, w + 12, 8); // the rollers
+  ctx.fillStyle = '#4a3420'; ctx.fillRect(x - 6, y - 7, w + 12, 2); ctx.fillRect(x - 6, y + h + 1, w + 12, 2);
+  ctx.fillStyle = '#d8c7a0'; ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = '#c8b48a'; ctx.fillRect(x, y, w, 3); ctx.fillRect(x, y + h - 3, w, 3); ctx.fillRect(x, y, 3, h); ctx.fillRect(x + w - 3, y, 3, h);
+  for (let i = 0; i < 60; i++) { const h2 = hash(i, 99); ctx.fillStyle = 'rgba(120,90,50,0.10)'; ctx.fillRect(x + h2 % w, y + (h2 >> 8) % h, 3 + h2 % 6, 1); }
+}
+const INK = '#2a2118', INK2 = '#5a4a36', JADE_INK = '#1d5e57', AMBER_INK = '#8a5a1a', SEAL = '#a8382a';
+// the sequence each technique is written with
+const SEQS = {
+  'Corte': { seq: [['key', 'cut'], ['then'], ['key', 'cut'], ['then'], ['key', 'cut']], note: 'Aperte de novo durante o golpe para encadear até três.' },
+  'Estocada': { seq: [['dir', 'frente'], ['plus'], ['key', 'cut']], note: 'Com o alvo travado: a lâmina avança mais longe.' },
+  'Onda de Qi': { seq: [['key', 'qi']], note: () => `Gasta ${tune.qi_cost} de qi. A guarda fechada a dissipa.` },
+  'Passo curto': { seq: [['dir', 'trás'], ['plus'], ['key', 'step']], note: 'Para frente ou para trás em relação ao alvo. Sozinho, recua.' },
+  'Passo Lateral': { seq: [['dir', 'lado'], ['plus'], ['key', 'step']], note: 'Com o alvo travado: contorna a guarda e cega o inimigo por um instante.' },
+  'Passo longo': { seq: [['dir', 'direção'], ['plus'], ['key', 'step']], note: 'Sem trava: um passo longo que atravessa a fenda.' },
+  'Passo da Lâmina Silenciosa': { seq: [['dir', 'lado'], ['plus'], ['key', 'step'], ['then'], ['key', 'cut'], ['then'], ['key', 'qi']], note: 'Quebra a guarda. O qi segue o corte sem ruído.' },
+};
+function bookEntries() {
+  const list = state.reg.map(r => ({ ...r, known: true }));
+  if (!state.comboFound && state.steleRead) list.push({ name: 'Página rasgada', kind: 'combinação', key: '', known: false,
+    where: 'A inscrição além da fenda: “O qi caminha atrás da lâmina que segue o passo.” Uma técnica que quebra a guarda. Falta o primeiro movimento.' });
+  const order = { 'técnica': 0, 'combinação': 1, 'fragmento': 2 };
+  return list.sort((a, b) => order[a.kind] - order[b.kind]);
+}
+function drawSeq(seq, cx, y) {
+  // measure, then draw centered: keycaps, direction marks, + and brush arrows
+  ctx.font = `bold 10px ${FONT}`;
+  const parts = seq.map(([k, v]) => k === 'key' ? Math.max(18, ctx.measureText(K(v)).width + 10) : k === 'dir' ? Math.max(30, ctx.measureText(v).width + 8) : k === 'unknown' ? 22 : 14);
+  const total = parts.reduce((a, b) => a + b, 0) + (parts.length - 1) * 6;
+  let x = Math.round(cx - total / 2);
+  seq.forEach(([k, v], i) => {
+    const w = parts[i];
+    if (k === 'key') keycap(x + w / 2, y, K(v), false, true);
+    else if (k === 'unknown') { ctx.fillStyle = INK2; ctx.fillRect(x, y - 9, w, 18); ctx.fillStyle = '#b8a37a'; ctx.fillRect(x + 1, y - 8, w - 2, 16); text('?', x + w / 2, y, 12, INK); }
+    else if (k === 'dir') { // a brush mark of the direction
+      ctx.fillStyle = JADE_INK; const mx = x + w / 2;
+      if (v === 'lado') { ctx.fillRect(mx - 10, y - 4, 20, 2); ctx.fillRect(mx + 6, y - 7, 2, 8); ctx.fillRect(mx + 8, y - 6, 2, 6); ctx.fillRect(mx - 8, y - 7, 2, 8); ctx.fillRect(mx - 10, y - 6, 2, 6); }
+      else if (v === 'trás') { ctx.fillRect(mx - 1, y - 9, 2, 12); ctx.fillRect(mx - 4, y, 8, 2); ctx.fillRect(mx - 3, y + 2, 6, 1); }
+      else { ctx.fillRect(mx - 1, y - 7, 2, 12); ctx.fillRect(mx - 4, y - 8, 8, 2); ctx.fillRect(mx - 3, y - 10, 6, 2); }
+      text(v, mx, y + 11, 8, INK2);
+    } else if (k === 'plus') { ctx.fillStyle = INK; ctx.fillRect(x + 3, y - 1, 8, 2); ctx.fillRect(x + 6, y - 4, 2, 8); }
+    else if (k === 'then') { ctx.fillStyle = INK; ctx.fillRect(x + 1, y - 1, 10, 2); ctx.fillRect(x + 8, y - 4, 2, 2); ctx.fillRect(x + 10, y - 2, 2, 4); ctx.fillRect(x + 8, y + 2, 2, 2); }
+    x += w + 6;
+  });
+}
+function drawBook() {
+  const list = bookEntries(); state.bookSel = clamp(state.bookSel, 0, list.length - 1);
+  const X = 28, Y = 22, Wd = W - 56, Hd = H - 46;
+  parchment(X, Y, Wd, Hd);
+  text('Livro de Técnicas', X + 92, Y + 14, 12, INK);
+  ctx.fillStyle = INK2; ctx.fillRect(X + 12, Y + 24, 164, 1); ctx.fillRect(X + 184, Y + 10, 1, Hd - 20);
+  let y = Y + 38, lastKind = '';
+  list.forEach((r, i) => {
+    if (r.kind !== lastKind) { text(r.kind === 'técnica' ? 'técnicas' : r.kind === 'combinação' ? 'combinações' : 'fragmentos', X + 14, y, 8, INK2, 'left', false); y += 11; lastKind = r.kind; }
+    const sel = i === state.bookSel, c = r.kind === 'combinação' ? JADE_INK : r.kind === 'fragmento' ? AMBER_INK : INK;
+    if (sel) { ctx.fillStyle = 'rgba(29,94,87,0.16)'; ctx.fillRect(X + 10, y - 7, 168, 14); ctx.fillStyle = JADE_INK; ctx.fillRect(X + 10, y - 7, 2, 14); }
+    text(r.known ? r.name : '???', X + 18, y, 10, c, 'left'); y += 14;
+  });
+  const r = list[state.bookSel]; if (!r) return;
+  const px = X + 200, pw = Wd - 214, pcx = px + pw / 2;
+  textS(r.known ? r.name : 'Página rasgada', pcx, Y + 26, 14, r.kind === 'combinação' ? JADE_INK : INK, 'center', '#c8b48a');
+  text(r.kind, pcx, Y + 42, 9, INK2);
+  const sq = SEQS[r.name];
+  let ty = Y + 70;
+  if (sq || !r.known) {
+    ctx.fillStyle = 'rgba(120,90,50,0.12)'; ctx.fillRect(px + 8, ty - 18, pw - 16, 40);
+    drawSeq(r.known ? sq.seq : [['unknown'], ['then'], ['key', 'cut'], ['then'], ['key', 'qi']], pcx, ty);
+    ty += 38;
+    const note = sq ? (typeof sq.note === 'function' ? sq.note() : sq.note) : 'Algo antes do corte. Talvez um passo.';
+    for (const l of wrapLines(note, 52)) { text(l, pcx, ty, 10, INK); ty += 13; }
+    ty += 6;
+  }
+  for (const l of wrapLines(r.where, 54)) { text(l, pcx, ty, 9, INK2, 'center', false); ty += 12; }
+  if (r.kind === 'combinação' && r.known) { // the seal: you did it with your own hands
+    const sx = px + pw - 52, sy = Y + Hd - 52;
+    ctx.fillStyle = SEAL; ctx.fillRect(sx, sy, 38, 38); ctx.fillStyle = '#d8c7a0'; ctx.fillRect(sx + 3, sy + 3, 32, 32); ctx.fillStyle = SEAL; ctx.fillRect(sx + 5, sy + 5, 28, 28);
+    text('feita', sx + 19, sy + 13, 9, '#f0dcc0'); text('por', sx + 19, sy + 21, 8, '#f0dcc0'); text('você', sx + 19, sy + 29, 9, '#f0dcc0');
+  }
+  text(`Setas: folhear   ${K('book')}: fechar`, W / 2, H - 6, 9, C.ui, 'center', false);
+}
+function bagItems() { return state.invOrder.filter(id => state.inv[id] > 0); }
+function drawBag() {
+  const items = bagItems(); state.bagSel = clamp(state.bagSel, 0, Math.max(0, items.length - 1));
+  const X = 120, Y = 50, Wd = 400, Hd = 236;
+  parchment(X, Y, Wd, Hd);
+  text('Inventário', X + Wd / 2, Y + 16, 13, INK);
+  ctx.fillStyle = INK2; ctx.fillRect(X + 40, Y + 28, Wd - 80, 1);
+  const cols = 6, sz = 44, gx = X + (Wd - cols * sz) / 2, gy = Y + 42;
+  for (let i = 0; i < cols * 2; i++) {
+    const sx = gx + (i % cols) * sz, sy = gy + Math.floor(i / cols) * sz, id = items[i], sel = i === state.bagSel && id;
+    ctx.fillStyle = sel ? JADE_INK : INK2; ctx.fillRect(sx + 2, sy + 2, sz - 4, sz - 4);
+    ctx.fillStyle = sel ? '#e9dcb8' : '#c9b68d'; ctx.fillRect(sx + 4, sy + 4, sz - 8, sz - 8);
+    if (id) { drawItemIcon(id, sx + sz / 2, sy + sz / 2 - 2, 2); textS(String(state.inv[id]), sx + sz - 7, sy + sz - 10, 10, INK, 'right', '#e9dcb8'); }
+  }
+  const id = items[state.bagSel];
+  const dy = gy + 2 * sz + 18;
+  if (id) {
+    const it = ITEMS[id];
+    text(it.name, X + Wd / 2, dy, 12, INK);
+    let ly = dy + 18; for (const l of wrapLines(it.desc(), 56)) { text(l, X + Wd / 2, ly, 10, INK2, 'center', false); ly += 13; }
+    if (it.use) keycap(X + Wd / 2, ly + 12, 'Enter: usar', false, true);
+  } else text('Nada ainda. Inimigos, potes e ervas deixam coisas para trás.', X + Wd / 2, dy + 10, 10, INK2, 'center', false);
+  text(`Setas: escolher   ${K('bag')}: fechar`, W / 2, H - 10, 9, C.ui, 'center', false);
+}
+const MAPC = { [G]: '#b3a882', [PATH]: '#9a7d55', [CAMP]: '#b59c72', [WATER]: '#5f8a8a', [CHASM]: '#2a2620', [BRIDGE]: '#7a5a3a',
+  [ROCK]: '#6f6a5c', [TWALL]: '#55545a', [CUTWALL]: '#55545a', [DOOR]: '#55545a', [TFLOOR]: '#8d8a84', [BAMBOO]: '#6f8f55',
+  [TENT]: '#8f4a36', [STELE]: '#6f6a5c', [GATE]: '#6d4f33', [PINE]: '#4c6a48' };
+function drawMap() {
+  const X = 22, Y = 24, Wd = W - 44, Hd = H - 48, s = 5, mx = X + 14, my = Y + 30;
+  parchment(X, Y, Wd, Hd);
+  text('Mapa da região', mx + MW * s / 2, Y + 14, 12, INK);
+  ctx.fillStyle = 'rgba(120,90,50,0.15)'; ctx.fillRect(mx - 2, my - 2, MW * s + 4, MH * s + 4);
+  for (let ty = 0; ty < MH; ty++) for (let tx = 0; tx < MW; tx++) {
+    if (!state.seen[ty * MW + tx]) continue;
+    let t = map[ty * MW + tx]; if (t === GATE && state.gateOpen) t = CAMP;
+    ctx.fillStyle = MAPC[t] || '#b3a882'; ctx.fillRect(mx + tx * s, my + ty * s, s, s);
+    // the edge of what you've seen is a soft brush line
+    if (!state.seen[(ty - 1) * MW + tx] && ty > 0) { ctx.fillStyle = 'rgba(42,33,24,0.35)'; ctx.fillRect(mx + tx * s, my + ty * s, s, 1); }
+  }
+  for (const [name, tx, ty] of LANDMARKS) if (state.seen[ty * MW + tx]) { textS(name, mx + tx * s + 2, my + ty * s, 8, INK, 'center', '#e0d2ae'); }
+  // missions: a seal where you took it, and a brush stroke toward where it leads (the place itself is never marked)
+  for (const q of state.quests) {
+    const qx = mx + q.x / TS * s, qy = my + q.y / TS * s, Q = QUESTS[q.id];
+    if (Q.to && !q.done) {
+      const a = Math.atan2(Q.to.y - q.y, Q.to.x - q.x), L = 26;
+      for (let i = 4; i < L; i++) { ctx.fillStyle = `rgba(168,56,42,${0.9 * (1 - i / L)})`; ctx.fillRect(Math.round(qx + Math.cos(a) * i) - 1, Math.round(qy + Math.sin(a) * i) - 1, 2 + (i < 10 ? 1 : 0), 2); }
+    }
+    ctx.fillStyle = q.done ? INK2 : SEAL; ctx.fillRect(Math.round(qx) - 3, Math.round(qy) - 3, 7, 7);
+    ctx.fillStyle = '#d8c7a0'; ctx.fillRect(Math.round(qx) - 1, Math.round(qy) - 1, 3, 3);
+  }
+  const p = state.p, blink = Math.floor(state.t * 3) % 2;
+  const px = Math.round(mx + p.x / TS * s), py = Math.round(my + p.y / TS * s);
+  ctx.fillStyle = INK; ctx.fillRect(px - 3, py - 3, 7, 7); ctx.fillStyle = blink ? '#3fae9e' : '#a6f2e2'; ctx.fillRect(px - 2, py - 2, 5, 5);
+  // the missions, on the right
+  const lx = mx + MW * s + 16, lw = X + Wd - lx - 10;
+  text('Missões', lx + lw / 2, Y + 14, 12, INK);
+  let ly = my + 4;
+  if (!state.quests.length) for (const l of wrapLines('Nenhuma ainda. Converse, examine, explore.', 30)) { text(l, lx, ly, 9, INK2, 'left', false); ly += 12; }
+  for (const q of state.quests) {
+    const Q = QUESTS[q.id];
+    ctx.fillStyle = q.done ? INK2 : SEAL; ctx.fillRect(lx, ly - 3, 6, 6);
+    text(Q.name, lx + 10, ly, 10, q.done ? INK2 : INK, 'left');
+    if (q.done) { ctx.fillStyle = INK2; ctx.fillRect(lx + 10, ly, Math.min(lw - 10, Q.name.length * 6), 1); }
+    ly += 13;
+    if (!q.done) for (const l of wrapLines(Q.desc, 30)) { text(l, lx + 10, ly, 8, INK2, 'left', false); ly += 11; }
+    ly += 6;
+  }
+  text(`${K('map')}: fechar   O traço vermelho aponta a direção, não o lugar.`, W / 2, H - 10, 9, C.ui, 'center', false);
+}
+
 const scenes = {
   figures: {
     update(dt) { state.t += dt; },
@@ -1285,15 +1743,20 @@ const scenes = {
     },
   },
   title: {
-    update(dt) { state.t += dt; if (pressed('Enter') || pressed('Space')) { reset(); scene = 'play'; } },
+    update(dt) {
+      state.t += dt;
+      if (pressed('Enter') || pressed('Space')) { reset(); scene = 'play'; }
+      else if (pressed('KeyO')) { teclas.from = 'title'; teclas.sel = 0; teclas.wait = false; scene = 'teclas'; }
+    },
     draw() {
-      drawMountains();
+      drawMountains(true);
       shadow(W / 2, 168, 14); drawFighter(W / 2, 168, Math.PI / 2, 'player', 'guard', { t: state.t });
       textS(TITLE, W / 2, 44, 30, C.ui);
       text('O Passo da Mestra', W / 2, 70, 12, C.learnGlow);
-      ctx.fillStyle = C.panel; ctx.fillRect(W / 2 - 170, 184, 340, CONTROLS.length * 14 + 12);
-      CONTROLS.forEach((c, i) => text(c, W / 2, 196 + i * 14, 11, C.ui));
-      text('Enter para começar', W / 2, H - 20, 12, Math.floor(state.t * 2) % 2 ? C.ui : C.uiDim);
+      const cl = controlsList();
+      ctx.fillStyle = C.panel; ctx.fillRect(W / 2 - 190, 184, 380, cl.length * 14 + 12);
+      cl.forEach((c, i) => text(c, W / 2, 196 + i * 14, 11, C.ui));
+      text('Enter: começar    O: trocar teclas', W / 2, H - 20, 12, Math.floor(state.t * 2) % 2 ? C.ui : C.uiDim);
     },
   },
   play: {
@@ -1301,24 +1764,68 @@ const scenes = {
     draw() { drawPlay(); },
   },
   pause: {
-    update() { if (pressed('KeyP') || pressed('Escape')) scene = 'play'; },
-    draw() { drawPlay(); ctx.fillStyle = 'rgba(8,10,8,0.6)'; ctx.fillRect(0, 0, W, H); textS('Pausa', W / 2, H / 2 - 30, 20, C.ui);
-      CONTROLS.forEach((c, i) => text(c, W / 2, H / 2 + i * 14, 10, C.uiDim)); },
+    update() {
+      if (tapped('pause') || pressed('Escape')) scene = 'play';
+      else if (pressed('KeyO')) { teclas.from = 'pause'; teclas.sel = 0; teclas.wait = false; scene = 'teclas'; }
+    },
+    draw() { drawPlay(); ctx.fillStyle = 'rgba(8,10,8,0.6)'; ctx.fillRect(0, 0, W, H); textS('Pausa', W / 2, H / 2 - 60, 20, C.ui);
+      controlsList().forEach((c, i) => text(c, W / 2, H / 2 - 28 + i * 14, 10, C.ui)); },
   },
-  registro: {
-    update() { if (pressed('Tab') || pressed('Escape') || pressed('KeyE')) scene = 'play'; },
-    draw() {
-      drawPlay(); ctx.fillStyle = 'rgba(8,10,8,0.82)'; ctx.fillRect(0, 0, W, H);
-      textS('Registro de técnicas', W / 2, 24, 16, C.ui); ctx.fillStyle = C.uiDim; ctx.fillRect(W / 2 - 110, 36, 220, 1);
-      let y = 54;
-      for (const r of state.reg) {
-        const c = r.kind === 'combinação' ? C.learn : r.kind === 'fragmento' ? C.amberHi : C.qiHi;
-        text(r.name, 40, y, 11, c, 'left'); text(r.kind + (r.key ? '  ·  ' + r.key : ''), W - 40, y, 9, C.uiDim, 'right', false);
-        y += 13;
-        for (const l of wrapLines(r.where, 92)) { text(l, 52, y, 9, C.ui, 'left', false); y += 11; }
-        y += 6;
+  livro: {
+    update() {
+      const list = bookEntries();
+      if (navY() !== 0) { state.bookSel = clamp(state.bookSel + navY(), 0, list.length - 1); sfx('menu'); }
+      if (tapped('book') || pressed('Escape')) { scene = 'play'; sfx('page2'); }
+    },
+    draw() { drawPlay(); drawBook(); },
+  },
+  bolsa: {
+    update() {
+      const items = bagItems(), cols = 6;
+      const dx = navX(), dy = navY();
+      if (dx || dy) { state.bagSel = clamp(state.bagSel + dx + dy * cols, 0, Math.max(0, items.length - 1)); sfx('menu'); }
+      if ((pressed('Enter') || tapped('use')) && items[state.bagSel] && ITEMS[items[state.bagSel]].use) useItem(items[state.bagSel]);
+      if (tapped('bag') || pressed('Escape')) { scene = 'play'; sfx('page2'); }
+    },
+    draw() { drawPlay(); drawBag(); },
+  },
+  mapa: {
+    update() { if (tapped('map') || pressed('Escape')) { scene = 'play'; sfx('page2'); } },
+    draw() { drawPlay(); drawMap(); },
+  },
+  teclas: {
+    update() {
+      if (teclas.wait) {
+        if (pressed('Escape')) { teclas.wait = false; return; }
+        const code = [...hit][0];
+        if (code) {
+          const id = ACTIONS[teclas.sel][0], other = Object.keys(binds).find(k => binds[k] === code && k !== id);
+          if (other) binds[other] = binds[id]; // the two keys trade places
+          binds[id] = code; saveBinds(); teclas.wait = false; sfx('chime');
+        }
+        return;
       }
-      text('Tab: voltar', W / 2, H - 12, 9, C.uiDim, 'center', false);
+      if (navY()) { teclas.sel = clamp(teclas.sel + navY(), 0, ACTIONS.length); sfx('menu'); }
+      if (pressed('Enter')) {
+        if (teclas.sel === ACTIONS.length) { for (const [id, , def] of ACTIONS) binds[id] = def; saveBinds(); sfx('chime'); }
+        else { teclas.wait = true; hit.clear(); }
+      }
+      if (pressed('Escape')) scene = teclas.from;
+    },
+    draw() {
+      if (teclas.from === 'pause') drawPlay(); else drawMountains(true);
+      ctx.fillStyle = 'rgba(8,10,8,0.86)'; ctx.fillRect(0, 0, W, H);
+      textS('Teclas', W / 2, 20, 16, C.ui);
+      ACTIONS.forEach(([id, label], i) => {
+        const y = 42 + i * 18, sel = i === teclas.sel;
+        if (sel) { ctx.fillStyle = 'rgba(111,216,210,0.16)'; ctx.fillRect(140, y - 8, 360, 16); }
+        text(label, 156, y, 11, sel ? C.learn : C.ui, 'left');
+        keycap(470, y, sel && teclas.wait ? '...' : keyLabel(binds[id]), sel);
+      });
+      const ry = 42 + ACTIONS.length * 18, rsel = teclas.sel === ACTIONS.length;
+      if (rsel) { ctx.fillStyle = 'rgba(111,216,210,0.16)'; ctx.fillRect(140, ry - 8, 360, 16); }
+      text('Restaurar o padrão', 156, ry, 11, rsel ? C.learn : C.uiDim, 'left');
+      text(teclas.wait ? 'Aperte a nova tecla (Esc cancela)' : 'Setas: escolher   Enter: trocar   Esc: voltar', W / 2, H - 10, 10, C.ui);
     },
   },
   results: {
@@ -1336,7 +1843,7 @@ const scenes = {
 
 // ---- Loop: fixed step, frame time clamped ---------------------------------------------
 function step() {
-  if (pressed('KeyM')) { setMuted(!muted); hit.delete('KeyM'); }
+  if (scene !== 'teclas' && tapped('mute')) { setMuted(!muted); hit.delete(binds.mute); }
   scenes[scene].update(STEP); hit.clear();
 }
 let last, acc = 0, ALPHA = 1;
