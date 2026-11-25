@@ -1,0 +1,102 @@
+[
+ {
+  "name": "normal start puts the player at the trail start",
+  "ok": true,
+  "detail": "29.0,35.5"
+ },
+ {
+  "name": "the bridge disciple speaks on first sight",
+  "ok": true,
+  "detail": "Sua lâmina não passa pela minha guarda."
+ },
+ {
+  "name": "frontal cuts are parried",
+  "ok": true,
+  "detail": "3 parries"
+ },
+ {
+  "name": "the player can retreat alive without the side step",
+  "ok": true,
+  "detail": "hp 3"
+ },
+ {
+  "name": "the disciple goes back to the bridge",
+  "ok": true,
+  "detail": "idle"
+ },
+ {
+  "name": "retreating gives a lead to keep exploring",
+  "ok": true,
+  "detail": "Uma trilha desce para o vale, a leste. | Fuja, então. Pela frente, ninguém passa por mim."
+ },
+ {
+  "name": "the corpse offers E",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "the manual gives a short lead to the tomb",
+  "ok": true,
+  "detail": "“...a lâmina não vence a guarda: contorna-a. Entra pelo flanco, onde a guarda não olha.” / A página que ensinava o passo foi arrancada. / Na margem, à mão: “O resto ficou no túmulo da mestra, entre as pedras gêmeas.”"
+ },
+ {
+  "name": "the tomb door offers E",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "the half manual opens the door",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "a wrong footprint resets and tells the player",
+  "ok": true,
+  "detail": "Não. Ela começava de frente para a estátua. | "
+ },
+ {
+  "name": "the side step is learned at the tomb",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "the tomb leaves the player whole",
+  "ok": true,
+  "detail": "hp 5"
+ },
+ {
+  "name": "the book lists the side step with its keys",
+  "ok": true,
+  "detail": "Corte [J]; Estocada [frente + J]; Onda de Qi [K]; Passo curto [L]; Metade de um manual []; Passo Lateral [L + lado do alvo]; Passo longo [sem trava: direção + L]"
+ },
+ {
+  "name": "the statue answers a flank cut while practising",
+  "ok": true,
+  "detail": "1 flank, 0 parried"
+ },
+ {
+  "name": "losing sends the player back whole, knowledge kept",
+  "ok": true,
+  "detail": "deaths 1, hp 5, at 29.0,35.5, Você desperta no início da trilha. O que aprendeu, ficou. | "
+ },
+ {
+  "name": "the disciple is whole again for the retry",
+  "ok": true,
+  "detail": "hp 6"
+ },
+ {
+  "name": "the side step + cut lands on the flank",
+  "ok": true,
+  "detail": "6 hits, 3 on the flank, 2 parries, words flanco,aparado"
+ },
+ {
+  "name": "the rematch is won",
+  "ok": true,
+  "detail": "try 1, hp 5, deaths 1"
+ },
+ {
+  "name": "no page errors",
+  "ok": true,
+  "detail": ""
+ }
+]

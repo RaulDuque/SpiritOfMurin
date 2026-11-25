@@ -1,0 +1,344 @@
+[
+ {
+  "label": "start",
+  "t": 1795630992252,
+  "state": {
+   "x": 29,
+   "y": 35.5,
+   "hp": 5,
+   "area": "Trilha da Montanha",
+   "quests": [],
+   "toasts": [],
+   "speech": null,
+   "panel": null,
+   "learnedSide": false,
+   "fpIdx": 0,
+   "deaths": 0
+  },
+  "events": []
+ },
+ {
+  "label": "bridge: first sight",
+  "t": 1795630997131,
+  "state": {
+   "x": 29.5,
+   "y": 20.9,
+   "hp": 5,
+   "area": "Trilha da Montanha",
+   "quests": [
+    "guarda"
+   ],
+   "toasts": [
+    "Nova missão: A guarda fechada  (M: mapa)"
+   ],
+   "speech": "Sua lâmina não passa pela minha guarda.",
+   "panel": null,
+   "learnedSide": false,
+   "fpIdx": 0,
+   "deaths": 0
+  },
+  "events": [
+   "quest:guarda"
+  ]
+ },
+ {
+  "label": "what the player read during the frontal attempt",
+  "saw": [
+   "Nova missão: A guarda fechada  (M: mapa) | Sua lâmina não passa pela minha guarda.",
+   "word:aparado",
+   "Nova missão: A guarda fechada  (M: mapa) | De frente, essa guarda não cai. | De frente, nada passa pela Guarda Fechada."
+  ]
+ },
+ {
+  "label": "retreated",
+  "t": 1795631003995,
+  "state": {
+   "x": 29.5,
+   "y": 27.2,
+   "hp": 3,
+   "area": "Trilha da Montanha",
+   "quests": [
+    "guarda"
+   ],
+   "toasts": [
+    "Uma trilha desce para o vale, a leste."
+   ],
+   "speech": "Fuja, então. Pela frente, ninguém passa por mim.",
+   "panel": null,
+   "learnedSide": false,
+   "fpIdx": 0,
+   "deaths": 0
+  },
+  "events": []
+ },
+ {
+  "label": "lead after retreat",
+  "text": "Uma trilha desce para o vale, a leste. | Fuja, então. Pela frente, ninguém passa por mim.",
+  "quests": [
+   "guarda"
+  ]
+ },
+ {
+  "label": "manual",
+  "t": 1795631011246,
+  "state": {
+   "x": 40.4,
+   "y": 34.5,
+   "hp": 3,
+   "area": "Vale de Bambus",
+   "quests": [
+    "guarda",
+    "manual"
+   ],
+   "toasts": [
+    "Nova missão: O manual dividido  (M: mapa)"
+   ],
+   "speech": null,
+   "panel": {
+    "title": "Metade de um manual",
+    "lines": [
+     "“...a lâmina não vence a guarda: contorna-a. Entra pelo flanco, onde a guarda não olha.”",
+     "A página que ensinava o passo foi arrancada.",
+     "Na margem, à mão: “O resto ficou no túmulo da mestra, entre as pedras gêmeas.”"
+    ]
+   },
+   "learnedSide": false,
+   "fpIdx": 0,
+   "deaths": 0
+  },
+  "events": [
+   "quest:manual",
+   "manual"
+  ]
+ },
+ {
+  "label": "door",
+  "t": 1795631016866,
+  "state": {
+   "x": 51.1,
+   "y": 31.6,
+   "hp": 3,
+   "area": "Vale de Bambus",
+   "quests": [
+    "guarda",
+    "manual"
+   ],
+   "toasts": [],
+   "speech": null,
+   "panel": {
+    "title": "O selo do túmulo",
+    "lines": [
+     "O símbolo partido no manual completa o selo.",
+     "A porta de pedra se abre."
+    ]
+   },
+   "learnedSide": false,
+   "fpIdx": 0,
+   "deaths": 0
+  },
+  "events": []
+ },
+ {
+  "label": "slab",
+  "t": 1795631020473,
+  "state": {
+   "x": 51.1,
+   "y": 23.7,
+   "hp": 3,
+   "area": "Túmulo da Mestra",
+   "quests": [
+    "guarda",
+    "manual"
+   ],
+   "toasts": [],
+   "speech": null,
+   "panel": {
+    "title": "A marca na pedra",
+    "lines": [
+     "Um corte curvo na pedra, como um golpe que contorna algo.",
+     "Aos pés da estátua em guarda, pegadas gravadas no chão",
+     "saem da frente dela e vão para o lado.",
+     "Pise onde ela pisava."
+    ]
+   },
+   "learnedSide": false,
+   "fpIdx": 0,
+   "deaths": 0
+  },
+  "events": [
+   "slab"
+  ]
+ },
+ {
+  "label": "wrong first footprint",
+  "t": 1795631022515,
+  "state": {
+   "x": 49.1,
+   "y": 25.1,
+   "hp": 3,
+   "area": "Túmulo da Mestra",
+   "quests": [
+    "guarda",
+    "manual"
+   ],
+   "toasts": [
+    "Não. Ela começava de frente para a estátua."
+   ],
+   "speech": null,
+   "panel": null,
+   "learnedSide": false,
+   "fpIdx": 0,
+   "deaths": 0
+  },
+  "events": []
+ },
+ {
+  "label": "after the three footprints",
+  "t": 1795631029811,
+  "state": {
+   "x": 49.2,
+   "y": 25,
+   "hp": 5,
+   "area": "Túmulo da Mestra",
+   "quests": [
+    "guarda",
+    "manual:ok"
+   ],
+   "toasts": [
+    "Com o alvo travado: L + direção para o lado do inimigo.",
+    "Experimente na estátua: Espaço trava nela."
+   ],
+   "speech": null,
+   "panel": null,
+   "learnedSide": true,
+   "fpIdx": 3,
+   "deaths": 0
+  },
+  "events": [
+   "learn:Passo Lateral"
+  ]
+ },
+ {
+  "label": "after reveal",
+  "t": 1795631033713,
+  "state": {
+   "x": 49.2,
+   "y": 25,
+   "hp": 5,
+   "area": "Túmulo da Mestra",
+   "quests": [
+    "guarda",
+    "manual:ok"
+   ],
+   "toasts": [
+    "Com o alvo travado: L + direção para o lado do inimigo.",
+    "Experimente na estátua: Espaço trava nela."
+   ],
+   "speech": null,
+   "panel": null,
+   "learnedSide": true,
+   "fpIdx": 3,
+   "deaths": 0
+  },
+  "events": []
+ },
+ {
+  "label": "what the player is told after learning",
+  "text": "Com o alvo travado: L + direção para o lado do inimigo. | Experimente na estátua: Espaço trava nela. | "
+ },
+ {
+  "label": "statue practice",
+  "t": 1795631038310,
+  "state": {
+   "x": 54.4,
+   "y": 25.1,
+   "hp": 5,
+   "area": "Túmulo da Mestra",
+   "quests": [
+    "guarda",
+    "manual:ok"
+   ],
+   "toasts": [
+    "A pedra responde ao golpe no flanco."
+   ],
+   "speech": null,
+   "panel": null,
+   "learnedSide": true,
+   "fpIdx": 3,
+   "deaths": 0
+  },
+  "events": []
+ },
+ {
+  "label": "statue practice",
+  "practice": {
+   "hits": 1,
+   "parries": 0
+  },
+  "text": "A pedra responde ao golpe no flanco. | "
+ },
+ {
+  "label": "after losing",
+  "t": 1795631059179,
+  "state": {
+   "x": 29,
+   "y": 35.5,
+   "hp": 5,
+   "area": "Trilha da Montanha",
+   "quests": [
+    "guarda",
+    "manual:ok"
+   ],
+   "toasts": [
+    "Você desperta no início da trilha. O que aprendeu, ficou."
+   ],
+   "speech": null,
+   "panel": null,
+   "learnedSide": true,
+   "fpIdx": 3,
+   "deaths": 1
+  },
+  "events": []
+ },
+ {
+  "label": "rematch try 1",
+  "hits": 6,
+  "parries": 2,
+  "flank": 3,
+  "words": [
+   "flanco",
+   "aparado"
+  ],
+  "hp": 5
+ },
+ {
+  "label": "rematch",
+  "t": 1795631069667,
+  "state": {
+   "x": 29.1,
+   "y": 18.6,
+   "hp": 5,
+   "area": "Ponte do Rio Nublado",
+   "quests": [
+    "guarda:ok",
+    "manual:ok",
+    "senior"
+   ],
+   "toasts": [
+    "O guardião cai. O portão do acampamento se abre.",
+    "Missão cumprida: A guarda fechada",
+    "Nova missão: O Espadachim Sênior  (M: mapa)"
+   ],
+   "speech": null,
+   "panel": null,
+   "learnedSide": true,
+   "fpIdx": 3,
+   "deaths": 1
+  },
+  "events": []
+ },
+ {
+  "label": "page errors",
+  "errors": []
+ }
+]

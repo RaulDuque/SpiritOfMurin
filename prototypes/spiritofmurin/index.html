@@ -436,6 +436,7 @@ function startAction(b) {
       if (tg.type !== 'statue') tg.fooled = tg.type === 'senior' ? tune.sen_fooled : tune.dis_fooled;
       sfx('side');
     } else if (state.learnedSide && !tg && (b.mx || b.my)) {
+      if (state.enemies.some(e => e.alive && guarding(e) && dist(p, e) < 120)) once('lockFirst', () => toast(`Para contornar a guarda, trave no alvo primeiro (${K('lock')}).`, 4));
       a = { kind: 'dash', dur: 0.18, cancelAt: 0.13, sx: p.x, sy: p.y, dx: b.mx, dy: b.my, dist: tune.dash_dist };
       p.inv = Math.max(p.inv, 0.12);
       sfx('side');
@@ -456,6 +457,20 @@ function startAction(b) {
   a.t = 0; p.act = a;
   state.hist.push({ k: a.kind, t0: state.t }); if (state.hist.length > 6) state.hist.shift();
   events.push({ type: 'action', kind: a.kind, t: state.t });
+}
+// The movement keys that read as "to the side" of the target from where the player stands now
+// (relDir's rule), e.g. "A / D" in front of him, "W / S" beside him.
+function sideKeys(p, tg) {
+  const a = angTo(p, tg), fx = Math.cos(a), fy = Math.sin(a);
+  const out = [];
+  for (const sgn of [1, -1]) {
+    const vx = -fy * sgn, vy = fx * sgn; // perpendicular to the line to the target
+    const ks = [];
+    if (Math.abs(vx) > 0.38) ks.push(K(vx > 0 ? 'right' : 'left'));
+    if (Math.abs(vy) > 0.38) ks.push(K(vy > 0 ? 'down' : 'up'));
+    out.push(ks.join('+'));
+  }
+  return out.join(' / ');
 }
 function canAct(p) { return !p.act || p.act.t >= p.act.cancelAt; }
 
@@ -546,7 +561,8 @@ function strikeEnemy(e, src, dmg, o) {
   const a = angTo(e, src);
   const mx = (e.x + src.x) / 2, my = (e.y + src.y) / 2 - 18;
   if (!o.lamina && guarding(e) && angDiff(e.face, a) <= tune.guard_half * DEG) { // parried
-    e.parries++; state.parryCount++;
+    e.parries++; state.parryCount++; e.guardShow = 0.7;
+    if (e.type !== 'statue') state.fx.push({ type: 'word', x: mx, y: my - 12, s: 'aparado', life: 0.5, max: 0.5, c: C.ui });
     burst(mx, my, 9, e.type === 'statue' ? '#b9b5a6' : C.spark, 120, 0.25, 1);
     state.fx.push({ type: 'ring', x: mx, y: my, life: 0.15, max: 0.15, c: C.spark });
     sfx(e.type === 'statue' ? 'stone' : 'parry'); state.hitstop = Math.max(state.hitstop, 0.045);
@@ -554,9 +570,17 @@ function strikeEnemy(e, src, dmg, o) {
       const back = angTo(e, p);
       p.act = { kind: 'recoil', t: 0, dur: 0.24, cancelAt: 0.24, vx: Math.cos(back) * tune.parry_push * 6, vy: Math.sin(back) * tune.parry_push * 6 };
     }
-    if (e.type !== 'statue' && state.parryCount === 3 && !state.learnedSide) toast('De frente, essa guarda não cai.');
+    if (e.type !== 'statue' && state.parryCount === 3 && !state.learnedSide) { say(e, 'De frente, nada passa pela Guarda Fechada.'); toast('De frente, essa guarda não cai.'); }
     events.push({ type: 'parry', by: e.type });
     return false;
+  }
+  const flank = !o.lamina && guarding(e); // the guard was up, but facing where you used to be
+  if (flank) {
+    state.flankHits = (state.flankHits || 0) + 1;
+    state.fx.push({ type: 'word', x: e.x, y: e.y - 50, s: 'flanco', life: 0.8, max: 0.8, c: C.learn });
+    state.fx.push({ type: 'flank', x: e.x, y: e.y - 14, ang: a, guard: e.face, life: 0.7, max: 0.7 });
+    events.push({ type: 'flank', on: e.type });
+    if (e.type !== 'statue') once('flankWhy', () => toast('A guarda ficou olhando para onde você estava. O flanco estava aberto.', 4.5));
   }
   if (e.type === 'statue') { // the stone answers a flank strike
     sfx('chime'); burst(mx, my, 10, C.learn, 110, 0.4, 1);
@@ -623,7 +647,7 @@ function respawn() {
   }
   state.cam.x = p.x; state.cam.y = p.y - 60;
   toast(state.respawn === START || state.respawn.y > 20 * TS ? 'Você desperta no início da trilha. O que aprendeu, ficou.' : 'Você desperta na entrada do acampamento.', 3.5);
-  if (state.deaths === 1 && !state.hasManual) toast('Uma trilha desce para o vale, a leste.', 4.5);
+  if (!state.hasManual) once('valeHint', () => toast('Uma trilha desce para o vale, a leste.', 4.5));
 }
 
 // ---- Enemies ---------------------------------------------------------------------------
@@ -631,6 +655,7 @@ function say(e, s) { state.speech = { e, s, t: 3.4 }; }
 function updateEnemy(e, dt) {
   const p = state.p;
   e.flash = Math.max(0, e.flash - dt);
+  if (e.guardShow > 0) e.guardShow -= dt;
   if (!e.alive) return;
   if (e.kx || e.ky) { moveEnt(e, e.kx * dt, e.ky * dt); e.kx *= 0.82; e.ky *= 0.82; if (Math.abs(e.kx) + Math.abs(e.ky) < 4) e.kx = e.ky = 0; }
   if (e.static) return;
@@ -663,7 +688,14 @@ function updateEnemy(e, dt) {
       break;
     case 'guard': {
       track();
-      if (leashOut) { e.st = 'return'; break; }
+      if (leashOut) {
+        e.st = 'return';
+        if (e.bridge && !state.hasManual && !p.dead) {
+          say(e, 'Fuja, então. Pela frente, ninguém passa por mim.');
+          once('valeHint', () => toast('Uma trilha desce para o vale, a leste.', 4.5));
+        }
+        break;
+      }
       if (e.type === 'senior') { e.stanceT += dt; if (e.stanceT >= tune.sen_closed_time) { e.stance = 'attack'; e.st = 'advance'; e.combo = 0; e.t = 0; sfx('warn'); break; } }
       const keep = e.type === 'senior' ? 56 : 52;
       if (d > keep + 16) walkTo(p.x, p.y, e.type === 'senior' ? 55 : 45);
@@ -750,10 +782,10 @@ function interact(id) {
       panel('O selo do túmulo', ['O símbolo partido no manual completa o selo.', 'A porta de pedra se abre.']);
     } else panel('O selo do túmulo', ['Um selo partido ao meio. Falta a outra metade.'], C.uiDim);
   } else if (id === 'slab') {
-    if (state.learnedSide) panel('O corte na pedra', ['Agora você entende onde ela pisava.']);
+    if (state.learnedSide) panel('A marca na pedra', ['Agora você entende onde ela pisava: fora da frente da guarda.']);
     else {
       state.slabRead = true;
-      panel('O corte na pedra', ['Um corte reto na pedra. Ao lado, pegadas gravadas no chão,', 'contornando a estátua em guarda.', 'Pise onde ela pisava.']);
+      panel('A marca na pedra', ['Um corte curvo na pedra, como um golpe que contorna algo.', 'Aos pés da estátua em guarda, pegadas gravadas no chão', 'saem da frente dela e vão para o lado.', 'Pise onde ela pisava.']);
       events.push({ type: 'slab' });
     }
   } else if (id === 'stele') {
@@ -778,6 +810,7 @@ function updateFootprints() {
 }
 function learnSide() {
   state.learnedSide = true; state.reveal = 3.2; sfx('learn');
+  state.p.hp = tune.player_hp; state.p.qi = tune.qi_max; // the breath settles at the master's feet: you leave the tomb whole
   addReg({ name: 'Passo Lateral', kind: 'técnica', key: 'L + lado do alvo', where: 'Túmulo da Mestra do Vale Nublado: as pegadas ao lado do corte na pedra.' });
   addReg({ name: 'Passo longo', kind: 'técnica', key: 'sem trava: direção + L', where: 'Nasce do passo lateral. Atravessa o que o passo curto não alcança.' });
   const r = state.reg.find(x => x.name === 'Passo curto'); if (r) r.where = 'Sua arte de origem: para frente ou para trás.';
@@ -805,13 +838,17 @@ function updatePlay(dt) {
   if (state.panel) { if (tapped('use') || pressed('Enter') || pressed('Escape') || tapped('cut')) state.panel = null; return; }
   if (state.reveal > 0) {
     state.reveal -= dt;
-    if (state.reveal <= 0) { toast(`Com o alvo travado: ${K('step')} + direção para o lado do inimigo.`, 5); toast(`Sem trava: ${K('step')} + direção dá um passo longo.`, 5); }
+    if (state.reveal <= 0) {
+      toast(`Com o alvo travado: ${K('step')} + direção para o lado do inimigo.`, 6);
+      toast(`Experimente na estátua: ${K('lock')} trava nela.`, 6);
+    }
     return;
   }
   // input: a press during the hitstop still lands in the buffer
   let mx = (held('right') ? 1 : 0) - (held('left') ? 1 : 0), my = (held('down') ? 1 : 0) - (held('up') ? 1 : 0);
   const ml = Math.hypot(mx, my); if (ml > 0) { mx /= ml; my /= ml; }
   for (const [k, id] of [['J', 'cut'], ['K', 'qi'], ['L', 'step']]) if (tapped(id)) state.buf = { k, t: tune.buffer_time + Math.max(0, state.hitstop), mx, my };
+  if (tapped('lock')) state.lockPress = true; // a lock pressed during a hit's freeze still counts
 
   if (state.hitstop > 0) { state.hitstop -= dt; return; }
   if (state.won) { state.winT -= dt; if (state.winT <= 0) { finish(); } }
@@ -819,7 +856,8 @@ function updatePlay(dt) {
   if (state.dying > 0) { state.dying -= dt; for (const e of state.enemies) updateEnemy(e, dt); if (state.dying <= 0) respawn(); return; }
 
   if (state.buf) { state.buf.t -= dt; if (state.buf.t <= 0) state.buf = null; }
-  if (tapped('lock')) {
+  if (state.lockPress) {
+    state.lockPress = false;
     if (state.lock) state.lock = null;
     else {
       let best = null, bd = 240;
@@ -1212,12 +1250,12 @@ function drawTall(t, tx, ty, X, Y) {
         ctx.fillStyle = '#3e3d43'; ctx.fillRect(X, Y + 4, 6, 10);
       }
     }
-    if (t === CUTWALL && tx === 51) { // the straight cut in the stone, across both stones
+    if (t === CUTWALL && tx === 51) { // the curved cut in the stone, across both stones: a blade that goes around
       X -= TS;
       const lit = state.slabRead || state.learnedSide;
       const k = lit ? (0.6 + 0.4 * Math.sin(state.t * 3)) : 0;
       for (let i = 0; i < 40; i++) {
-        const px = X + 12 + i, py = Y - 4 + Math.floor(i * 0.42);
+        const u = i / 39, px = X + 12 + i, py = Y - 4 + Math.floor(u * 16 - Math.sin(u * Math.PI) * 9);
         ctx.fillStyle = lit ? (k > 0.8 ? C.learn : C.learnGlow) : '#4b4a51'; ctx.fillRect(px, py, 1, 2);
       }
       if (lit) { ctx.fillStyle = 'rgba(111,216,210,0.18)'; ctx.fillRect(X + 10, Y - 7, 44, 24); }
@@ -1281,8 +1319,8 @@ function drawDecals(cx, cy) {
     ctx.globalAlpha = k * 0.85;
     if (f.type === 'foot') { ctx.fillStyle = C.learnGlow; ctx.fillRect(X - 3, Y - 1, 2, 3); ctx.fillRect(X + 1, Y - 2, 2, 3); }
     else { // the cut left on the ground, the stone's shape
-      ctx.fillStyle = C.learn; const dx = Math.cos(f.ang), dy = Math.sin(f.ang) * 0.6;
-      for (let i = -f.len / 2; i < f.len / 2; i++) ctx.fillRect(Math.round(X + dx * i), Math.round(Y + dy * i), 1, 1);
+      ctx.fillStyle = C.learn; const dx = Math.cos(f.ang), dy = Math.sin(f.ang) * 0.6, nx = -dy, ny = dx;
+      for (let i = -f.len / 2; i < f.len / 2; i++) { const b = (1 - (2 * i / f.len) ** 2) * f.len * 0.16; ctx.fillRect(Math.round(X + dx * i + nx * b), Math.round(Y + dy * i + ny * b), 1, 1); }
     }
   }
   ctx.globalAlpha = 1;
@@ -1326,9 +1364,14 @@ function drawWorld(cx, cy) {
         ctx.globalAlpha = 0.15 + 0.3 * k; ctx.fillStyle = C.threat;
         ctx.beginPath(); ctx.moveTo(X, Y); ctx.arc(X, Y, reach, e.face - arc, e.face + arc); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
       }
-      if (tg === e && guarding(e) && e.type !== 'statue') {
-        ctx.strokeStyle = 'rgba(236,229,208,0.22)'; ctx.lineWidth = 1; ctx.beginPath();
-        ctx.arc(X, Y - 2, 30, e.face - tune.guard_half * DEG, e.face + tune.guard_half * DEG); ctx.stroke();
+      if ((tg === e || e.guardShow > 0) && guarding(e)) {
+        const gh = tune.guard_half * DEG, lit = Math.max(0, e.guardShow || 0);
+        ctx.strokeStyle = `rgba(236,229,208,${0.22 + lit * 0.8})`; ctx.lineWidth = lit > 0 ? 2 : 1; ctx.beginPath();
+        ctx.arc(X, Y - 2, 30, e.face - gh, e.face + gh); ctx.stroke();
+        if ((e.fooled > 0 || e.type === 'statue') && tg === e && state.learnedSide) { // the guard looks away: the rest is open
+          ctx.strokeStyle = e.type === 'statue' ? 'rgba(111,216,210,0.35)' : C.learn; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.beginPath();
+          ctx.arc(X, Y - 2, 30, e.face + gh + 0.08, e.face + 2 * Math.PI - gh - 0.08); ctx.stroke(); ctx.setLineDash([]);
+        }
       }
       shadow(X, Y, e.type === 'senior' ? 12 : 11);
       let pose = 'guard';
@@ -1395,6 +1438,11 @@ function drawWorld(cx, cy) {
     } else if (f.type === 'ring') {
       ctx.strokeStyle = f.c; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(X, Y, 4 + (1 - k) * 14, 0, Math.PI * 2); ctx.stroke();
     } else if (f.type === 'word') { textS(f.s, X, Y - (1 - k) * 8, 10, f.c); }
+    else if (f.type === 'flank') { // the guard's facing (grey) and where the blade came in (ciano-white)
+      const gh = tune.guard_half * DEG;
+      ctx.strokeStyle = C.uiDim; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(X, Y + 12, 30, f.guard - gh, f.guard + gh); ctx.stroke();
+      ctx.strokeStyle = C.learn; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y + 12, 30, f.ang - 0.45, f.ang + 0.45); ctx.stroke();
+    }
     ctx.globalAlpha = 1;
   }
   for (const q of state.parts) { ctx.globalAlpha = Math.min(1, q.life / q.max * 1.4); ctx.fillStyle = q.c; ctx.fillRect(Math.round(q.x - cx), Math.round(q.y - cy), q.size, q.size); }
@@ -1429,6 +1477,17 @@ function drawWorld(cx, cy) {
     ctx.fillStyle = C.panel; ctx.fillRect(Math.round(X - w / 2), Y - 8, Math.round(w), 16);
     ctx.fillStyle = C.uiDim; ctx.fillRect(Math.round(X - w / 2), Y + 8, Math.round(w), 1);
     text(state.speech.s, X, Y, 10, C.ui);
+  }
+  // side-step keys, relative to the locked target
+  const tgh = lockTarget();
+  if (state.learnedSide && tgh && guarding(tgh) && (state.flankHits || 0) < 3 && !state.panel) {
+    const keys = sideKeys(p, tgh);
+    if (keys) {
+      const s2 = `${K('step')} + ${keys}: contornar`, X = Math.round(p.x - cx), Y = Math.round(p.y - cy) + 14;
+      ctx.font = `bold 9px ${FONT}`; const w = ctx.measureText(s2).width + 8;
+      ctx.fillStyle = C.panel; ctx.fillRect(Math.round(X - w / 2), Y - 6, Math.round(w), 12);
+      text(s2, X, Y, 9, C.learn);
+    }
   }
   // E prompt
   const sp = nearSpot();
