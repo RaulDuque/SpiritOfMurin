@@ -1,0 +1,14 @@
+<Project Sdk="Godot.NET.Sdk/4.7.2">
+  <!-- SpiritOfMurin game code (Godot 4.7.2 .NET). Code lives in src/, integration checks in tests/. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RootNamespace>SpiritOfMurin</RootNamespace>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- folders Godot ignores (.gdignore) hold no game code -->
+    <Compile Remove="prototypes/**;tools/**;user-docs/**;production/**;design/**;docs/**;studio-tests/**;.claude/**" />
+  </ItemGroup>
+</Project>

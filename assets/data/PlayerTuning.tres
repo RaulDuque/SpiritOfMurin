@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PlayerTuning" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/Player/PlayerTuning.cs" id="1_tuning"]
+
+[resource]
+script = ExtResource("1_tuning")
+MoveSpeed = 105.0
+BufferTime = 0.2
+CutStartup = 0.07
+CutActive = 0.08
+CutRecovery = 0.24
+CutCancelAt = 0.13
+ThirdCutExtra = 0.03
+CutLunge = 8.0
+ThirdCutLunge = 14.0
+StepDistance = 34.0
+StepTime = 0.16

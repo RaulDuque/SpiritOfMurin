@@ -81,6 +81,8 @@ export_presets.cfg
 *.csproj
 *.unityproj
 *.sln
+# Godot C#: the game's project file is source, not a Unity artifact
+!/SpiritOfMurin.csproj
 *.suo
 *.tmp
 *.user

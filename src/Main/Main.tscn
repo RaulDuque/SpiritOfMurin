@@ -1,0 +1,31 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/Main/Main.cs" id="1_main"]
+[ext_resource type="Script" path="res://src/World/Ground.cs" id="2_ground"]
+[ext_resource type="PackedScene" path="res://src/Player/Player.tscn" id="3_player"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="Ground" type="Node2D" parent="."]
+z_index = -10
+script = ExtResource("2_ground")
+
+[node name="World" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Player" parent="World" instance=ExtResource("3_player")]
+position = Vector2(768, 560)
+
+[node name="Hud" type="CanvasLayer" parent="."]
+
+[node name="Controls" type="Label" parent="Hud"]
+offset_left = 6.0
+offset_top = 342.0
+offset_right = 634.0
+offset_bottom = 358.0
+theme_override_colors/font_color = Color(0.92549, 0.898039, 0.815686, 1)
+theme_override_colors/font_outline_color = Color(0.0862745, 0.0784314, 0.0588235, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 9
+text = "WASD: andar    J / clique esquerdo: corte (encadeia até 3)    L / clique direito: passo"

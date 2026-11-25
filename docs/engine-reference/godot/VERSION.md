@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Engine Version** | Godot 4.7 |
-| **Installed at pin time** | NOT DETERMINED — `/setup-engine` §3 probes the installed editor and records the result here. |
+| **Installed at pin time** | 4.7.2.stable.official (2026-11-25): standard edition at `C:/Users/Raul/Tools/Godot/4.7.2-stable/`; the .NET edition 4.7.2 was downloaded from the official release (SHA-512 checked) to `C:/Users/Raul/Tools/Godot/4.7.2-stable-mono/`. .NET SDK 11.0.100, runtimes 10.0.15 and 11.0.0 (Godot's runtimeconfig rolls forward from net8.0). Matches the pin. |
 | **Release Date** | June 2026 (latest patch: 4.7.2, August 2026) |
 | **Project Pinned** | 2026-10-17 |
 | **Last Docs Verified** | 2026-10-21 (Windows driver default and Compositor, against Godot source); 2026-10-17 (release timeline and 4.7 changes); 2026-02-12 (4.4-4.6 content) |

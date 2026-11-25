@@ -25,6 +25,8 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-25 | [2026-11-25-controles-mouse.md](2026-11-25-controles-mouse.md) | Controles no mouse (esquerdo = corte, direito = passo), tela de Teclas com coluna de mouse, cliques nos menus não vazam para o jogo; testes e regressões |
 | 2026-11-25 | [prompts/06-controles-mouse.md](prompts/06-controles-mouse.md) | Pedido do criador para os controles no mouse e o rumo das próximas etapas (texto integral) |
 | 2026-11-25 | [2026-11-25-passar-atras-do-cenario.md](2026-11-25-passar-atras-do-cenario.md) | Colisão só na base de pedras soltas, pinheiros e bambus; silhueta do personagem atrás do cenário; testes e regressões |
+| 2026-11-25 | [2026-11-25-godot-base.md](2026-11-25-godot-base.md) | Base no Godot 4.7.2 com C#: versões, caminho do project.godot, controles (WASD, J/clique esq., L/clique dir.), câmera, testes 14/14 e como abrir com F5 |
+| 2026-11-25 | [prompts/07-setup-engine-godot.md](prompts/07-setup-engine-godot.md) | Pedido do criador para o /setup-engine com Godot e C# (texto integral) |
 
 ## Prompts de imagem do criador
 
