@@ -14,6 +14,10 @@ $prefs = '--prefs=user://teste_vale_prefs.json'
 foreach ($phase in 'prologue', 'resume-vale', 'resume-ending', 'old-save', 'skip') {
   & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ValeCheck.tscn -- "--phase=$phase" $prefs @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
 }
+# the seal and the weakened return of the techniques (delivery 2)
+foreach ($phase in 'full', 'sealed', 'resume2', 'resume3', 'migrate', 'migrate2') {
+  & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/TechCheck.tscn -- "--phase=$phase" @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+}
 if ($SoPrologo) { if ($fail -eq 0) { Write-Host "Prologo: todos os testes passaram." } else { Write-Host "$fail execucao(oes) com falha." }; exit $fail }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/unit/UnitRunner.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ControlsCheck.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
