@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using SpiritOfMurin.Combat;
 
 namespace SpiritOfMurin.Characters;
 
@@ -14,7 +15,76 @@ namespace SpiritOfMurin.Characters;
 public partial class Player : CharacterBody2D
 {
     /// <summary>What the body is doing right now.</summary>
-    public enum ActionKind { None, Cut, Step }
+    public enum ActionKind { None, Cut, Step, Thrust, Qi, Side, Dash, Recoil }
+
+    /// <summary>A qi shot leaving the hand: where from, which way, how far and fast, its damage, and whether it is the Silent Blade Step.</summary>
+    public readonly record struct QiShot(Vector2 Origin, Vector2 Dir, float Range, float Speed, int Damage, bool Lamina, float Stagger);
+
+    /// <summary>The prologue techniques and their state (full, sealed, weakened); null = none known (the plain body).</summary>
+    public TechniqueSet? Tech { get; set; }
+
+    /// <summary>The locked target (Space), or null. Provided by the scene (Vale: an enemy; Planície: the focused animal).</summary>
+    public Func<Node2D?>? LockTarget { get; set; }
+
+    /// <summary>Current Qi.</summary>
+    public float Qi { get; set; }
+
+    /// <summary>Maximum Qi.</summary>
+    public float MaxQi { get; set; }
+
+    /// <summary>Qi regained per second.</summary>
+    public float QiRegen { get; set; }
+
+    /// <summary>Raised when a qi shot (or the Silent Blade Step) leaves the hand.</summary>
+    public event Action<QiShot>? QiFired;
+
+    /// <summary>Raised when a technique is refused: technique id and the message (sealed, not enough Qi or vigor).</summary>
+    public event Action<string, string>? TechniqueRefused;
+
+    /// <summary>Raised when a hit passes through the side step's untouchable moment.</summary>
+    public event Action? Evaded;
+
+    /// <summary>Raised when a side step starts around a target (the scene makes it lose track).</summary>
+    public event Action<Node2D>? SideStepped;
+
+    /// <summary>Raised when a side step or a dash ends (the scene can move the body off a gap).</summary>
+    public event Action<Vector2>? MoveEnded;
+
+    /// <summary>Collision layer of gaps a side step or a dash may cross (bit value).</summary>
+    public const uint GapLayer = 16;
+
+    /// <summary>Half angle, degrees, of the blade's arc for the current action (the thrust is narrow).</summary>
+    public float BladeArcDegrees => _act is { Kind: ActionKind.Thrust } ? 20f : Tuning.HitArcDegrees;
+
+    /// <summary>True during the third cut of the chain (heavier hit).</summary>
+    public bool HeavyCut => _act is { Kind: ActionKind.Cut, N: 3 };
+
+    /// <summary>Starts a parry recoil: the body is thrown back along <paramref name="dir"/>.</summary>
+    public void Recoil(Vector2 dir, float push)
+    {
+        _act = new Act { Kind = ActionKind.Recoil, Startup = 0.24f, CancelAt = 0.24f, StepVelocity = dir.Normalized() * push * 6f };
+    }
+
+    /// <summary>
+    /// Lying on the ground (after the explosion, at the awakening). 1 = flat; values between 0 and 1 draw
+    /// the getting up (kneeling). The body takes no input while lying.
+    /// </summary>
+    public float Lying { get; set; }
+
+    /// <summary>Thrown through the air: rotation of the body in radians (0 = upright) and height above the ground, px.</summary>
+    public float TumbleAngle { get; set; }
+
+    /// <summary>Height above the ground while thrown, px.</summary>
+    public float Airborne { get; set; }
+
+    /// <summary>Turns the body to face a direction (scenes and cutscenes).</summary>
+    public void Face(Vector2 dir) { if (dir.LengthSquared() > 0.0001f) Facing = dir.Normalized(); }
+
+    /// <summary>Asks for a qi shot (K). It waits in the buffer like a cut or a step.</summary>
+    public void RequestQi() { if (!InputLocked && Health > 0 && Lying <= 0) _buffer = (ActionKind.Qi, Tuning.BufferTime); }
+
+    private readonly List<(ActionKind Kind, float T0)> _hist = new();
+    private float _evade;
 
     /// <summary>What the hands hold.</summary>
     public enum Weapon { None, Knife, Sword }
@@ -135,10 +205,12 @@ public partial class Player : CharacterBody2D
     {
         public ActionKind Kind;
         public float T, Startup, Active, Recovery, CancelAt, Lunge;
-        public int N;
-        public Vector2 StepVelocity;
-        public bool Live;
-        public float Duration => Kind == ActionKind.Step ? Startup : Startup + Active + Recovery;
+        public int N, Damage;
+        public Vector2 StepVelocity, From, Dir;
+        public bool Live, Lamina, Fired;
+        public float Reach, Radius, A0, A1;
+        public Node2D? Orbit;
+        public float Duration => Kind is ActionKind.Step or ActionKind.Side or ActionKind.Dash or ActionKind.Recoil ? Startup : Startup + Active + Recovery;
     }
 
     private sealed class Slash { public Vector2 World; public float Angle, Length, Life, Max; }
@@ -166,6 +238,7 @@ public partial class Player : CharacterBody2D
     /// <summary>Takes damage from a hit coming from <paramref name="from"/>. Ignored while invulnerable. Returns true when it landed.</summary>
     public bool TakeDamage(int amount, Vector2 from)
     {
+        if (_evade > 0 && Health > 0) { Evaded?.Invoke(); return false; }
         if (_invulnerable > 0 || Health <= 0 || amount <= 0) return false;
         Health = Mathf.Max(0, Health - amount);
         _invulnerable = Tuning.HurtInvulnerability;
@@ -199,6 +272,8 @@ public partial class Player : CharacterBody2D
         float dt = (float)delta;
         _time += dt;
         _invulnerable = Mathf.Max(0, _invulnerable - dt);
+        _evade = Mathf.Max(0, _evade - dt);
+        if (MaxQi > 0) Qi = Mathf.Min(MaxQi, Qi + QiRegen * dt);
         _hurtFlash = Mathf.Max(0, _hurtFlash - dt);
         if (_regenLeft > 0 && Health > 0)
         {
@@ -212,7 +287,7 @@ public partial class Player : CharacterBody2D
             if (_vigorWait > 0) _vigorWait -= dt;
             else Vigor = Mathf.Min(MaxVigor, Vigor + VigorRegen * dt);
         }
-        bool locked = InputLocked || Health <= 0;
+        bool locked = InputLocked || Health <= 0 || Lying > 0;
         Vector2 move = locked ? Vector2.Zero : Input.GetVector("move_left", "move_right", "move_up", "move_down");
         bool sneaking = !locked && InputMap.HasAction("sneak") && Input.IsActionPressed("sneak");
 
@@ -239,13 +314,23 @@ public partial class Player : CharacterBody2D
             Velocity = move * Tuning.MoveSpeed * MoveSpeedMultiplier * (sneaking ? Tuning.SneakFactor : 1f);
             if (move != Vector2.Zero) { Facing = move.Normalized(); _moving = true; _walk += dt * (sneaking ? 4f : 7f); }
         }
-        else Velocity = _act.Kind == ActionKind.Step ? _act.StepVelocity : Vector2.Zero;
-        MoveAndSlide();
+        else if (_act.Kind is ActionKind.Step or ActionKind.Recoil) Velocity = _act.StepVelocity;
+        else Velocity = Vector2.Zero;
+        if (_act is { Kind: ActionKind.Recoil } rc) rc.StepVelocity *= 0.86f;
+        if (_act == null || _act.Kind is not (ActionKind.Side or ActionKind.Dash)) MoveAndSlide();
+        // with a target locked, the body keeps facing it
+        if (LockTarget?.Invoke() is { } lockedOn && IsInstanceValid(lockedOn) && _act is not { Kind: ActionKind.Side or ActionKind.Dash })
+        {
+            Vector2 to = lockedOn.GlobalPosition - GlobalPosition;
+            if (to.LengthSquared() > 1) Facing = to.Normalized();
+        }
         Noise = _act != null ? NoiseLevel.Loud : !_moving ? NoiseLevel.Still : sneaking ? NoiseLevel.Sneak : NoiseLevel.Walk;
-        if (_act is { Kind: ActionKind.Cut, Live: true } live && live.T < live.Startup + live.Active)
+        if (_act is { Kind: ActionKind.Cut or ActionKind.Thrust, Live: true } live && live.T < live.Startup + live.Active)
         {
             bool knife = Equipped == Weapon.Knife;
-            BladeActive?.Invoke(GlobalPosition, Facing, knife ? Tuning.KnifeReach : Tuning.SwordReach, knife ? Tuning.KnifeDamage : Tuning.SwordDamage, _swingId);
+            float reach = live.Kind == ActionKind.Thrust ? live.Reach : knife ? Tuning.KnifeReach : Tuning.SwordReach;
+            int dmg = live.Kind == ActionKind.Thrust ? live.Damage : knife ? Tuning.KnifeDamage : Tuning.SwordDamage * (live.N == 3 ? 2 : 1);
+            BladeActive?.Invoke(GlobalPosition, Facing, reach, dmg, _swingId);
         }
 
         for (int i = _slashes.Count - 1; i >= 0; i--) { _slashes[i].Life -= dt; if (_slashes[i].Life <= 0) _slashes.RemoveAt(i); }
@@ -253,8 +338,109 @@ public partial class Player : CharacterBody2D
         QueueRedraw();
     }
 
+    // forward / back / lateral of the move keys relative to the locked target (or the facing)
+    private (string Kind, int Side) Rel(Vector2 move)
+    {
+        if (move == Vector2.Zero) return ("none", 0);
+        var tg = LockTarget?.Invoke();
+        Vector2 f = tg != null && IsInstanceValid(tg) ? (tg.GlobalPosition - GlobalPosition).Normalized() : Facing;
+        float fwd = move.Dot(f), lat = f.X * move.Y - f.Y * move.X;
+        if (Mathf.Abs(lat) > Mathf.Abs(fwd) * 1.05f) return ("lat", Math.Sign(lat));
+        return (fwd > 0 ? "fwd" : "back", 0);
+    }
+
+    // pays a technique's costs, or refuses with a clear message and spends nothing
+    private bool Pay(string id, TechniqueParams p)
+    {
+        string name = Tech?.Data.Get(id).Name ?? id;
+        bool vigorRule = MaxVigor > 0 && p.VigorCost > 0;
+        if (vigorRule && Vigor < p.VigorCost) { TechniqueRefused?.Invoke(id, $"{name}: falta vigor ({Mathf.FloorToInt(Vigor)}/{p.VigorCost:0})."); return false; }
+        if (p.QiCost > 0 && Qi < p.QiCost) { TechniqueRefused?.Invoke(id, $"{name}: falta Qi ({Mathf.FloorToInt(Qi)}/{p.QiCost:0})."); return false; }
+        if (vigorRule) { Vigor -= p.VigorCost; _vigorWait = VigorRegenDelay; }
+        Qi -= p.QiCost;
+        return true;
+    }
+
+    private bool Sealed(string id) => Tech?.State(id) == TechniqueState.Sealed;
+
+    // the Silent Blade Step is found by doing it: while unknown it follows the side step's version; sealed, it never fires
+    private TechniqueParams? LaminaParams()
+    {
+        if (Tech == null || Sealed("lamina")) return null;
+        if (Tech.Params("lamina") is { } p) return p;
+        return Tech.State("side_step") switch { TechniqueState.Full => Tech.Data.Lamina.Full, TechniqueState.Weakened => Tech.Data.Lamina.Weak, _ => null };
+    }
+
+    private void Refuse(string id, string what) => TechniqueRefused?.Invoke(id, $"{Tech?.Data.Get(id).Name ?? id} está selada: {what}");
+
     private void Start(ActionKind kind, Vector2 move)
     {
+        var rel = Rel(move);
+        var target = LockTarget?.Invoke();
+        if (target != null && !IsInstanceValid(target)) target = null;
+        if (kind == ActionKind.Qi)
+        {
+            if (Tech?.Params("qi_wave") is not { } qp)
+            {
+                if (Sealed("qi_wave")) Refuse("qi_wave", "o Qi não responde.");
+                return;
+            }
+            if (!Pay("qi_wave", qp)) return;
+            _act = new Act { Kind = ActionKind.Qi, Startup = 0.1f, Active = 0.02f, Recovery = 0.22f * RecoveryMultiplier, CancelAt = 0.16f };
+            // the Silent Blade Step: a side step, then a cut, then qi, each within the window
+            var lp = LaminaParams();
+            if (lp != null && _hist.Count >= 2)
+            {
+                var p1 = _hist[^1]; var p2 = _hist[^2];
+                float sideTime = Tech.Params("side_step")?.Time ?? 0.16f;
+                _act.Lamina = p2.Kind == ActionKind.Side && p1.Kind is ActionKind.Cut or ActionKind.Thrust
+                    && p1.T0 - p2.T0 <= sideTime + lp.ComboWindow && _time - p1.T0 <= lp.ComboWindow + 0.1f;
+            }
+            _hist.Add((ActionKind.Qi, _time)); if (_hist.Count > 6) _hist.RemoveAt(0);
+            ActionStarted?.Invoke(kind, 0);
+            return;
+        }
+        if (kind == ActionKind.Cut && target != null && rel.Kind == "fwd" && Equipped != Weapon.None && Tech?.State("thrust") is TechniqueState.Full or TechniqueState.Weakened)
+        {
+            var tp = Tech.Params("thrust")!;
+            if (!Pay("thrust", tp)) return;
+            _swingId++;
+            _act = new Act { Kind = ActionKind.Thrust, Startup = 0.09f, Active = 0.1f, Recovery = 0.28f * RecoveryMultiplier, CancelAt = 0.17f * RecoveryMultiplier, Lunge = tp.Lunge, Reach = tp.Reach, Damage = tp.Damage };
+            _hist.Add((ActionKind.Thrust, _time)); if (_hist.Count > 6) _hist.RemoveAt(0);
+            LastCutAngle = Facing.Angle();
+            ActionStarted?.Invoke(ActionKind.Thrust, 0);
+            return;
+        }
+        if (kind == ActionKind.Step && target != null && rel.Kind == "lat" && Tech?.State("side_step") is not (null or TechniqueState.Unknown))
+        {
+            if (Tech.Params("side_step") is not { } sp) Refuse("side_step", "fica o passo comum.");
+            else if (Pay("side_step", sp))
+            {
+                Vector2 from = GlobalPosition - target.GlobalPosition;
+                float r = Mathf.Clamp(from.Length(), sp.RadiusMin, sp.RadiusMax), a0 = from.Angle();
+                _act = new Act { Kind = ActionKind.Side, Startup = sp.Time, CancelAt = sp.Time * 0.7f, Orbit = target, Radius = r, A0 = a0, A1 = a0 - rel.Side * Mathf.DegToRad(sp.Angle) };
+                _evade = Mathf.Max(_evade, sp.Iframes);
+                SideStepped?.Invoke(target);
+                _hist.Add((ActionKind.Side, _time)); if (_hist.Count > 6) _hist.RemoveAt(0);
+                ActionStarted?.Invoke(ActionKind.Side, 0);
+                return;
+            }
+            else return;
+        }
+        if (kind == ActionKind.Step && target == null && move != Vector2.Zero && Tech?.State("dash") is not (null or TechniqueState.Unknown))
+        {
+            if (Tech.Params("dash") is not { } dp) { Refuse("dash", "fica o passo comum."); }
+            else if (Pay("dash", dp))
+            {
+                Facing = move.Normalized();
+                _act = new Act { Kind = ActionKind.Dash, Startup = dp.Time, CancelAt = dp.Time * 0.72f, From = GlobalPosition, Dir = move.Normalized(), Radius = dp.Distance };
+                _evade = Mathf.Max(_evade, 0.12f);
+                _hist.Add((ActionKind.Dash, _time)); if (_hist.Count > 6) _hist.RemoveAt(0);
+                ActionStarted?.Invoke(ActionKind.Dash, 0);
+                return;
+            }
+            else return;
+        }
         if (kind == ActionKind.Cut)
         {
             if (Equipped == Weapon.None || !SpendVigor(CutVigorCost)) return;
@@ -277,6 +463,7 @@ public partial class Player : CharacterBody2D
                 };
             }
             LastCutAngle = Facing.Angle();
+            _hist.Add((ActionKind.Cut, _time)); if (_hist.Count > 6) _hist.RemoveAt(0);
             ActionStarted?.Invoke(kind, n);
         }
         else
@@ -287,6 +474,7 @@ public partial class Player : CharacterBody2D
             if (move != Vector2.Zero) Facing = dir;
             _act = new Act { Kind = ActionKind.Step, Startup = Tuning.StepTime, CancelAt = Tuning.StepTime * 0.85f * RecoveryMultiplier,
                 StepVelocity = dir * Tuning.StepDistance * StepDistanceMultiplier / Tuning.StepTime };
+            _hist.Add((ActionKind.Step, _time)); if (_hist.Count > 6) _hist.RemoveAt(0);
             ActionStarted?.Invoke(kind, 0);
         }
     }
@@ -306,23 +494,61 @@ public partial class Player : CharacterBody2D
         return Mathf.Abs(Mathf.RadToDeg(dir.AngleTo(v))) <= arcDegrees;
     }
 
+    // moves the body to a point; gaps do not stop a side step or a dash
+    private void Glide(Vector2 to)
+    {
+        uint mask = CollisionMask;
+        CollisionMask = mask & ~GapLayer;
+        MoveAndCollide(to - GlobalPosition);
+        CollisionMask = mask;
+    }
+
     private void Advance(float dt)
     {
         var a = _act!;
         a.T += dt;
-        if (a.Kind == ActionKind.Cut && !a.Live && a.T >= a.Startup)
+        if (a.Kind == ActionKind.Qi && !a.Fired && a.T >= a.Startup)
+        {
+            a.Fired = true;
+            var qp = Tech?.Params("qi_wave");
+            var lp = a.Lamina ? LaminaParams() : null;
+            Vector2 o = GlobalPosition + new Vector2(Facing.X * 14, -12 + Facing.Y * 10);
+            if (lp != null) QiFired?.Invoke(new QiShot(o, Facing, lp.Range, lp.Speed, lp.Damage, true, lp.Stagger));
+            else if (qp != null) QiFired?.Invoke(new QiShot(o, Facing, qp.Range, qp.Speed, qp.Damage, false, 0));
+        }
+        if (a.Kind == ActionKind.Side)
+        {
+            float k = Mathf.Min(1, a.T / a.Startup), e = 1 - (1 - k) * (1 - k);
+            Vector2 c = a.Orbit != null && IsInstanceValid(a.Orbit) ? a.Orbit.GlobalPosition : a.From;
+            if (a.From == Vector2.Zero) a.From = c;
+            float ang = Mathf.Lerp(a.A0, a.A1, e);
+            Glide(c + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * a.Radius);
+            _ghosts.Add((GlobalPosition, 0.22f));
+            if (a.T >= a.Startup) { _act = null; MoveEnded?.Invoke(new Vector2(Mathf.Cos(a.A1 + Mathf.Pi / 2), Mathf.Sin(a.A1 + Mathf.Pi / 2))); }
+            return;
+        }
+        if (a.Kind == ActionKind.Dash)
+        {
+            float k = Mathf.Min(1, a.T / a.Startup), e = 1 - (1 - k) * (1 - k);
+            Glide(a.From + a.Dir * a.Radius * e);
+            _ghosts.Add((GlobalPosition, 0.22f));
+            if (a.T >= a.Startup) { _act = null; MoveEnded?.Invoke(a.Dir); }
+            return;
+        }
+        if (a.Kind is ActionKind.Cut or ActionKind.Thrust && !a.Live && a.T >= a.Startup)
         {
             a.Live = true; // the blade goes live: lunge and leave the slash
             MoveAndCollide(Facing * a.Lunge);
-            float side = a.N % 2 == 1 ? 55f : -55f;
+            float side = a.Kind == ActionKind.Thrust ? 0f : a.N % 2 == 1 ? 55f : -55f;
             _slashes.Add(new Slash
             {
                 World = GlobalPosition + (Equipped == Weapon.Knife ? new Vector2(Facing.X * 14f, -12f + Facing.Y * 10f) : new Vector2(Facing.X * 22f, -14f + Facing.Y * 16f)),
                 Angle = Facing.Angle() + Mathf.DegToRad(side) + Mathf.Pi / 2f,
-                Length = Equipped == Weapon.Knife ? 16f : a.N == 3 ? 44f : 34f, Life = 0.16f, Max = 0.16f,
+                Length = a.Kind == ActionKind.Thrust ? 10f : Equipped == Weapon.Knife ? 16f : a.N == 3 ? 44f : 34f, Life = 0.16f, Max = 0.16f,
             });
         }
         if (a.Kind == ActionKind.Step) _ghosts.Add((GlobalPosition, 0.22f));
+        if (a.Kind == ActionKind.Recoil && a.T >= a.Startup) { _act = null; return; }
         if (a.T >= a.Duration) _act = null;
     }
 
@@ -338,6 +564,17 @@ public partial class Player : CharacterBody2D
         // ground shadow
         var sh = new Color(8 / 255f, 10 / 255f, 8 / 255f, 0.38f);
         DrawRect(new Rect2(-11, -2, 22, 4), sh); DrawRect(new Rect2(-8, -3, 16, 6), sh);
+        if (Lying >= 0.99f) { DrawLying(); return; }
+        if (Lying > 0) { DrawKneeling(); return; }
+        if (TumbleAngle != 0 || Airborne > 0)
+        {
+            // thrown: the whole figure turns around its middle, above its shadow
+            var t = Transform2D.Identity.Translated(new Vector2(0, 20)).Rotated(TumbleAngle).Translated(new Vector2(0, -20 - Airborne));
+            DrawSetTransformMatrix(t);
+            DrawFighter();
+            DrawSetTransformMatrix(Transform2D.Identity);
+            return;
+        }
         if (_invulnerable <= 0 || Mathf.PosMod(_time, 0.12f) < 0.08f) DrawFighter();
         if (_hurtFlash > 0) DrawRect(new Rect2(-8, -40, 16, 40), new Color(0.75f, 0.2f, 0.15f, _hurtFlash));
         // the slash: straight and clean, like the cut in the master's stone
@@ -348,6 +585,37 @@ public partial class Player : CharacterBody2D
             for (float i = -s.Length / 2; i < s.Length / 2; i++)
                 DrawRect(new Rect2(Mathf.Round(c.X + dx * i), Mathf.Round(c.Y + dy * i), 2, 2), new Color(Mathf.Abs(i) < s.Length / 3 ? Learn : LearnGlow, k));
         }
+    }
+
+    // the swordsman flat on the ground, head to the right, in the prototype's colours
+    private void DrawLying()
+    {
+        var p = _paint;
+        p.Rect(-15, -7, 24, 7, Robe); p.Rect(-15, -7, 24, 2, Shade); p.Rect(-6, -7, 2, 7, Sash); p.Rect(-15, -2, 24, 1, Trim);
+        p.Rect(-21, -6, 6, 3, Pants); p.Rect(-21, -3, 6, 3, Pants);
+        p.Rect(9, -9, 9, 9, Skin); p.Rect(9, -9, 9, 3, Hair); p.Rect(17, -8, 3, 4, Hair);
+        p.Rect(13, -5, 1, 1, Outline);
+        float ph = Mathf.Sin(_time * 2);
+        p.Line(18, -7, 23 + ph, -2, Trim, 1); // the ribbon in the grass
+        p.Rect(-4, -10, 8, 3, Robe); // the arm across the chest
+        p.Flush(this, Outline);
+        if (Mathf.Sin(_time * 1.6f) > 0.4f) DrawRect(new Rect2(3, -10, 1, 1), new Color(LearnGlow, 0.4f)); // breathing
+    }
+
+    // getting up: on one knee, a hand on the ground
+    private void DrawKneeling()
+    {
+        var p = _paint;
+        float x = 0, y = 0, k = 1 - Lying; // 0 = still down, 1 = standing
+        float top = y - 18 - k * 9;
+        p.Rect(x - 7, y - 5, 6, 5, Pants); p.Rect(x + 1, y - 8, 4, 8, Pants);
+        for (int r = 0; r < 14; r++) { float w = 12 + Mathf.Floor(r * 3f / 14) * 2; p.Rect(x - w / 2, top + r, w, 1, Robe); p.Rect(x - w / 2, top + r, 3, 1, Shade); }
+        p.Rect(x - 6, top + 6, 12, 2, Sash);
+        float hy = top - 11;
+        p.Rect(x - 5, hy + 1, 10, 9, Skin); p.Rect(x - 5, hy, 10, 4, Hair); p.Rect(x - 2, hy - 3, 4, 3, Hair);
+        p.Rect(x - 3, hy + 6, 1, 1, Outline); p.Rect(x + 2, hy + 6, 1, 1, Outline);
+        p.Line(x + 5, top + 2, x + 11, y - 1, Robe, 3); p.Rect(x + 10, y - 2, 2, 2, Skin); // a hand on the ground
+        p.Flush(this, Outline);
     }
 
     // A port of the prototype's drawFighter for the player (idle, walk, cut, step), feet at (0, 0).
@@ -366,6 +634,17 @@ public partial class Player : CharacterBody2D
             float a = face + Mathf.DegToRad(from + (-from * 2f) * k);
             hand = new Vector2(x + Mathf.Cos(a) * 11, sy + 4 + Mathf.Sin(a) * 8);
             tip = hand + new Vector2(Mathf.Cos(a) * 20, Mathf.Sin(a) * 14) * bladeLen;
+        }
+        else if (_act is { Kind: ActionKind.Thrust })
+        {
+            hand = new Vector2(x + fx * 12, sy + 3 + fy * 8);
+            tip = hand + new Vector2(fx * 22, fy * 15) * bladeLen;
+        }
+        else if (_act is { Kind: ActionKind.Qi })
+        {
+            hand = new Vector2(x - nx * 7 * s, sy + 9);
+            tip = hand + new Vector2(fx * 6, 12) * bladeLen;
+            p.Rect(x + fx * 11 + nx * 3, sy + 3 + fy * 8, 3, 3, LearnGlow); // the open palm, qi gathering
         }
         else
         {

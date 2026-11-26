@@ -32,11 +32,11 @@ public sealed class PixelPainter
         }
     }
 
-    /// <summary>Draws the outline pass, then the colour pass, onto <paramref name="item"/>, and clears.</summary>
-    public void Flush(CanvasItem item, Color outline)
+    /// <summary>Draws the outline pass, then the colour pass (all in <paramref name="tint"/> when given: a hit flash), onto <paramref name="item"/>, and clears.</summary>
+    public void Flush(CanvasItem item, Color outline, Color? tint = null)
     {
         foreach (var (r, _) in _ops) item.DrawRect(new Rect2(r.Position - Vector2.One, r.Size + Vector2.One * 2), outline);
-        foreach (var (r, c) in _ops) item.DrawRect(r, c);
+        foreach (var (r, c) in _ops) item.DrawRect(r, tint ?? c);
         _ops.Clear();
     }
 }
