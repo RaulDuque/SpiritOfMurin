@@ -90,6 +90,25 @@ Vencê-lo de verdade abre o fim do prólogo: o Sênior revive, fala, se explode 
   - L lateral com um animal focado vira o passo comum, com o aviso.
 - Andar, caçar, cortar com a faca equipada e o passo comum continuam.
 
+### 3.5 Retorno enfraquecido no nível 3 (entrega 2)
+- **Quando volta:** ao chegar ao nível `unlock_level` (3) da Planície, as técnicas seladas voltam como **Enfraquecida**.
+  - Faixa "As técnicas do Vale voltam", uma mensagem curta e o Livro atualizado com comando, custo e efeito em vigor.
+  - Acontece uma vez por jornada (`techniques_returned` vai no save).
+  - Um save que já está no nível 3 ou acima, ainda selado, recebe o retorno uma vez ao carregar.
+- **Versões enfraquecidas** (`combat_techniques.json`, campos `weak`):
+
+| Técnica | O que muda |
+|---|---|
+| Disparo de Qi | 45 Qi + 10 vigor (a plena: 30 Qi), 105 px (a plena: 210), dano 1 (a plena: 2) |
+| Passo Lateral | 15 Qi + 12 vigor (a plena: grátis), 55° em volta do alvo (a plena: 95°), raio até 70 px, 0,08 s de invulnerabilidade |
+| Passo longo | 10 Qi + 14 vigor, 60 px (a plena: 112). Na Planície pede **Shift + direção + L**, para que L + direção continue sendo o passo comum |
+| Estocada | 8 de vigor, alcance de 40 px, dano 1 |
+| Passo da Lâmina Silenciosa | dano 3 (o pleno: 6), 126 px, 0,8 s de abertura |
+
+- **Recusa:** sem Qi ou sem vigor suficiente, a técnica é recusada com a falta dita ("Disparo de Qi: falta Qi (10/45)") e nenhum dos dois recursos é gasto.
+- **Selada:** a recusa diz que está selada e não se repete a cada toque (2,5 s).
+- **K conforme o contexto:** perto de uma carcaça, K esfola com Qi; longe, é o disparo. A faixa de atalhos mostra qual ("K esfolar com Qi" ou "K disparo de Qi (selado)"). Um toque faz uma ação só.
+
 ## 4. Formulas
 
 | Fórmula | Definição |
