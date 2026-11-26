@@ -209,6 +209,13 @@ public partial class ValeCheck : Node
         await Shot("05-portao-aberto");
         await Frames(40);
 
+        // the map: M shows what was seen; X puts a marker; M closes
+        await Tap(Key.M);
+        Check("M opens the Vale's map (seen places only)", V.Hud.MapOpen && V.Seen(29, 34) && !V.Seen(2, 38), $"seen start {V.Seen(29, 34)}");
+        await Shot("05b-mapa-vale");
+        await Tap(Key.X);
+        await Tap(Key.M);
+        Check("a marker is placed on the map", V.MapMarkers.Count == 1 && !V.Hud.MapOpen);
         // meditate by the twin stones
         await Teleport(ValeMap.Meditate + new Vector2(0, 6), Vector2.Up);
         await Tap(Key.E);
@@ -286,6 +293,7 @@ public partial class ValeCheck : Node
         Check("Continuar from the meditation in the Vale", _c.Vale != null && V.Story.HasManual && V.Story.DoorOpen && V.Story.LearnedSide && V.Story.GateOpen && !V.Fighters["dis_bridge"].Alive && V.Fighters["senior"].Alive, $"{P.GlobalPosition}");
         Check("the techniques come back as they were (side step full)", V.Tech.State("side_step") == TechniqueState.Full && V.Tech.State("lamina") == TechniqueState.Full);
         Check("by the twin stones", P.GlobalPosition.DistanceTo(ValeMap.Meditate) < 20);
+        Check("the map's marker and the seen places come back", V.MapMarkers.Count == 1 && V.Seen(29, 34), $"{V.MapMarkers.Count} marker(s)");
         Finish();
     }
 
