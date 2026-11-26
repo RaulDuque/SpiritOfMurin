@@ -213,6 +213,17 @@ public partial class PlainsHud : CanvasLayer
     }
 
     /// <summary>Updates the level line.</summary>
+    /// <summary>What K does here, in the controls line (it changes next to a carcass).</summary>
+    public void SetQiKeyHint(string hint)
+    {
+        if (_valeMode) return;
+        string t = $"WASD andar · Shift quieto · E pegar/examinar · I inventário · C ficha · B livro · Espaço focar · {hint} · H erva · J/clique corte · L/clique dir. passo";
+        if (_controls.Text != t) _controls.Text = t;
+    }
+
+    /// <summary>The controls line now.</summary>
+    public string ControlsText => _controls.Text;
+
     /// <summary>The prologue's corner: no vigor bar, no level line (the Vale has neither).</summary>
     public void SetValeMode(bool vale) { _valeMode = vale; _level.Visible = !vale; _controls.Text = vale
         ? "WASD andar · Espaço travar · J/clique corte · L/clique dir. passo · K Qi · E examinar · H bálsamo · I inventário · B livro"
@@ -306,7 +317,7 @@ public partial class PlainsHud : CanvasLayer
     public void Toast(string text)
     {
         Messages.Add(text);
-        if (Messages.Count > 60) Messages.RemoveAt(0);
+        if (Messages.Count > 500) Messages.RemoveAt(0);
         var l = MakeLabel(9, Text); l.Text = text; l.HorizontalAlignment = HorizontalAlignment.Center;
         l.AutowrapMode = TextServer.AutowrapMode.WordSmart; l.CustomMinimumSize = new Vector2(400, 0);
         _toasts.AddChild(l);

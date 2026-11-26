@@ -371,7 +371,19 @@ public partial class Player : CharacterBody2D
         return Tech.State("side_step") switch { TechniqueState.Full => Tech.Data.Lamina.Full, TechniqueState.Weakened => Tech.Data.Lamina.Weak, _ => null };
     }
 
-    private void Refuse(string id, string what) => TechniqueRefused?.Invoke(id, $"{Tech?.Data.Get(id).Name ?? id} está selada: {what}");
+    private void Refuse(string id, string what)
+    {
+        string m = $"{Tech?.Data.Get(id).Name ?? id} está selada: {what}";
+        if (m == _lastRefusal && _time - _lastRefusalAt < 2.5f) return; // the same refusal is not repeated at every press
+        _lastRefusal = m; _lastRefusalAt = _time;
+        TechniqueRefused?.Invoke(id, m);
+    }
+
+    private string _lastRefusal = "";
+    private float _lastRefusalAt = -10;
+
+    /// <summary>When true the long step needs Shift held (the Planície: L + direction stays the plain step).</summary>
+    public bool DashNeedsShift { get; set; }
 
     private void Start(ActionKind kind, Vector2 move)
     {
@@ -427,7 +439,8 @@ public partial class Player : CharacterBody2D
             }
             else return;
         }
-        if (kind == ActionKind.Step && target == null && move != Vector2.Zero && Tech?.State("dash") is not (null or TechniqueState.Unknown))
+        bool dashKey = !DashNeedsShift || InputMap.HasAction("sneak") && Input.IsActionPressed("sneak");
+        if (kind == ActionKind.Step && target == null && move != Vector2.Zero && dashKey && Tech?.State("dash") is not (null or TechniqueState.Unknown))
         {
             if (Tech.Params("dash") is not { } dp) { Refuse("dash", "fica o passo comum."); }
             else if (Pay("dash", dp))

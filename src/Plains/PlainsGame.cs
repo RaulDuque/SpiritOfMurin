@@ -104,6 +104,7 @@ public partial class PlainsGame : Node2D
     private SaveStatus _saveStatus;
     private bool _confirmNew;
     private float _riseHintAt, _riseClock;
+    private bool _returnOnStart;
     private bool _rising;
 
     /// <summary>True while the swordsman still lies on the ground after the awakening.</summary>
@@ -204,6 +205,8 @@ public partial class PlainsGame : Node2D
         Player.EmptyHanded += () => Hud.Toast("Mãos vazias: fabrique uma ferramenta no inventário (I).");
         Player.OutOfBreath += () => Hud.Toast("Sem fôlego: espere o vigor voltar ou coma carne assada.");
         Player.TechniqueRefused += (_, m) => { Hud.Toast(m); Sfx?.Play("fizzle"); };
+        Player.QiFired += OnQiShot;
+        Player.DashNeedsShift = true;
         Player.Fainted += () => { _faintTimer = 2.2f; Player.InputLocked = true; Hud.Overlay("Você desmaiou…", 1.4f); };
         Spot = Gen.StartPixel;
         Qi = Stats.MaxQi;
@@ -226,6 +229,7 @@ public partial class PlainsGame : Node2D
         }
         foreach (var b in Book.Where(b => b.Tech.Length > 0))
             Tech.Set(b.Tech, b.State switch { "Selada" => TechniqueState.Sealed, "Enfraquecida" => TechniqueState.Weakened, _ => TechniqueState.Full });
+        _returnOnStart = d != null; // a journey saved at level 3 or more with the techniques still sealed gets them back once, now
         ApplyStats(fill: d == null);
         if (d != null)
         {
@@ -244,6 +248,7 @@ public partial class PlainsGame : Node2D
         _lastChunk = Gen.ChunkOfPixel(Player.GlobalPosition);
         Player.GetNode<Camera2D>("Camera").ResetSmoothing();
         RefreshHands(); RefreshRows(); RefreshSheet();
+        if (_returnOnStart) ReturnTechniques();
         if (awaken != null)
         {
             // from darkness into light: a pale glare that slowly clears, and the sounds of nature coming back
@@ -312,8 +317,10 @@ public partial class PlainsGame : Node2D
         Hud.SetHealth(Player.Health, Player.MaxHealth, Player.PendingRegen);
         Hud.SetEnergy(Player.Vigor, Player.MaxVigor, Qi, Stats.MaxQi);
         Hud.SetLevel(Stats.Level, Stats.Xp, Stats.XpToNext(Stats.Level), Stats.Points);
+        UpdateWaves(dt);
         UpdateFocus();
         UpdatePrompt();
+        Hud.SetQiKeyHint(QiKeyAction == "esfolar" ? "K esfolar com Qi" : $"K disparo de Qi{(Tech.State("qi_wave") == TechniqueState.Sealed ? " (selado)" : "")}");
     }
 
     /// <inheritdoc />
@@ -375,6 +382,61 @@ public partial class PlainsGame : Node2D
         else Player.RequestQi();
     }
 
+    /// <summary>
+    /// At the unlock level (3), the techniques sealed at the awakening come back weakened: the book shows
+    /// "Enfraquecida" with the cost and effect in force, and a short message says so — once per journey
+    /// (the flag is saved, so loading or levelling again never repeats it).
+    /// </summary>
+    public bool ReturnTechniques()
+    {
+        if (TechniquesReturned || Stats.Level < Tech.Data.UnlockLevel || !Book.Any(b => b.State == "Selada")) return false;
+        TechniquesReturned = true;
+        foreach (var b in Book.Where(b => b.State == "Selada")) { b.State = "Enfraquecida"; Tech.Set(b.Tech, TechniqueState.Weakened); }
+        Hud.Banner("As técnicas do Vale voltam", 3.0f);
+        Hud.Toast($"Nível {Tech.Data.UnlockLevel}: as técnicas do Vale voltam, enfraquecidas. Custam Qi e vigor; veja o Livro (B).");
+        Sfx?.Play("learn");
+        return true;
+    }
+
+    private readonly List<QiWave> _waves = new();
+
+    /// <summary>Qi shots in flight (for checks).</summary>
+    public IReadOnlyList<QiWave> Waves => _waves;
+
+    /// <summary>Raised when a qi shot ends: how far it went and whether it hit something.</summary>
+    public event System.Action<QiWave, bool>? QiShotEnded;
+
+    private void OnQiShot(Player.QiShot shot)
+    {
+        var w = new QiWave { Shot = shot, GlobalPosition = shot.Origin, ZIndex = 10 };
+        World.Objects.AddChild(w); _waves.Add(w);
+        Sfx?.Play(shot.Lamina ? "combo" : "qi");
+        if (shot.Lamina) Hud.Banner("Passo da Lâmina Silenciosa", 1.6f);
+    }
+
+    private void UpdateWaves(float dt)
+    {
+        foreach (var w in _waves.ToList())
+        {
+            w.Advance(dt);
+            bool hit = false;
+            foreach (var n in GetTree().GetNodesInGroup("creatures"))
+            {
+                if (n is not IHittable h || !h.CanBeHit || w.HitSet.Contains(h.CreatureId)) continue;
+                if (h.GlobalPosition.DistanceTo(w.Foot) > (w.Shot.Lamina ? 22 : 16) + h.BodyRadius) continue;
+                w.HitSet.Add(h.CreatureId);
+                h.ReceiveHit(w.Shot.Damage);
+                hit = true;
+                if (!w.Shot.Lamina) { w.Stop(); break; }
+            }
+            if (w.Done)
+            {
+                QiShotEnded?.Invoke(w, hit || w.HitSet.Count > 0);
+                w.QueueFree(); _waves.Remove(w);
+            }
+        }
+    }
+
     /// <summary>Opens or closes the Livro de Técnicas.</summary>
     public void ToggleBook()
     {
@@ -430,6 +492,7 @@ public partial class PlainsGame : Node2D
         {
             Hud.Toast($"Nível {Stats.Level}! +{levels * Data.PointsPerLevel} pontos de atributo: abra a ficha (C).");
             RefreshSheet();
+            ReturnTechniques();
         }
     }
 
