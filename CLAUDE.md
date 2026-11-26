@@ -86,6 +86,10 @@ A regra vale também para entregas de documentação e configuração. Se a sess
 foi apenas uma conversa e nenhum arquivo mudou, basta responder, sem criar
 commit vazio.
 
+O passo a passo está na skill **`/subir-git`**. Os commits seguem
+`.claude/rules/commits-atomicos.md`: uma mudança lógica por commit, `git add`
+por arquivo e `git diff --staged` revisado antes de cada commit.
+
 > **First session?** Say "make me a game" (`/prototype`), or run `/start` to begin
 > the guided onboarding flow.
 
