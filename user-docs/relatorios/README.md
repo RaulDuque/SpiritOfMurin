@@ -35,6 +35,7 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-26 | [2026-11-26-campanha-prologo.md](2026-11-26-campanha-prologo.md) | Campanha (entregas 0 e 1): Novo jogo no prólogo do Vale portado do protótipo; Sênior vencido de verdade; revivescência, fala, explosão que lança o espadachim para fora do quadro, escuridão e silêncio; despertar deitado na Planície de mãos vazias com o Livro selado; etapas persistentes; testes com janela e como rodá-los mais devagar |
 | 2026-11-26 | [prompts/10-campanha-inicial.md](prompts/10-campanha-inicial.md) | Pedido do criador para a campanha inicial e a próxima evolução da Planície, entregas 0 a 8 (texto integral) |
 | 2026-11-26 | [2026-11-26-tecnicas-seladas.md](2026-11-26-tecnicas-seladas.md) | Campanha, entrega 2: técnicas do Vale seladas no despertar, recusadas em toda entrada; voltam enfraquecidas no nível 3 (uma mensagem por jornada, também para saves já no nível 3+); comparação plena × enfraquecida com os números medidos; K conforme o contexto |
+| 2026-11-26 | [2026-11-26-tela-cheia-mapa.md](2026-11-26-tela-cheia-mapa.md) | Campanha, entrega 3: causa das bordas pretas (escala inteira sobre 640×360 fixo) e a correção medida no monitor 2; tela cheia (F11, menu, preferência); menu de pausa; mouse nos painéis; mapa do Vale e da Planície com zoom, marcadores e exploração salvos |
 
 ## Prompts de imagem do criador
 
