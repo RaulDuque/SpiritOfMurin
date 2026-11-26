@@ -39,6 +39,7 @@ public partial class PlainsCheck : Node
         }
         _game = GD.Load<PackedScene>("res://src/Plains/Plains.tscn").Instantiate<PlainsGame>();
         _game.Seed = _seed; _game.ShowIntro = false;
+        _game.Start = PlainsGame.StartMode.New; _game.SavePath = "user://teste_plainscheck.json";
         AddChild(_game);
         _player = _game.Player;
         _player.ActionStarted += (k, n) => _started.Add((k, n));
@@ -115,7 +116,8 @@ public partial class PlainsCheck : Node
 
     private Pickup? NearestPickup(string item, Vector2 from) => Nodes<Pickup>().Where(p => p.ItemId == item).OrderBy(p => p.GlobalPosition.DistanceTo(from)).FirstOrDefault();
 
-    private bool LastMessage(string contains) => _game.Hud.Messages.Count > 0 && _game.Hud.Messages[^1].Contains(contains);
+    // one action can show several messages (the item, then practice and XP): look at the last few
+    private bool LastMessage(string contains) => _game.Hud.Messages.TakeLast(5).Any(m => m.Contains(contains));
 
     private string _lastPick = "";
 
@@ -264,7 +266,7 @@ public partial class PlainsCheck : Node
                 await Teleport(carcass.GlobalPosition + new Vector2(-8, 2), Vector2.Right);
                 await Shot("07-carcaca-coelho");
                 await Tap(Godot.Key.E); await Tap(Godot.Key.E); await Tap(Godot.Key.E); await Frames(3);
-                Check("the carcass gives meat and hide, once each", inv.Count("carne_macia") == 1 && inv.Count("pele_fina") == 1 && !Nodes<Carcass>().Any(c => c.CreatureId == carcass.CreatureId), $"carne {inv.Count("carne_macia")}, pele {inv.Count("pele_fina")}");
+                Check("the carcass gives meat and hide, once each", inv.Count("carne_macia") == 1 && inv.Count("pele_rasgada") == 1 && !Nodes<Carcass>().Any(c => c.CreatureId == carcass.CreatureId), $"carne {inv.Count("carne_macia")}, pele rasgada {inv.Count("pele_rasgada")} (Esfolar Bruto)");
             }
             else Check("the carcass gives meat and hide, once each", false, "no carcass");
         }
@@ -318,29 +320,70 @@ public partial class PlainsCheck : Node
                 if (boar.Brain.State == BoarState.Charge) minDist = Mathf.Min(minDist, boar.GlobalPosition.DistanceTo(_player.GlobalPosition));
                 await Frames(1);
             }
-            Check("standing in the line, the charge hurts on contact", _player.Health == hp1 - _game.World.BoarTuning.ContactDamage, $"Vida {hp1} → {_player.Health}, closest during charge {minDist:0} px, hit by {hitBy}");
+            Check("standing in the line, the charge hurts on contact", _player.Health == hp1 - boar.Tuning.ContactDamage, $"Vida {hp1} → {_player.Health}, closest during charge {minDist:0} px, hit by {hitBy}");
             await Frames(2);
-            Check("the Vida bar shows the percentage", _game.Hud.LifeText.StartsWith($"Vida {PlainsHud.LifePercent(_player.Health, _player.MaxHealth)}%") && _game.Hud.LifeText.StartsWith("Vida 80%"), _game.Hud.LifeText);
+            Check("the Vida bar shows the percentage", _game.Hud.LifeText.StartsWith($"Vida {PlainsHud.LifePercent(_player.Health, _player.MaxHealth)}%") && _player.Health < _player.MaxHealth, _game.Hud.LifeText);
             await Shot("11-javali-acertou");
+
+            // the boar does not follow to the clearing
+            await Teleport(_game.Gen.StartPixel, Vector2.Down);
+            await Frames(30);
+            Check("the boar does not follow to the clearing", boar.GlobalPosition.DistanceTo(_player.GlobalPosition) > 120, $"{boar.GlobalPosition.DistanceTo(_player.GlobalPosition):0} px");
+
+            // ---- 6b. focus shows its level; hunt it down in its openings; its materials (brief: meat, hide, tusks)
+            Vector2 boarHome = boar.HomeAt;
+            await Teleport(boar.GlobalPosition + new Vector2(-120, 0), Vector2.Right);
+            await Tap(Godot.Key.Space);
+            Check("Space on the boar: name, level (3-5), temper", _game.Hud.FocusText == $"Javali da Mata · Nv {boar.Level} · Territorial" && boar.Level is >= 3 and <= 5, _game.Hud.FocusText);
+            await Tap(Godot.Key.Space);
+            _player.Revive();
+            for (int round = 0; round < 12 && IsInstanceValid(boar) && boar.Brain.State != BoarState.Dead; round++)
+            {
+                if (_player.Health < 4) _player.Revive();
+                await Teleport(boar.GlobalPosition + new Vector2(-90, 0), Vector2.Right);
+                for (int i = 0; i < 200 && boar.Brain.State is not (BoarState.Charge or BoarState.Dead); i++) await Frames(1);
+                Key(Godot.Key.S, true); await Flush();
+                for (int i = 0; i < 60 && boar.Brain.State == BoarState.Charge; i++) await Frames(1);
+                Key(Godot.Key.S, false); await Flush();
+                for (int hit = 0; hit < 2 && IsInstanceValid(boar) && boar.Brain.State == BoarState.Recover; hit++)
+                {
+                    _player.GlobalPosition = boar.GlobalPosition + new Vector2(0, 14); await Frames(1);
+                    await Teleport(boar.GlobalPosition + new Vector2(0, 14), Vector2.Up);
+                    await Tap(Godot.Key.J); await Frames(8);
+                }
+            }
+            var boarCarcass = Nodes<Carcass>().FirstOrDefault(c => c.CreatureId == boar.CreatureId);
+            Check("the boar falls after its openings", boarCarcass != null, $"rounds; carcass {(boarCarcass != null)}");
+            if (boarCarcass != null)
+            {
+                string hide = _game.Data.Hides["boar"][_game.Skills.Grade("esfolar")];
+                _player.GlobalPosition = boarCarcass.GlobalPosition + new Vector2(-8, 2); await Frames(3);
+                await Tap(Godot.Key.E); await Tap(Godot.Key.E); await Tap(Godot.Key.E); await Tap(Godot.Key.E);
+                Check("the boar gives hide (by Esfolar), Carne Rija and tusks, once each", inv.Count(hide) == 1 && inv.Count("carne_rija") >= 1 && inv.Count("presa_javali") == 1 && !Nodes<Carcass>().Any(c => c.CreatureId == boar.CreatureId),
+                    $"{hide} {inv.Count(hide)}, carne rija {inv.Count("carne_rija")}, presas {inv.Count("presa_javali")}");
+            }
+            _player.Revive(); await Frames(50); _player.TakeDamage(2, _player.GlobalPosition + Vector2.Right); await Frames(45); // Revive leaves a moment of invulnerability
 
             // ---- 7. herbs: Grama Sangue-de-Coelho heals over time; Raiz Amarga by the rooted earth
             await Teleport(_game.Gen.StartPixel, Vector2.Down);
             await Frames(30);
-            Check("the boar does not follow to the clearing", boar.GlobalPosition.DistanceTo(_player.GlobalPosition) > 120, $"{boar.GlobalPosition.DistanceTo(_player.GlobalPosition):0} px");
             await PickUp("grama_sangue");
-            Check("E picks up Grama Sangue-de-Coelho by a stone", inv.Count("grama_sangue") == 1 && LastMessage("Grama Sangue-de-Coelho"), _game.Hud.Messages.LastOrDefault() ?? "");
+            string herbId = inv.Entries.Select(e => e.Id).FirstOrDefault(id => id.StartsWith("grama_sangue")) ?? "grama_sangue_q0";
+            Check("E picks up Grama Sangue-de-Coelho by a stone", inv.Count(herbId) >= 1 && LastMessage("Grama Sangue-de-Coelho"), $"{herbId}: {string.Join(" / ", _game.Hud.Messages.TakeLast(3))}");
             float hurt = _player.Health;
             await Tap(Godot.Key.I);
-            await SelectRow(r => !r.IsRecipe && r.Id == "grama_sangue");
+            int herbsBefore = inv.Count(herbId);
+            float regen = _game.Catalog.Get(herbId).RegenAmount * _game.Stats.MedicinePotency;
+            await SelectRow(r => !r.IsRecipe && r.Id == herbId);
             await Tap(Godot.Key.E);
             await Tap(Godot.Key.I);
             await Frames(60);
             float mid = _player.Health;
             await Frames(330);
             float end = _player.Health;
-            Check("the herb restores Vida over time", inv.Count("grama_sangue") == 0 && mid > hurt && mid < end && end >= Mathf.Min(_player.MaxHealth, hurt + 3.9f), $"{hurt} → {mid:0.0} (1 s) → {end:0.0} (6.5 s)");
+            Check("the herb restores Vida over time", inv.Count(herbId) == herbsBefore - 1 && mid > hurt && mid < end && end >= Mathf.Min(_player.MaxHealth, hurt + regen - 0.1f), $"{hurt} → {mid:0.0} (1 s) → {end:0.0} (6.5 s), herb {regen:0.0}");
             await Shot("12-cura-erva");
-            var root = roots.Where(IsInstanceValid).OrderBy(r => r.GlobalPosition.DistanceTo(boar.HomeAt)).FirstOrDefault();
+            var root = roots.Where(IsInstanceValid).OrderBy(r => r.GlobalPosition.DistanceTo(boarHome)).FirstOrDefault();
             if (root != null)
             {
                 await Teleport(root.GlobalPosition + new Vector2(-10, 4), Vector2.Right);

@@ -34,6 +34,7 @@ public partial class PlainsCapture : Node
         }
         _game = GD.Load<PackedScene>("res://src/Plains/Plains.tscn").Instantiate<PlainsGame>();
         _game.Seed = _seed; _game.ShowIntro = false;
+        _game.Start = PlainsGame.StartMode.New; _game.SavePath = "user://teste_capture.json";
         AddChild(_game);
         _ = _mode == "boar" ? Boar() : Wide();
     }

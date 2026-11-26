@@ -41,6 +41,14 @@ public sealed class Inventory
         return true;
     }
 
+    /// <summary>Replaces everything with a saved list (pickup order kept).</summary>
+    public void Restore(IEnumerable<(string Id, int Count)> entries)
+    {
+        _order.Clear(); _counts.Clear();
+        foreach (var (id, n) in entries) if (n > 0 && !_counts.ContainsKey(id)) { _order.Add(id); _counts[id] = n; }
+        Changed?.Invoke("", 0);
+    }
+
     /// <summary>True when every input of the recipe is held.</summary>
     public bool CanCraft(RecipeDef r) => r.Inputs.All(kv => Count(kv.Key) >= kv.Value);
 

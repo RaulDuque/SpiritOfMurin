@@ -1,25 +1,50 @@
 {
   "_doc": {
-    "about": "Itens e receitas da Planície. Lido por src/Items/ItemCatalog.cs. Esquema em design/gdd/plains-first-stretch.md.",
+    "about": "Itens e receitas da Planície. Lido por src/Items/ItemCatalog.cs. Esquema em design/gdd/plains-first-stretch.md e design/gdd/plains-progression.md.",
     "items.<id>.name": "nome mostrado ao jogador",
-    "items.<id>.description": "frase curta do inventário",
+    "items.<id>.description": "frase curta do inventário (diz para que serve)",
     "items.<id>.equip": "arma que o item equipa: knife (faca) ou vazio",
-    "items.<id>.regen_amount / regen_seconds": "ao usar: pontos de Vida recuperados aos poucos ao longo destes segundos",
-    "items.<id>.heal_now": "ao usar: pontos de Vida recuperados na hora",
-    "recipes[].inputs": "materiais consumidos (id: quantidade), uma vez por fabricação"
+    "items.<id>.regen_amount / regen_seconds": "ao usar: Vida recuperada aos poucos ao longo destes segundos (preparo medicinal: multiplicado pela potência de INT)",
+    "items.<id>.heal_now": "ao usar: Vida recuperada na hora (preparo medicinal: multiplicado pela potência de INT)",
+    "items.<id>.vigor_now": "ao usar: vigor recuperado na hora (carne assada: + bônus do Preparo de Caça de quem assou)",
+    "items.<id>.medicine": "true para preparos medicinais (INT aumenta a potência)",
+    "items.<id>.quick_slot": "true para os itens que a Bolsa Simples deixa à mão (tecla H)",
+    "items.<id>.passive": "efeito permanente de carregar o item (texto)",
+    "recipes[].inputs": "materiais consumidos (id: quantidade), uma vez por fabricação",
+    "recipes[].station": "lugar necessário (fogueira) ou vazio"
   },
   "items": {
-    "silex":        { "name": "Sílex", "description": "Pedra que lasca com gume." },
-    "galho_rijo":   { "name": "Galho Rijo", "description": "Madeira seca e firme, boa para cabo." },
-    "faca_pedra":   { "name": "Faca de Pedra", "description": "Lasca de sílex amarrada num galho. Corte curto.", "equip": "knife" },
-    "grama_sangue": { "name": "Grama Sangue-de-Coelho", "description": "Nervuras vermelhas. Mastigada, fecha feridas aos poucos.", "regen_amount": 4, "regen_seconds": 6.0 },
-    "raiz_amarga":  { "name": "Raiz Amarga", "description": "Cresce onde o javali fuça. Amarga; dá um alívio rápido.", "heal_now": 1 },
-    "carne_macia":  { "name": "Carne Macia", "description": "Carne de coelho." },
-    "pele_fina":    { "name": "Pele Fina", "description": "Pele de coelho. Rasga com facilidade." },
-    "carne_rija":   { "name": "Carne Rija", "description": "Carne de javali." },
-    "couro_grosso": { "name": "Couro Grosso", "description": "Couro de javali, duro e espesso." }
+    "silex":              { "name": "Sílex", "description": "Pedra que lasca com gume. Material da faca." },
+    "galho_rijo":         { "name": "Galho Rijo", "description": "Madeira seca e firme, boa para cabo. Material da faca." },
+    "faca_pedra":         { "name": "Faca de Pedra", "description": "Lasca de sílex amarrada num galho. Corte curto; permite esfolar e aproveitar a caça.", "equip": "knife" },
+    "grama_sangue_q0":    { "name": "Grama Sangue-de-Coelho (amassada)", "description": "Colhida às pressas, perdeu seiva. Fecha feridas aos poucos.", "regen_amount": 3, "regen_seconds": 6.0, "medicine": true, "quick_slot": true },
+    "grama_sangue_q1":    { "name": "Grama Sangue-de-Coelho", "description": "Cortada no talo. Fecha feridas aos poucos.", "regen_amount": 4, "regen_seconds": 6.0, "medicine": true, "quick_slot": true },
+    "grama_sangue_q2":    { "name": "Grama Sangue-de-Coelho (bem colhida)", "description": "Guardada à sombra, com a seiva inteira.", "regen_amount": 5, "regen_seconds": 6.0, "medicine": true, "quick_slot": true },
+    "grama_sangue_q3":    { "name": "Grama Sangue-de-Coelho (seiva viva)", "description": "Colhida por mão de mestre: a seiva ainda corre.", "regen_amount": 6, "regen_seconds": 5.0, "medicine": true, "quick_slot": true },
+    "raiz_amarga":        { "name": "Raiz Amarga", "description": "Cresce onde o javali fuça. Amarga; dá um alívio rápido.", "heal_now": 1, "medicine": true, "quick_slot": true },
+    "carne_macia":        { "name": "Carne Macia", "description": "Carne crua de coelho. Asse na fogueira para recuperar vigor." },
+    "carne_rija":         { "name": "Carne Rija", "description": "Carne crua de javali. Asse na fogueira para recuperar vigor." },
+    "carne_macia_assada": { "name": "Carne Macia Assada", "description": "Recupera vigor na hora.", "vigor_now": 25 },
+    "carne_rija_assada":  { "name": "Carne Rija Assada", "description": "Recupera muito vigor na hora.", "vigor_now": 40 },
+    "pele_rasgada":       { "name": "Pele Rasgada", "description": "Esfolada na força. Só serve para cortar tiras de amarração." },
+    "pele_comum":         { "name": "Pele Comum", "description": "Pele inteira de coelho. Material de bolsa." },
+    "pele_fina":          { "name": "Pele Fina", "description": "Pele intacta e macia. Material de bolsa (e de costura, mais adiante)." },
+    "couro_rasgado":      { "name": "Couro Rasgado", "description": "Couro de javali arrancado na força. Só serve para tiras." },
+    "couro_comum":        { "name": "Couro Comum", "description": "Couro de javali inteiro. Material de bolsa." },
+    "couro_grosso":       { "name": "Couro Grosso", "description": "Couro intacto, com a resistência do javali. Material de bolsa (e de armadura, mais adiante)." },
+    "presa_javali":       { "name": "Presas de Javali", "description": "Duas presas curvas. Material de forja inicial, mais adiante." },
+    "presa_espiritual":   { "name": "Presa Espiritual", "description": "Extraída com um fio de Qi: guarda a força do javali. Catalisador, mais adiante." },
+    "tendao":             { "name": "Tendão", "description": "Material secundário da caça. Serve de cordão (arcos e costura, mais adiante)." },
+    "tira_amarracao":     { "name": "Tira de Amarração", "description": "Tira de pele para amarrar. Material da bolsa." },
+    "bolsa_simples":      { "name": "Bolsa Simples", "description": "Presa na cintura: deixa uma erva à mão.", "passive": "Tecla H usa a melhor erva da bolsa sem abrir o inventário." }
   },
   "recipes": [
-    { "id": "faca_pedra", "output": "faca_pedra", "count": 1, "inputs": { "silex": 1, "galho_rijo": 1 } }
+    { "id": "faca_pedra", "output": "faca_pedra", "count": 1, "inputs": { "silex": 1, "galho_rijo": 1 } },
+    { "id": "tiras_pele", "output": "tira_amarracao", "count": 2, "inputs": { "pele_rasgada": 1 } },
+    { "id": "tiras_couro", "output": "tira_amarracao", "count": 3, "inputs": { "couro_rasgado": 1 } },
+    { "id": "bolsa_pele", "output": "bolsa_simples", "count": 1, "inputs": { "pele_comum": 1, "tira_amarracao": 2 } },
+    { "id": "bolsa_couro", "output": "bolsa_simples", "count": 1, "inputs": { "couro_comum": 1, "tira_amarracao": 1 } },
+    { "id": "assar_macia", "output": "carne_macia_assada", "count": 1, "inputs": { "carne_macia": 1 }, "station": "fogueira" },
+    { "id": "assar_rija", "output": "carne_rija_assada", "count": 1, "inputs": { "carne_rija": 1 }, "station": "fogueira" }
   ]
 }

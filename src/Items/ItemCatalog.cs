@@ -21,8 +21,16 @@ public sealed class ItemDef
     public float RegenSeconds { get; set; }
     /// <summary>Life restored at once when used.</summary>
     public int HealNow { get; set; }
+    /// <summary>Vigor restored at once when used.</summary>
+    public int VigorNow { get; set; }
+    /// <summary>True for medicinal preparations (INT raises their potency).</summary>
+    public bool Medicine { get; set; }
+    /// <summary>True for the items the Bolsa Simples keeps at hand (quick use key).</summary>
+    public bool QuickSlot { get; set; }
+    /// <summary>Permanent effect of carrying the item (text), or empty.</summary>
+    public string Passive { get; set; } = "";
     /// <summary>True when using the item does something (it is then consumed).</summary>
-    public bool Usable => RegenAmount > 0 || HealNow > 0;
+    public bool Usable => RegenAmount > 0 || HealNow > 0 || VigorNow > 0;
 }
 
 /// <summary>A crafting recipe: materials consumed once, item produced.</summary>
@@ -36,6 +44,8 @@ public sealed class RecipeDef
     public int Count { get; set; } = 1;
     /// <summary>Materials consumed: item id → quantity.</summary>
     public Dictionary<string, int> Inputs { get; set; } = new();
+    /// <summary>Place needed to make it ("fogueira"), or empty for anywhere.</summary>
+    public string Station { get; set; } = "";
 }
 
 /// <summary>The items and recipes, loaded from <c>res://assets/data/plains/plains_items.json</c>.</summary>

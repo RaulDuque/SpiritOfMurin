@@ -1,48 +1,88 @@
 using System.Collections.Generic;
 using Godot;
-using SpiritOfMurin.Items;
 
 namespace SpiritOfMurin.Plains;
 
 /// <summary>
-/// The Planície's screen layer: Vida (hearts and number), what the hands hold, the interaction prompt,
-/// pickup messages with the item's name and quantity, the inventory with crafting, the seed in a
-/// corner, the controls line and the wake / faint overlays. Draws with the prototype's colours.
+/// The Planície's screen layer, drawn with the prototype's colours:
+/// <list type="bullet">
+/// <item>the bars in the corner: Vida with its percentage and the pending herb heal in green, vigor and Qi,
+/// in the style of the prototype's qi bar; the level and the XP missing; what the hands hold;</item>
+/// <item>the focused creature's name, level, temper and health at the top;</item>
+/// <item>the interaction prompt, pickup messages, the seed, the controls line;</item>
+/// <item>three panels that share one look: the inventory (I), the character sheet (C) and the title menu;</item>
+/// <item>the wake / faint overlay.</item>
+/// </list>
 /// </summary>
 public partial class PlainsHud : CanvasLayer
 {
-    /// <summary>One line of the inventory list: an item held or a recipe.</summary>
-    public readonly record struct Row(bool IsRecipe, string Id, string Text, string Detail, bool Enabled);
+    /// <summary>One selectable line of a panel. <paramref name="Group"/> starts a titled block before it.</summary>
+    public readonly record struct Row(bool IsRecipe, string Id, string Text, string Detail, bool Enabled, string Group = "");
 
-    private static readonly Color Text = new("#ece5d0"), Dim = new("#a39e8c"), OutlineC = new("#16140f"), Life = new("#7a3a32"),
-        LifeEmpty = new("#3a2a26"), Panel = new(0.07f, 0.075f, 0.06f, 0.92f), Select = new("#c9a14a"), Disabled = new("#6b675c");
+    private static readonly Color Text = new("#ece5d0"), Dim = new("#a39e8c"), OutlineC = new("#16140f"), Life = new("#7a3a32"), LifeHi = new("#b0574a"),
+        LifeBack = new("#2b1f1a"), RegenC = new("#4c7c4a"), Panel = new(0.07f, 0.075f, 0.06f, 0.94f), Select = new("#c9a14a"), Disabled = new("#6b675c"),
+        Vig = new("#b8923a"), VigHi = new("#e6c878"), VigBack = new("#2a2418"), QiC = new("#3fae9e"), QiHi = new("#a6f2e2"), QiBack = new("#1f2a28"),
+        Threat = new("#b0403a");
 
-    private Control _root = null!;
-    private Label _life = null!, _hands = null!, _seed = null!, _controls = null!, _prompt = null!, _invTitle = null!, _invDetail = null!, _overlayText = null!;
-    private VBoxContainer _toasts = null!, _invList = null!;
-    private PanelContainer _inv = null!;
+    /// <summary>A panel with a title, a list of rows, a detail block and a help line.</summary>
+    private sealed class Menu
+    {
+        public PanelContainer Box = null!;
+        public Label Title = null!, Header = null!, Detail = null!, Help = null!;
+        public VBoxContainer List = null!;
+        public readonly List<Row> Rows = new();
+        public int Selected;
+        public string Empty = "";
+    }
+
+    private Control _root = null!, _bars = null!, _focusBar = null!;
+    private Label _life = null!, _vigor = null!, _qi = null!, _level = null!, _hands = null!, _seed = null!, _controls = null!, _prompt = null!, _overlayText = null!, _focus = null!;
+    private VBoxContainer _toasts = null!;
+    private Menu _inv = null!, _sheet = null!, _title = null!;
     private ColorRect _overlay = null!;
-    private Control _hearts = null!; // the Vida bar
-    private float _health, _max = 10, _pending, _overlayTime, _overlayHold;
+    private float _health, _max = 10, _pending, _vig, _maxVig, _qiNow, _maxQi, _focusFrac, _overlayTime, _overlayHold;
     private readonly List<(Label L, float T)> _toastLabels = new();
 
     /// <summary>True while the inventory is open.</summary>
-    public bool InventoryOpen => _inv.Visible;
+    public bool InventoryOpen => _inv.Box.Visible;
+    /// <summary>True while the character sheet is open.</summary>
+    public bool SheetOpen => _sheet.Box.Visible;
+    /// <summary>True while the title menu is shown.</summary>
+    public bool TitleOpen => _title.Box.Visible;
+    /// <summary>True while any panel is open.</summary>
+    public bool AnyPanelOpen => InventoryOpen || SheetOpen || TitleOpen;
 
     /// <summary>Selected row of the inventory.</summary>
-    public int Selected { get; private set; }
-
+    public int Selected => _inv.Selected;
     /// <summary>The inventory rows currently shown.</summary>
-    public List<Row> Rows { get; } = new();
+    public List<Row> Rows => _inv.Rows;
+    /// <summary>Selected row of the sheet.</summary>
+    public int SheetSelected => _sheet.Selected;
+    /// <summary>The sheet rows (the six attributes).</summary>
+    public List<Row> SheetRows => _sheet.Rows;
+    /// <summary>The sheet's detail text (the selected attribute's preview and the proficiencies).</summary>
+    public string SheetDetail => _sheet.Detail.Text;
+    /// <summary>The sheet's header (level, XP, points).</summary>
+    public string SheetHeader => _sheet.Header.Text;
+    /// <summary>Selected option of the title menu.</summary>
+    public int TitleSelected => _title.Selected;
+    /// <summary>The title options.</summary>
+    public List<Row> TitleRows => _title.Rows;
+    /// <summary>The title menu's message line.</summary>
+    public string TitleMessage => _title.Header.Text;
 
     /// <summary>The last messages shown (newest last), for checks.</summary>
     public List<string> Messages { get; } = new();
-
     /// <summary>The prompt text currently shown ("" when none).</summary>
     public string PromptText => _prompt.Visible ? _prompt.Text : "";
-
     /// <summary>The seed text shown in the corner.</summary>
     public string SeedText => _seed.Text;
+    /// <summary>The Vida text currently shown.</summary>
+    public string LifeText => _life.Text;
+    /// <summary>The level / XP line.</summary>
+    public string LevelText => _level.Text;
+    /// <summary>The focused creature's line ("" when none).</summary>
+    public string FocusText => _focus.Visible ? _focus.Text : "";
 
     private static Label MakeLabel(int size, Color c)
     {
@@ -54,6 +94,24 @@ public partial class PlainsHud : CanvasLayer
         return l;
     }
 
+    private Label Add(Label l, Vector2 pos) { l.Position = pos; _root.AddChild(l); return l; }
+
+    private Menu MakeMenu(string title, string help, Vector2 pos, Vector2 size)
+    {
+        var m = new Menu();
+        m.Box = new PanelContainer { Position = pos, Size = size, Visible = false };
+        m.Box.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = Panel, BorderColor = new Color("#4e3824"), BorderWidthBottom = 1, BorderWidthTop = 1, BorderWidthLeft = 1, BorderWidthRight = 1, ContentMarginLeft = 8, ContentMarginRight = 8, ContentMarginTop = 6, ContentMarginBottom = 6 });
+        var box = new VBoxContainer(); box.AddThemeConstantOverride("separation", 2);
+        m.Box.AddChild(box);
+        m.Title = MakeLabel(10, Text); m.Title.Text = title; box.AddChild(m.Title);
+        m.Header = MakeLabel(8, Dim); m.Header.AutowrapMode = TextServer.AutowrapMode.WordSmart; m.Header.CustomMinimumSize = new Vector2(size.X - 16, 0); box.AddChild(m.Header);
+        m.List = new VBoxContainer(); m.List.AddThemeConstantOverride("separation", 0); box.AddChild(m.List);
+        m.Detail = MakeLabel(8, Dim); m.Detail.AutowrapMode = TextServer.AutowrapMode.WordSmart; m.Detail.CustomMinimumSize = new Vector2(size.X - 16, 20); box.AddChild(m.Detail);
+        m.Help = MakeLabel(8, Dim); m.Help.Text = help; box.AddChild(m.Help);
+        _root.AddChild(m.Box);
+        return m;
+    }
+
     /// <inheritdoc />
     public override void _Ready()
     {
@@ -61,59 +119,114 @@ public partial class PlainsHud : CanvasLayer
         _root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(_root);
 
-        _hearts = new Control { Position = Vector2.Zero, Size = new Vector2(130, 40), MouseFilter = Control.MouseFilterEnum.Ignore };
-        _hearts.Draw += DrawLifeBar;
-        _root.AddChild(_hearts);
-        _life = MakeLabel(9, Text); _life.Position = new Vector2(97, 4); _root.AddChild(_life);
-        _hands = MakeLabel(9, Dim); _hands.Position = new Vector2(9, 18); _root.AddChild(_hands);
+        _bars = new Control { Size = new Vector2(220, 56), MouseFilter = Control.MouseFilterEnum.Ignore };
+        _bars.Draw += DrawBars;
+        _root.AddChild(_bars);
+        _life = Add(MakeLabel(8, Text), new Vector2(97, 0));
+        _vigor = Add(MakeLabel(8, Dim), new Vector2(97, 10));
+        _qi = Add(MakeLabel(8, Dim), new Vector2(97, 20));
+        _level = Add(MakeLabel(8, Text), new Vector2(9, 31));
+        _hands = Add(MakeLabel(8, Dim), new Vector2(9, 41));
 
-        _seed = MakeLabel(8, new Color(Dim, 0.75f));
-        _seed.HorizontalAlignment = HorizontalAlignment.Right;
-        _seed.Position = new Vector2(640 - 156, 3); _seed.Size = new Vector2(150, 12);
-        _root.AddChild(_seed);
+        _focus = Add(MakeLabel(9, Text), new Vector2(170, 3)); _focus.Size = new Vector2(300, 12); _focus.HorizontalAlignment = HorizontalAlignment.Center; _focus.Visible = false;
+        _focusBar = new Control { Position = new Vector2(259, 17), Size = new Vector2(122, 6), Visible = false, MouseFilter = Control.MouseFilterEnum.Ignore };
+        _focusBar.Draw += () =>
+        {
+            _focusBar.DrawRect(new Rect2(0, 0, 122, 6), OutlineC); _focusBar.DrawRect(new Rect2(1, 1, 120, 4), LifeBack);
+            _focusBar.DrawRect(new Rect2(1, 1, Mathf.Round(120 * _focusFrac), 4), Threat);
+        };
+        _root.AddChild(_focusBar);
 
-        _controls = MakeLabel(8, new Color(Text, 0.85f));
-        _controls.Position = new Vector2(6, 346);
-        _controls.Text = "WASD andar · Shift andar quieto · E pegar · I inventário · J/clique esq. corte · L/clique dir. passo";
-        _root.AddChild(_controls);
+        _seed = Add(MakeLabel(8, new Color(Dim, 0.75f)), new Vector2(640 - 156, 3));
+        _seed.HorizontalAlignment = HorizontalAlignment.Right; _seed.Size = new Vector2(150, 12);
 
-        _prompt = MakeLabel(8, Text); _prompt.Visible = false; _prompt.HorizontalAlignment = HorizontalAlignment.Center; _prompt.Size = new Vector2(160, 12);
-        _root.AddChild(_prompt);
+        _controls = Add(MakeLabel(8, new Color(Text, 0.85f)), new Vector2(6, 346));
+        _controls.Text = "WASD andar · Shift quieto · E pegar/examinar · I inventário · C ficha · Espaço focar · K esfolar com Qi · H erva · J/clique corte · L/clique dir. passo";
 
-        _toasts = new VBoxContainer { Position = new Vector2(170, 270), Size = new Vector2(300, 70), Alignment = BoxContainer.AlignmentMode.End, MouseFilter = Control.MouseFilterEnum.Ignore };
+        _prompt = Add(MakeLabel(8, Text), Vector2.Zero); _prompt.Visible = false; _prompt.HorizontalAlignment = HorizontalAlignment.Center; _prompt.Size = new Vector2(200, 12);
+
+        _toasts = new VBoxContainer { Position = new Vector2(120, 262), Size = new Vector2(400, 78), Alignment = BoxContainer.AlignmentMode.End, MouseFilter = Control.MouseFilterEnum.Ignore };
         _root.AddChild(_toasts);
 
-        _inv = new PanelContainer { Position = new Vector2(150, 40), Size = new Vector2(340, 250), Visible = false };
-        _inv.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = Panel, BorderColor = new Color("#4e3824"), BorderWidthBottom = 1, BorderWidthTop = 1, BorderWidthLeft = 1, BorderWidthRight = 1, ContentMarginLeft = 8, ContentMarginRight = 8, ContentMarginTop = 6, ContentMarginBottom = 6 });
-        var box = new VBoxContainer();
-        _inv.AddChild(box);
-        _invTitle = MakeLabel(10, Text); _invTitle.Text = "Inventário"; box.AddChild(_invTitle);
-        _invList = new VBoxContainer(); _invList.AddThemeConstantOverride("separation", 0); box.AddChild(_invList);
-        _invDetail = MakeLabel(8, Dim); _invDetail.AutowrapMode = TextServer.AutowrapMode.WordSmart; _invDetail.CustomMinimumSize = new Vector2(320, 24); box.AddChild(_invDetail);
-        var help = MakeLabel(8, Dim); help.Text = "W/S escolher · E usar, equipar ou fabricar · I fechar"; box.AddChild(help);
-        _root.AddChild(_inv);
+        _inv = MakeMenu("Inventário", "W/S escolher · E usar, equipar ou fabricar · I fechar", new Vector2(130, 30), new Vector2(380, 290));
+        _inv.Empty = "(vazio: procure sílex e galhos na margem do riacho)";
+        _sheet = MakeMenu("Ficha", "W/S escolher atributo · E gastar 1 ponto · C fechar", new Vector2(110, 22), new Vector2(420, 310));
+        _title = MakeMenu("SpiritOfMurin — Planície Verdejante", "W/S escolher · E ou Enter confirmar", new Vector2(170, 110), new Vector2(300, 130));
 
         _overlay = new ColorRect { Color = new Color(0, 0, 0, 0), MouseFilter = Control.MouseFilterEnum.Ignore };
         _overlay.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         _root.AddChild(_overlay);
-        _overlayText = MakeLabel(12, Text); _overlayText.HorizontalAlignment = HorizontalAlignment.Center; _overlayText.Position = new Vector2(0, 160); _overlayText.Size = new Vector2(640, 20);
+        _overlayText = Add(MakeLabel(12, Text), new Vector2(0, 160)); _overlayText.HorizontalAlignment = HorizontalAlignment.Center; _overlayText.Size = new Vector2(640, 20);
         _overlayText.Modulate = new Color(1, 1, 1, 0);
-        _root.AddChild(_overlayText);
+        _root.MoveChild(_title.Box, -1);
     }
+
+    // ------------------------------------------------------------------ corner
 
     /// <summary>Shows the seed in the corner.</summary>
     public void SetSeed(int seed) => _seed.Text = $"semente {seed}";
+
+    /// <summary>Vida as a whole percentage of the maximum (rounded up, so any life left shows at least 1%).</summary>
+    public static int LifePercent(float health, int max) => max <= 0 ? 0 : Mathf.Clamp(Mathf.CeilToInt(health / max * 100f - 0.001f), 0, 100);
 
     /// <summary>Updates Vida (current, maximum, still regenerating).</summary>
     public void SetHealth(float health, int max, float pending)
     {
         _health = health; _max = max; _pending = pending;
         _life.Text = $"Vida {LifePercent(health, max)}%" + (pending > 0.05f ? " +" : "");
-        _hearts.QueueRedraw();
+        _bars.QueueRedraw();
     }
+
+    /// <summary>Updates vigor and Qi.</summary>
+    public void SetEnergy(float vigor, float maxVigor, float qi, float maxQi)
+    {
+        _vig = vigor; _maxVig = maxVigor; _qiNow = qi; _maxQi = maxQi;
+        _vigor.Text = $"Vigor {Mathf.FloorToInt(vigor)}/{maxVigor:0}";
+        _qi.Text = $"Qi {Mathf.FloorToInt(qi)}/{maxQi:0}";
+        _bars.QueueRedraw();
+    }
+
+    /// <summary>Updates the level line.</summary>
+    public void SetLevel(int level, int xp, int need, int points) =>
+        _level.Text = $"Nv {level} · XP {xp}/{need} (faltam {need - xp})" + (points > 0 ? $" · {points} ponto{(points > 1 ? "s" : "")} (C)" : "");
 
     /// <summary>Shows what the hands hold.</summary>
     public void SetHands(string text) => _hands.Text = "Mãos: " + text;
+
+    /// <summary>Shows (null hides) the focused creature's line and health.</summary>
+    public void SetFocus(string? text, float healthFraction)
+    {
+        _focus.Visible = _focusBar.Visible = text != null;
+        if (text == null) return;
+        _focus.Text = text; _focusFrac = Mathf.Clamp(healthFraction, 0, 1); _focusBar.QueueRedraw();
+    }
+
+    private void Bar(float x, float y, float w, float h, float frac, Color back, Color fill, Color hi)
+    {
+        _bars.DrawRect(new Rect2(x - 1, y - 1, w + 2, h + 2), OutlineC);
+        _bars.DrawRect(new Rect2(x, y, w, h), back);
+        float f = Mathf.Round(w * Mathf.Clamp(frac, 0, 1));
+        if (f > 0) { _bars.DrawRect(new Rect2(x, y, f, h), fill); _bars.DrawRect(new Rect2(x, y, f, 1), hi); }
+    }
+
+    // bars in the style of the prototype's qi bar: ink backdrop, outline, dark trough, fill with a light top line;
+    // the Vida still coming from a herb shows as a green segment after the fill
+    private void DrawBars()
+    {
+        const float x = 10, w = 82;
+        _bars.DrawRect(new Rect2(4, 2, 210, 52), new Color(12 / 255f, 14 / 255f, 11 / 255f, 0.72f));
+        float k = _max <= 0 ? 0 : Mathf.Clamp(_health / _max, 0, 1);
+        Bar(x, 5, w, 5, k, LifeBack, Life, LifeHi);
+        if (_pending > 0.05f && _max > 0)
+        {
+            float fill = Mathf.Round(w * k), extra = Mathf.Round(w * Mathf.Clamp((_health + _pending) / _max, 0, 1)) - fill;
+            if (extra > 0) _bars.DrawRect(new Rect2(x + fill, 5, extra, 5), new Color(RegenC, 0.8f));
+        }
+        Bar(x, 15, w, 3, _maxVig <= 0 ? 0 : _vig / _maxVig, VigBack, Vig, VigHi);
+        Bar(x, 24, w, 4, _maxQi <= 0 ? 0 : _qiNow / _maxQi, QiBack, QiC, QiHi);
+    }
+
+    // ------------------------------------------------------------------ messages
 
     /// <summary>Shows (or hides, with null) the interaction prompt over a screen position.</summary>
     public void SetPrompt(string? text, Vector2 screen)
@@ -121,17 +234,18 @@ public partial class PlainsHud : CanvasLayer
         _prompt.Visible = text != null;
         if (text == null) return;
         _prompt.Text = text;
-        _prompt.Position = screen + new Vector2(-80, -40);
+        _prompt.Position = screen + new Vector2(-100, -40);
     }
 
     /// <summary>Adds a short message at the bottom of the screen.</summary>
     public void Toast(string text)
     {
         Messages.Add(text);
-        if (Messages.Count > 40) Messages.RemoveAt(0);
+        if (Messages.Count > 60) Messages.RemoveAt(0);
         var l = MakeLabel(9, Text); l.Text = text; l.HorizontalAlignment = HorizontalAlignment.Center;
+        l.AutowrapMode = TextServer.AutowrapMode.WordSmart; l.CustomMinimumSize = new Vector2(400, 0);
         _toasts.AddChild(l);
-        _toastLabels.Add((l, 2.8f));
+        _toastLabels.Add((l, 3.2f));
         while (_toastLabels.Count > 4) { _toastLabels[0].L.QueueFree(); _toastLabels.RemoveAt(0); }
     }
 
@@ -142,35 +256,59 @@ public partial class PlainsHud : CanvasLayer
         _overlay.Color = new Color(0, 0, 0, 1); _overlayText.Modulate = Colors.White;
     }
 
-    /// <summary>Opens or closes the inventory.</summary>
-    public void ShowInventory(bool open) { _inv.Visible = open; if (open) Selected = Mathf.Clamp(Selected, 0, Mathf.Max(0, Rows.Count - 1)); }
+    // ------------------------------------------------------------------ panels
 
-    /// <summary>Moves the selection.</summary>
-    public void MoveSelection(int d) { if (Rows.Count == 0) return; Selected = Mathf.PosMod(Selected + d, Rows.Count); RefreshInventory(); }
-
-    /// <summary>Rebuilds the inventory list from <paramref name="rows"/>.</summary>
-    public void SetRows(List<Row> rows)
+    private void Fill(Menu m, List<Row> rows)
     {
-        Rows.Clear(); Rows.AddRange(rows);
-        Selected = Mathf.Clamp(Selected, 0, Mathf.Max(0, Rows.Count - 1));
-        RefreshInventory();
+        m.Rows.Clear(); m.Rows.AddRange(rows);
+        m.Selected = Mathf.Clamp(m.Selected, 0, Mathf.Max(0, m.Rows.Count - 1));
+        Refresh(m);
     }
 
-    private void RefreshInventory()
+    private void Refresh(Menu m)
     {
-        foreach (var c in _invList.GetChildren()) c.QueueFree();
-        if (Rows.Count == 0) { var e = MakeLabel(9, Dim); e.Text = "(vazio: procure sílex e galhos na margem do riacho)"; _invList.AddChild(e); _invDetail.Text = ""; return; }
-        bool recipeHeader = false;
-        for (int i = 0; i < Rows.Count; i++)
+        foreach (var c in m.List.GetChildren()) c.QueueFree();
+        if (m.Rows.Count == 0) { var e = MakeLabel(9, Dim); e.Text = m.Empty; m.List.AddChild(e); if (m != _sheet) m.Detail.Text = ""; return; }
+        for (int i = 0; i < m.Rows.Count; i++)
         {
-            var r = Rows[i];
-            if (r.IsRecipe && !recipeHeader) { var h = MakeLabel(9, Dim); h.Text = "— Fabricar —"; _invList.AddChild(h); recipeHeader = true; }
-            var l = MakeLabel(9, i == Selected ? Select : r.Enabled ? Text : Disabled);
-            l.Text = (i == Selected ? "› " : "  ") + r.Text;
-            _invList.AddChild(l);
+            var r = m.Rows[i];
+            if (r.Group.Length > 0) { var h = MakeLabel(9, Dim); h.Text = $"— {r.Group} —"; m.List.AddChild(h); }
+            var l = MakeLabel(9, i == m.Selected ? Select : r.Enabled ? Text : Disabled);
+            l.Text = (i == m.Selected ? "› " : "  ") + r.Text;
+            m.List.AddChild(l);
         }
-        _invDetail.Text = Rows[Selected].Detail;
+        if (m != _sheet) m.Detail.Text = m.Rows[m.Selected].Detail;
     }
+
+    private static void Move(Menu m, int d) { if (m.Rows.Count > 0) m.Selected = Mathf.PosMod(m.Selected + d, m.Rows.Count); }
+
+    /// <summary>Opens or closes the inventory.</summary>
+    public void ShowInventory(bool open) { _inv.Box.Visible = open; if (open) Refresh(_inv); }
+    /// <summary>Moves the inventory selection.</summary>
+    public void MoveSelection(int d) { Move(_inv, d); Refresh(_inv); }
+    /// <summary>Rebuilds the inventory list.</summary>
+    public void SetRows(List<Row> rows) => Fill(_inv, rows);
+
+    /// <summary>Opens or closes the character sheet.</summary>
+    public void ShowSheet(bool open) { _sheet.Box.Visible = open; if (open) Refresh(_sheet); }
+    /// <summary>Moves the sheet selection.</summary>
+    public void MoveSheet(int d) { Move(_sheet, d); Refresh(_sheet); }
+    /// <summary>Rebuilds the sheet: header, attribute rows and the detail text (preview + proficiencies).</summary>
+    public void SetSheet(string title, string header, List<Row> rows, string detail)
+    {
+        _sheet.Title.Text = title; _sheet.Header.Text = header; Fill(_sheet, rows); _sheet.Detail.Text = detail;
+    }
+
+    /// <summary>Shows the title menu with its options and a message line (null hides it). The corner and the controls line hide behind it.</summary>
+    public void ShowTitle(List<Row>? options, string message = "", string title = "SpiritOfMurin — Planície Verdejante")
+    {
+        _title.Box.Visible = options != null;
+        foreach (var c in new Control[] { _bars, _life, _vigor, _qi, _level, _hands, _controls }) c.Visible = options == null;
+        if (options == null) return;
+        _title.Title.Text = title; _title.Header.Text = message; _title.Selected = 0; Fill(_title, options);
+    }
+    /// <summary>Moves the title selection.</summary>
+    public void MoveTitle(int d) { Move(_title, d); Refresh(_title); }
 
     /// <inheritdoc />
     public override void _Process(double delta)
@@ -188,33 +326,8 @@ public partial class PlainsHud : CanvasLayer
         {
             _overlayTime += dt;
             float a = _overlayTime < _overlayHold ? 1 : Mathf.Max(0, 1 - (_overlayTime - _overlayHold) / 1.2f);
-            _overlay.Color = new Color(0, 0, 0, a * 0.9f + (a > 0 ? 0.1f * a : 0));
+            _overlay.Color = new Color(0, 0, 0, a);
             _overlayText.Modulate = new Color(1, 1, 1, a);
         }
-    }
-
-    /// <summary>Vida as a whole percentage of the maximum (rounded up, so any life left shows at least 1%).</summary>
-    public static int LifePercent(float health, int max) => max <= 0 ? 0 : Mathf.Clamp(Mathf.CeilToInt(health / max * 100f - 0.001f), 0, 100);
-
-    /// <summary>The Vida text currently shown.</summary>
-    public string LifeText => _life.Text;
-
-    private static readonly Color LifeHi = new("#b0574a"), LifeBack = new("#2b1f1a"), RegenC = new("#4c7c4a");
-
-    // a bar in the same style as the prototype's qi bar: ink backdrop, outline, dark trough, fill with a light top line;
-    // the Vida still coming from a herb shows as a green segment after the fill
-    private void DrawLifeBar()
-    {
-        const float x = 10, y = 7, w = 82, h = 5;
-        _hearts.DrawRect(new Rect2(4, 3, 126, 28), new Color(12 / 255f, 14 / 255f, 11 / 255f, 0.72f));
-        _hearts.DrawRect(new Rect2(x - 1, y - 1, w + 2, h + 2), OutlineC);
-        _hearts.DrawRect(new Rect2(x, y, w, h), LifeBack);
-        float k = _max <= 0 ? 0 : Mathf.Clamp(_health / _max, 0, 1), fill = Mathf.Round(w * k);
-        if (_pending > 0.05f)
-        {
-            float extra = Mathf.Round(w * Mathf.Clamp((_health + _pending) / _max, 0, 1)) - fill;
-            if (extra > 0) _hearts.DrawRect(new Rect2(x + fill, y, extra, h), new Color(RegenC, 0.8f));
-        }
-        if (fill > 0) { _hearts.DrawRect(new Rect2(x, y, fill, h), Life); _hearts.DrawRect(new Rect2(x, y, fill, 1), LifeHi); }
     }
 }

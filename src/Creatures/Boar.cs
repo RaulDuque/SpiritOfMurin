@@ -28,6 +28,14 @@ public partial class Boar : CharacterBody2D, IHittable
     /// <inheritdoc />
     public bool CanBeHit => Brain.State != BoarState.Dead;
     /// <inheritdoc />
+    public string Kind => "boar";
+    /// <inheritdoc />
+    public int Level { get; set; } = 3;
+    /// <inheritdoc />
+    public int HealthLeft => Brain.Health;
+    /// <inheritdoc />
+    public int HealthMax => Tuning.Health;
+    /// <inheritdoc />
     public event Action<IHittable, Vector2>? Died;
     /// <summary>Raised when a hit glances off the hide (warning or charge).</summary>
     public event Action<Boar>? Deflected;

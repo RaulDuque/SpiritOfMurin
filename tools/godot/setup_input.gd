@@ -18,7 +18,8 @@ func mouse(button: MouseButton) -> InputEventMouseButton:
 func _init() -> void:
 	# The HTML prototype's defaults: WASD (and arrows) to walk, J or left click to cut,
 	# L or right click to step, K for the qi wave, Space to lock, E to examine / pick up,
-	# I or Tab for the inventory, Shift to sneak (walk quietly).
+	# I or Tab for the inventory, Shift to sneak (walk quietly), C for the character sheet,
+	# H to use a herb from the bag. K (qi) skins with Qi, Space (lock) focuses an animal.
 	var actions := {
 		"move_up": [key(KEY_W), key(KEY_UP)],
 		"move_down": [key(KEY_S), key(KEY_DOWN)],
@@ -31,6 +32,8 @@ func _init() -> void:
 		"use": [key(KEY_E)],
 		"inventory": [key(KEY_I), key(KEY_TAB)],
 		"sneak": [key(KEY_SHIFT)],
+		"sheet": [key(KEY_C)],
+		"heal": [key(KEY_H)],
 	}
 	for name in actions:
 		ProjectSettings.set_setting("input/" + name, {"deadzone": 0.2, "events": actions[name]})

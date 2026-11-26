@@ -19,6 +19,14 @@ public interface IHittable
     HitResult ReceiveHit(int damage);
     /// <summary>Raised when it dies, with where it fell.</summary>
     event Action<IHittable, Vector2>? Died;
+    /// <summary>Kind for data lookups ("rabbit", "boar").</summary>
+    string Kind { get; }
+    /// <summary>Its level (fixed for the seed and its id).</summary>
+    int Level { get; }
+    /// <summary>Remaining hits it can take.</summary>
+    int HealthLeft { get; }
+    /// <summary>Hits it had at full health.</summary>
+    int HealthMax { get; }
 }
 
 /// <summary>
@@ -43,6 +51,14 @@ public partial class Rabbit : CharacterBody2D, IHittable
     public float BodyRadius => Tuning.BodyRadius;
     /// <inheritdoc />
     public bool CanBeHit => Brain.Visible;
+    /// <inheritdoc />
+    public string Kind => "rabbit";
+    /// <inheritdoc />
+    public int Level { get; set; } = 1;
+    /// <inheritdoc />
+    public int HealthLeft => Brain.Health;
+    /// <inheritdoc />
+    public int HealthMax => Tuning.Health;
     /// <inheritdoc />
     public event Action<IHittable, Vector2>? Died;
 

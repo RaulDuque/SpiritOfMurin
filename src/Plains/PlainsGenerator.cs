@@ -11,7 +11,7 @@ public enum TileKind { Grass, Bank, Water, Ford, BushGrass, Mud }
 public enum Habitat { Grass, Bank, Water, Bushes, Mud }
 
 /// <summary>The kinds of generated objects.</summary>
-public enum FeatureKind { Flint, Branch, Pine, Boulder, Bush, Burrow, Rooted, Herb, Root, Boar }
+public enum FeatureKind { Flint, Branch, Pine, Boulder, Bush, Burrow, Rooted, Herb, Root, Boar, Track, Campfire, MeditationMat }
 
 /// <summary>
 /// One generated object. <see cref="Id"/> is stable for a seed: the same kind on the same tile
@@ -23,7 +23,9 @@ public enum FeatureKind { Flint, Branch, Pine, Boulder, Bush, Burrow, Rooted, He
 /// <param name="Tile">The tile that owns it (decides its chunk).</param>
 /// <param name="Position">World position in pixels (its foot).</param>
 /// <param name="Variation">Seeded number for small visual variations.</param>
-public readonly record struct Feature(string Id, FeatureKind Kind, Vector2I Tile, Vector2 Position, int Variation);
+/// <param name="Dir">For a track: the direction it leads (toward the animal).</param>
+/// <param name="Link">For a track: "trail id|creature id" (the trail it belongs to and the animal it leads to).</param>
+public readonly record struct Feature(string Id, FeatureKind Kind, Vector2I Tile, Vector2 Position, int Variation, Vector2 Dir = default, string Link = "");
 
 /// <summary>The ground and objects of one chunk.</summary>
 public sealed class ChunkData
@@ -195,6 +197,8 @@ public sealed class PlainsGenerator
     {
         int BankTile(int ty) => Mathf.FloorToInt(CreekX(ty) - Settings.CreekHalfWidth - 1f);
         Vector2 mid = new(16, 20);
+        Force(2, 1, FeatureKind.Campfire, mid); // east side of the clearing: the guaranteed trails leave to the west
+        Force(1, -2, FeatureKind.MeditationMat, mid);
         Force(BankTile(-1), -1, FeatureKind.Flint, mid);
         Force(BankTile(-4), -4, FeatureKind.Flint, mid);
         Force(BankTile(2), 2, FeatureKind.Branch, mid);
@@ -229,7 +233,11 @@ public sealed class PlainsGenerator
         if (_forced.TryGetValue(new Vector2I(tx, ty), out var forced))
         {
             foreach (var (kind, off) in forced)
-                yield return new Feature($"{Short(kind)}@{tx},{ty}", kind, new Vector2I(tx, ty), origin + off, variation);
+            {
+                var f = new Feature($"{Short(kind)}@{tx},{ty}", kind, new Vector2I(tx, ty), origin + off, variation);
+                yield return f;
+                foreach (var t in Trail(f)) yield return t;
+            }
             yield break;
         }
         var tile = TileAt(tx, ty);
@@ -246,11 +254,46 @@ public sealed class PlainsGenerator
         }
         if (pick is not { } k) yield break;
         var pos = origin + new Vector2(6 + Rand01(tx, ty, 11) * 14, 14 + Rand01(tx, ty, 12) * 14);
-        yield return new Feature($"{Short(k)}@{tx},{ty}", k, new Vector2I(tx, ty), pos, variation);
+        var main = new Feature($"{Short(k)}@{tx},{ty}", k, new Vector2I(tx, ty), pos, variation);
+        yield return main;
+        foreach (var t in Trail(main)) yield return t;
         if (k == FeatureKind.Boulder && Rand01(tx, ty, 13) < Settings.HerbNearBoulder)
             yield return new Feature($"herb@{tx},{ty}", FeatureKind.Herb, new Vector2I(tx, ty), pos + new Vector2(15, 3), variation);
         if (k == FeatureKind.Rooted && Rand01(tx, ty, 14) < Settings.RootInRooted)
             yield return new Feature($"root@{tx},{ty}", FeatureKind.Root, new Vector2I(tx, ty), pos + new Vector2(3, -2), variation);
+    }
+
+    /// <summary>The creature id an animal feature (burrow or boar spot) spawns.</summary>
+    public static string CreatureIdOf(Feature f) => (f.Kind == FeatureKind.Boar ? "boar" : "rabbit") + $"@{f.Tile.X},{f.Tile.Y}";
+
+    // A trail of prints leading to a burrow or a boar's spot. The guaranteed burrow and boar get one that
+    // starts at the edge of the clearing; other animals get one with trail_chance, from a seeded direction.
+    // The prints belong to the animal's tile (and chunk), so they come and go with it.
+    private IEnumerable<Feature> Trail(Feature animal)
+    {
+        if (animal.Kind is not (FeatureKind.Burrow or FeatureKind.Boar)) yield break;
+        var s = Settings;
+        Vector2 target = animal.Position, start;
+        var anchor = animal.Kind == FeatureKind.Burrow ? BushAnchor : MudAnchor;
+        bool guaranteed = animal.Tile == new Vector2I(Mathf.RoundToInt(anchor.X), Mathf.RoundToInt(anchor.Y));
+        if (guaranteed)
+            start = StartPixel + (target - StartPixel).Normalized() * (s.ClearingRadius - 0.6f) * s.TileSize; // inside the empty clearing
+        else
+        {
+            if (Rand01(animal.Tile.X, animal.Tile.Y, 40) >= s.TrailChance) yield break;
+            float ang = Rand01(animal.Tile.X, animal.Tile.Y, 41) * Mathf.Tau;
+            float len = Mathf.Lerp(s.TrailMinTiles, s.TrailMaxTiles, Rand01(animal.Tile.X, animal.Tile.Y, 42)) * s.TileSize;
+            start = target + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * len;
+        }
+        Vector2 dir = (target - start).Normalized();
+        Vector2 end = target - dir * 20f;
+        int n = Mathf.Max(2, Mathf.FloorToInt(start.DistanceTo(end) / s.TrailSpacing));
+        string trail = $"trail@{animal.Tile.X},{animal.Tile.Y}", link = trail + "|" + CreatureIdOf(animal);
+        for (int i = 0; i <= n; i++)
+        {
+            Vector2 side = new Vector2(-dir.Y, dir.X) * (i % 2 == 0 ? 3f : -3f);
+            yield return new Feature($"track@{animal.Tile.X},{animal.Tile.Y}#{i}", FeatureKind.Track, animal.Tile, start.Lerp(end, (float)i / n) + side, animal.Variation + i, dir, link);
+        }
     }
 
     // ------------------------------------------------------------------ chunks

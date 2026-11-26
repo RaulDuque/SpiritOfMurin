@@ -7,7 +7,7 @@ namespace SpiritOfMurin.Plains;
 /// What changed in the generated world during this play session, keyed by the generator's stable
 /// ids: objects collected, animals killed (with where their carcass lies) and carcass parts taken.
 /// Chunks consult it when they are built again, so leaving a chunk and coming back keeps every change.
-/// Lives for the session only (saving comes in a later delivery).
+/// Saved when meditating (see <c>SaveGame</c>).
 /// </summary>
 public sealed class WorldState
 {
@@ -35,4 +35,25 @@ public sealed class WorldState
 
     /// <summary>Marks a carcass part taken. Returns false when it already was.</summary>
     public bool MarkPartTaken(string creatureId, string part) => _partsTaken.Add(creatureId + "#" + part);
+
+    private readonly HashSet<string> _trails = new();
+
+    /// <summary>Marks a trail examined. Returns false when it already was (no second practice or XP).</summary>
+    public bool MarkTrailExamined(string trailId) => _trails.Add(trailId);
+
+    /// <summary>True when the trail was examined.</summary>
+    public bool IsTrailExamined(string trailId) => _trails.Contains(trailId);
+
+    /// <summary>Saved form of everything this state holds.</summary>
+    public (List<string> Collected, Dictionary<string, Vector2> Dead, List<string> Parts, List<string> Trails) Snapshot() =>
+        (new(_collected), new(_dead), new(_partsTaken), new(_trails));
+
+    /// <summary>Restores a saved state (replacing everything).</summary>
+    public void Restore(IEnumerable<string> collected, IDictionary<string, Vector2> dead, IEnumerable<string> parts, IEnumerable<string> trails)
+    {
+        _collected.Clear(); foreach (var c in collected) _collected.Add(c);
+        _dead.Clear(); foreach (var (k, v) in dead) _dead[k] = v;
+        _partsTaken.Clear(); foreach (var p in parts) _partsTaken.Add(p);
+        _trails.Clear(); foreach (var t in trails) _trails.Add(t);
+    }
 }

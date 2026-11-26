@@ -86,6 +86,14 @@ public sealed class PlainsGenSettings
     public float HerbNearBoulder { get; set; } = 0.75f;
     /// <summary>Chance of a Raiz Amarga in each rooted patch.</summary>
     public float RootInRooted { get; set; } = 0.8f;
+    /// <summary>Chance that an animal away from the start leaves a trail of prints.</summary>
+    public float TrailChance { get; set; } = 0.6f;
+    /// <summary>Shortest random trail, in tiles.</summary>
+    public float TrailMinTiles { get; set; } = 4f;
+    /// <summary>Longest random trail, in tiles.</summary>
+    public float TrailMaxTiles { get; set; } = 7f;
+    /// <summary>Pixels between prints.</summary>
+    public float TrailSpacing { get; set; } = 22f;
 
     /// <summary>The JSON options for the data files: snake_case keys, comments and a "_doc" block ignored.</summary>
     public static readonly JsonSerializerOptions Json = new()

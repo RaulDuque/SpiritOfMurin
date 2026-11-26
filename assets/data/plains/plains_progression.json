@@ -1,0 +1,71 @@
+{
+  "_doc": {
+    "about": "Progressão da Planície: nível e XP do personagem, atributos, vigor e Qi, proficiências, níveis das criaturas e materiais por grau. Lido por src/Progression/ProgressionData.cs. Esquema e fórmulas em design/gdd/plains-progression.md.",
+    "xp_base / xp_growth": "XP para ir do nível L ao L+1 = round(xp_base * xp_growth^(L-1))",
+    "points_per_level": "pontos de atributo ganhos a cada nível",
+    "xp": "XP por ação: caça por nível da criatura, primeira fabricação de cada receita, primeira pista de cada trilha, cada planta nova, cada carne assada, cada prática nova de proficiência",
+    "level_diff_step / level_diff_min / level_diff_max": "multiplicador de XP da caça = clamp(1 + level_diff_step * (nível da criatura - nível do personagem), min, max)",
+    "base": "valores do personagem de nível 1 (a Vida e a velocidade vêm do PlayerTuning.tres)",
+    "per_point": "efeito de cada ponto investido em cada atributo",
+    "skills.<id>.thresholds": "prática acumulada para chegar aos graus 1, 2 e 3",
+    "creatures.<id>": "faixa de nível e o efeito de cada nível acima do mínimo"
+  },
+  "xp_base": 20,
+  "xp_growth": 1.5,
+  "points_per_level": 2,
+  "xp": {
+    "hunt_per_level": { "rabbit": 6, "boar": 9 },
+    "first_craft": 5,
+    "trail_examined": 3,
+    "herb_harvested": 1,
+    "meat_cooked": 2,
+    "practice": 1
+  },
+  "level_diff_step": 0.15,
+  "level_diff_min": 0.4,
+  "level_diff_max": 1.6,
+  "base": {
+    "max_vigor": 50,
+    "vigor_regen": 14,
+    "vigor_regen_delay": 0.6,
+    "step_vigor_cost": 12,
+    "cut_vigor_cost": 3,
+    "max_qi": 100,
+    "qi_regen": 0.5,
+    "qi_preserve_cost": 15,
+    "secondary_chance": 0.10,
+    "medicine_potency": 1.0
+  },
+  "per_point": {
+    "vit_max_health": 2,
+    "int_medicine_potency": 0.12,
+    "con_max_vigor": 10,
+    "con_vigor_regen": 0.10,
+    "agi_move_speed": 0.04,
+    "agi_step_distance": 0.05,
+    "agi_recovery": 0.05,
+    "agi_cap": 0.40,
+    "sor_secondary_chance": 0.05,
+    "qi_max_qi": 15
+  },
+  "skills": {
+    "esfolar":     { "name": "Esfolar",         "thresholds": [1, 4, 9] },
+    "preparo":     { "name": "Preparo de Caça", "thresholds": [1, 4, 9] },
+    "erboristeria":{ "name": "Erboristeria",    "thresholds": [2, 5, 10] },
+    "rastreamento":{ "name": "Rastreamento",    "thresholds": [1, 3, 6] }
+  },
+  "grade_names": ["Bruto", "Iniciante", "Adepto", "Mestre"],
+  "hides": {
+    "rabbit": ["pele_rasgada", "pele_comum", "pele_fina", "pele_fina"],
+    "boar":   ["couro_rasgado", "couro_comum", "couro_grosso", "couro_grosso"]
+  },
+  "spiritual": { "boar": { "part": "presas", "item": "presa_espiritual" } },
+  "meat_extra_grade": 2,
+  "cooked_vigor_bonus_per_grade": 0.25,
+  "herb_quality": ["grama_sangue_q0", "grama_sangue_q1", "grama_sangue_q2", "grama_sangue_q3"],
+  "creatures": {
+    "rabbit": { "name": "Coelho de Campo", "temper": "Arisco",      "min_level": 1, "max_level": 2, "hearing_per_level": 0.12, "speed_per_level": 0.08, "health_per_level": 0, "damage_per_level": 0 },
+    "boar":   { "name": "Javali da Mata",  "temper": "Territorial", "min_level": 3, "max_level": 5, "hearing_per_level": 0.0,  "speed_per_level": 0.06, "health_per_level": 1, "damage_per_level": 0.5 }
+  },
+  "secondary": { "rabbit": "tendao", "boar": "tendao", "herb": "extra", "flint": "extra" }
+}

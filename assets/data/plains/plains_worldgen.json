@@ -11,7 +11,8 @@
     "anchor_*": "garantia do início: um campo de arbustos e um lamaçal centrados a esta distância e ângulo (graus, 0 = leste, 90 = sul) do despertar",
     "per_habitat": "probabilidade por tile de cada objeto em cada habitat",
     "herb_near_boulder": "chance de uma Grama Sangue-de-Coelho junto a cada pedra",
-    "root_in_rooted": "chance de uma Raiz Amarga em cada terra revirada"
+    "root_in_rooted": "chance de uma Raiz Amarga em cada terra revirada",
+    "trail_*": "pegadas: chance de um animal longe do início deixar trilha, comprimento mínimo e máximo (tiles) e distância entre pegadas (px). O coelho e o javali garantidos sempre têm trilha saindo da clareira"
   },
   "chunk_tiles": 16,
   "tile_size": 32,
@@ -43,5 +44,9 @@
     "mud":    { "flint": 0.0,   "branch": 0.0,   "pine": 0.0,   "boulder": 0.01,  "bush": 0.02, "burrow": 0.0,   "rooted": 0.035, "boar": 0.006 }
   },
   "herb_near_boulder": 0.75,
-  "root_in_rooted": 0.8
+  "root_in_rooted": 0.8,
+  "trail_chance": 0.6,
+  "trail_min_tiles": 4.0,
+  "trail_max_tiles": 7.0,
+  "trail_spacing": 22.0
 }

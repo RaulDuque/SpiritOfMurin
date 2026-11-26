@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Godot;
 using SpiritOfMurin.Characters;
 using SpiritOfMurin.Creatures;
+using SpiritOfMurin.Progression;
 using SpiritOfMurin.World;
 
 namespace SpiritOfMurin.Plains;
@@ -31,8 +32,11 @@ public partial class PlainsWorld : Node2D
     /// <summary>Rabbit tuning.</summary>
     public RabbitTuning RabbitTuning { get; set; } = new();
 
-    /// <summary>Boar tuning.</summary>
+    /// <summary>Boar tuning (level-1 of the kind's range; each animal gets a copy scaled to its level).</summary>
     public BoarTuning BoarTuning { get; set; } = new();
+
+    /// <summary>Progression data (creature levels); null keeps every animal at its base tuning.</summary>
+    public ProgressionData? Progression { get; set; }
 
     /// <summary>Raised when an animal spawned by a chunk dies.</summary>
     public event Action<IHittable, Vector2>? CreatureDied;
@@ -147,8 +151,11 @@ public partial class PlainsWorld : Node2D
         _ => null,
     };
 
-    /// <summary>Parts a carcass yields, by animal kind.</summary>
-    public static List<string> PartsOf(bool boar) => boar ? new() { "carne_rija", "couro_grosso" } : new() { "carne_macia", "pele_fina" };
+    /// <summary>Parts a carcass yields, by animal kind, each taken once: hide (Esfolar), meat (Preparo de Caça) and, for the boar, tusks.</summary>
+    public static List<string> PartsOf(bool boar) => boar ? new() { "hide", "meat", "tusks" } : new() { "hide", "meat" };
+
+    /// <summary>The level of the animal with that id (fixed for the seed).</summary>
+    public int LevelOf(string kind, string creatureId) => Progression == null ? (kind == "boar" ? 3 : 1) : HarvestRules.CreatureLevel(Progression, Gen.Seed, kind, creatureId);
 
     private Node? MakeNode(Feature f)
     {
@@ -163,6 +170,16 @@ public partial class PlainsWorld : Node2D
                 return new Obstacle { Type = Obstacle.Kind.Boulder, Variation = f.Variation, Position = f.Position, Name = Safe(f.Id) };
             case FeatureKind.Bush:
                 return new Obstacle { Type = Obstacle.Kind.Bush, Variation = f.Variation, Position = f.Position, Name = Safe(f.Id) };
+            case FeatureKind.Track:
+            {
+                var parts = f.Link.Split('|');
+                int idx = int.Parse(f.Id[(f.Id.IndexOf('#') + 1)..]);
+                return new TrackPrint { FeatureId = f.Id, TrailId = parts[0], CreatureId = parts.Length > 1 ? parts[1] : "", Index = idx, Dir = f.Dir, Position = f.Position, ZIndex = -5, Name = Safe(f.Id).Replace('#', '_') };
+            }
+            case FeatureKind.Campfire:
+                return new Campfire { Position = f.Position, Name = "Campfire" };
+            case FeatureKind.MeditationMat:
+                return new MeditationMat { Position = f.Position, Name = "MeditationMat", ZIndex = -4 };
             case FeatureKind.Burrow:
                 return Creature($"rabbit@{f.Tile.X},{f.Tile.Y}", false, f);
             case FeatureKind.Boar:
@@ -182,9 +199,12 @@ public partial class PlainsWorld : Node2D
             if (parts.Count == 0) return null;
             return new Carcass { CreatureId = id, IsBoar = boar, Parts = parts, Position = at, Name = Safe(id) + "_carcass" };
         }
+        int level = LevelOf(boar ? "boar" : "rabbit", id);
+        CreatureDef? def = null;
+        Progression?.Creatures.TryGetValue(boar ? "boar" : "rabbit", out def);
         Node2D n = boar
-            ? new Boar { CreatureId = id, Tuning = BoarTuning, Target = Player, HomeAt = f.Position, Variation = f.Variation, Position = f.Position, Name = Safe(id) }
-            : new Rabbit { CreatureId = id, Tuning = RabbitTuning, Target = Player, BurrowAt = f.Position, Variation = f.Variation, Position = f.Position + new Vector2(14, 6), Name = Safe(id) };
+            ? new Boar { CreatureId = id, Level = level, Tuning = def == null ? BoarTuning : CreatureLevels.Boar(BoarTuning, def, level), Target = Player, HomeAt = f.Position, Variation = f.Variation, Position = f.Position, Name = Safe(id) }
+            : new Rabbit { CreatureId = id, Level = level, Tuning = def == null ? RabbitTuning : CreatureLevels.Rabbit(RabbitTuning, def, level), Target = Player, BurrowAt = f.Position, Variation = f.Variation, Position = f.Position + new Vector2(14, 6), Name = Safe(id) };
         ((IHittable)n).Died += OnDied;
         CreatureSpawned?.Invoke(n);
         return n;
