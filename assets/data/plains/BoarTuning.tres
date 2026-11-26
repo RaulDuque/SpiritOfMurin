@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BoarTuning" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/Creatures/BoarTuning.cs" id="1_t"]
+
+[resource]
+script = ExtResource("1_t")
+WarnTime = 0.8
+TrackFraction = 0.55
+ChargeSpeed = 240.0
+ChargeDistance = 170.0
+RecoverTime = 1.0
+Cooldown = 0.35
+AggroRadius = 110.0
+LeashRadius = 260.0
+ChargeHitRadius = 15.0
+ContactDamage = 2
+Health = 5
+WanderSpeed = 16.0
+ReturnSpeed = 50.0
+BodyRadius = 10.0
+HitFlinch = 0.15

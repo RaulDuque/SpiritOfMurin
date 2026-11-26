@@ -8,7 +8,7 @@ using SpiritOfMurin.Scenes;
 namespace SpiritOfMurin.Tests;
 
 /// <summary>
-/// Integration check for the engine base: loads the main scene and drives it through Godot's
+/// Integration check for the engine base (the sword test field, src/Main/Main.tscn): loads it and drives it through Godot's
 /// own input pipeline (Input.ParseInputEvent with keys and mouse buttons), then checks movement,
 /// facing, the cut chain, the step, that the cut follows the facing and that the camera follows.
 /// Run: <c>godot --headless --path . res://tests/integration/ControlsCheck.tscn</c>

@@ -27,6 +27,8 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-25 | [2026-11-25-passar-atras-do-cenario.md](2026-11-25-passar-atras-do-cenario.md) | Colisão só na base de pedras soltas, pinheiros e bambus; silhueta do personagem atrás do cenário; testes e regressões |
 | 2026-11-25 | [2026-11-25-godot-base.md](2026-11-25-godot-base.md) | Base no Godot 4.7.2 com C#: versões, caminho do project.godot, controles (WASD, J/clique esq., L/clique dir.), câmera, testes 14/14 e como abrir com F5 |
 | 2026-11-25 | [prompts/07-setup-engine-godot.md](prompts/07-setup-engine-godot.md) | Pedido do criador para o /setup-engine com Godot e C# (texto integral) |
+| 2026-11-26 | [2026-11-26-planicie-primeiro-trecho.md](2026-11-26-planicie-primeiro-trecho.md) | Primeiro trecho jogável da Planície Verdejante no Godot: mundo por semente em blocos, coleta, faca de pedra, coelho, javali, ervas, barra de Vida em %, testes em duas sementes, testes no monitor 2, captura ampla e vídeo do javali, como jogar pelo F5 |
+| 2026-11-26 | [prompts/08-planicie-primeiro-trecho.md](prompts/08-planicie-primeiro-trecho.md) | Pedido do criador para o primeiro trecho da Planície (texto integral) |
 
 ## Prompts de imagem do criador
 

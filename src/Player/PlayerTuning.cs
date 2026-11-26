@@ -42,4 +42,49 @@ public partial class PlayerTuning : Resource
 
     /// <summary>Duration in seconds of the plain step (prototype: short_step_time).</summary>
     [Export] public float StepTime { get; set; } = 0.16f;
+
+    /// <summary>Hit reach of the sword's blade from the feet, pixels.</summary>
+    [Export] public float SwordReach { get; set; } = 34f;
+
+    /// <summary>Damage of a sword cut.</summary>
+    [Export] public int SwordDamage { get; set; } = 2;
+
+    /// <summary>Seconds before the stone knife is live: shorter than the sword.</summary>
+    [Export] public float KnifeStartup { get; set; } = 0.05f;
+
+    /// <summary>Seconds the stone knife is live.</summary>
+    [Export] public float KnifeActive { get; set; } = 0.07f;
+
+    /// <summary>Seconds after the stone knife's cut.</summary>
+    [Export] public float KnifeRecovery { get; set; } = 0.15f;
+
+    /// <summary>Seconds into a knife cut when the next cut or a step may cancel it.</summary>
+    [Export] public float KnifeCancelAt { get; set; } = 0.11f;
+
+    /// <summary>Pixels the body moves forward on a knife cut.</summary>
+    [Export] public float KnifeLunge { get; set; } = 4f;
+
+    /// <summary>Hit reach of the stone knife from the feet, pixels (short: you must get close).</summary>
+    [Export] public float KnifeReach { get; set; } = 22f;
+
+    /// <summary>Damage of a knife cut.</summary>
+    [Export] public int KnifeDamage { get; set; } = 1;
+
+    /// <summary>Longest knife chain (the sword chains 3).</summary>
+    [Export] public int KnifeMaxChain { get; set; } = 2;
+
+    /// <summary>Half angle of the cut's arc, degrees: a target must be within it, in front.</summary>
+    [Export] public float HitArcDegrees { get; set; } = 75f;
+
+    /// <summary>Walking speed factor while sneaking (Shift): slower and much quieter.</summary>
+    [Export] public float SneakFactor { get; set; } = 0.45f;
+
+    /// <summary>Maximum Vida (life points; 2 per heart drawn).</summary>
+    [Export] public int MaxHealth { get; set; } = 10;
+
+    /// <summary>Seconds of invulnerability after being hurt.</summary>
+    [Export] public float HurtInvulnerability { get; set; } = 0.7f;
+
+    /// <summary>Pixels the body is pushed when hurt.</summary>
+    [Export] public float HurtKnockback { get; set; } = 26f;
 }

@@ -1,0 +1,25 @@
+{
+  "_doc": {
+    "about": "Itens e receitas da Planície. Lido por src/Items/ItemCatalog.cs. Esquema em design/gdd/plains-first-stretch.md.",
+    "items.<id>.name": "nome mostrado ao jogador",
+    "items.<id>.description": "frase curta do inventário",
+    "items.<id>.equip": "arma que o item equipa: knife (faca) ou vazio",
+    "items.<id>.regen_amount / regen_seconds": "ao usar: pontos de Vida recuperados aos poucos ao longo destes segundos",
+    "items.<id>.heal_now": "ao usar: pontos de Vida recuperados na hora",
+    "recipes[].inputs": "materiais consumidos (id: quantidade), uma vez por fabricação"
+  },
+  "items": {
+    "silex":        { "name": "Sílex", "description": "Pedra que lasca com gume." },
+    "galho_rijo":   { "name": "Galho Rijo", "description": "Madeira seca e firme, boa para cabo." },
+    "faca_pedra":   { "name": "Faca de Pedra", "description": "Lasca de sílex amarrada num galho. Corte curto.", "equip": "knife" },
+    "grama_sangue": { "name": "Grama Sangue-de-Coelho", "description": "Nervuras vermelhas. Mastigada, fecha feridas aos poucos.", "regen_amount": 4, "regen_seconds": 6.0 },
+    "raiz_amarga":  { "name": "Raiz Amarga", "description": "Cresce onde o javali fuça. Amarga; dá um alívio rápido.", "heal_now": 1 },
+    "carne_macia":  { "name": "Carne Macia", "description": "Carne de coelho." },
+    "pele_fina":    { "name": "Pele Fina", "description": "Pele de coelho. Rasga com facilidade." },
+    "carne_rija":   { "name": "Carne Rija", "description": "Carne de javali." },
+    "couro_grosso": { "name": "Couro Grosso", "description": "Couro de javali, duro e espesso." }
+  },
+  "recipes": [
+    { "id": "faca_pedra", "output": "faca_pedra", "count": 1, "inputs": { "silex": 1, "galho_rijo": 1 } }
+  ]
+}

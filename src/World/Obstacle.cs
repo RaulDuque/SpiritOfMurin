@@ -10,7 +10,7 @@ namespace SpiritOfMurin.World;
 public partial class Obstacle : StaticBody2D
 {
     /// <summary>The kinds of tall scenery the base scene uses.</summary>
-    public enum Kind { Pine, Boulder, Bamboo }
+    public enum Kind { Pine, Boulder, Bamboo, Bush }
 
     /// <summary>What this obstacle is.</summary>
     [Export] public Kind Type { get; set; } = Kind.Pine;
@@ -21,12 +21,12 @@ public partial class Obstacle : StaticBody2D
     private float _time;
 
     // base collision boxes (half width, height), the HTML prototype's BASE values
-    private static readonly (float HalfWidth, float Height) PineBase = (7, 11), BoulderBase = (12, 13), BambooBase = (16, 7);
+    private static readonly (float HalfWidth, float Height) PineBase = (7, 11), BoulderBase = (12, 13), BambooBase = (16, 7), BushBase = (9, 6);
 
     /// <inheritdoc />
     public override void _Ready()
     {
-        var (hw, h) = Type switch { Kind.Pine => PineBase, Kind.Boulder => BoulderBase, _ => BambooBase };
+        var (hw, h) = Type switch { Kind.Pine => PineBase, Kind.Boulder => BoulderBase, Kind.Bush => BushBase, _ => BambooBase };
         AddChild(new CollisionShape2D { Shape = new RectangleShape2D { Size = new Vector2(hw * 2, h) }, Position = new Vector2(0, -h / 2) });
     }
 
@@ -47,6 +47,7 @@ public partial class Obstacle : StaticBody2D
         {
             case Kind.Pine: DrawPine(hv); break;
             case Kind.Boulder: DrawBoulder(hv); break;
+            case Kind.Bush: DrawBush(hv); break;
             default: DrawBamboo(hv); break;
         }
     }
@@ -104,5 +105,23 @@ public partial class Obstacle : StaticBody2D
             float sway = Mathf.Round(Mathf.Sin(_time * 1.5f + h2) * 1.5f);
             Fill(bx - 4 + sway, -ht + 2, 5, 2, leaf); Fill(bx + 2 + sway, -ht + 6, 6, 2, leaf); Fill(bx - 3 + sway, -ht + 11, 4, 1, leaf);
         }
+    }
+
+    private void DrawBush(int hv)
+    {
+        Color dark = new("#2f4a2c"), mid = new("#456a3a"), hi = new("#5f8a4a"), berry = new("#7a3a32");
+        Fill(-13, -4, 26, 5, Shadow);
+        int sway = Mathf.RoundToInt(Mathf.Sin(_time * 1.1f + hv) * 0.6f);
+        // three overlapping leafy lobes, outline first
+        (float X, float Y, float R)[] lobes = { (-6, -9, 7), (6, -9, 7), (0 + sway, -14, 8) };
+        for (int pass = 0; pass < 2; pass++)
+            foreach (var (lx, ly, r) in lobes)
+                for (int yy = (int)-r; yy <= r; yy++)
+                {
+                    float w = Mathf.Round(Mathf.Sqrt(Mathf.Max(0, r * r - yy * yy)));
+                    if (pass == 0) { Fill(lx - w - 1, ly + yy - 1, w * 2 + 2, 3, Outline); continue; }
+                    Fill(lx - w, ly + yy, w * 2, 1, yy < -r / 3 ? hi : yy < r / 3 ? mid : dark);
+                }
+        if (hv % 3 == 0) { Fill(-3, -10, 2, 2, berry); Fill(4, -13, 2, 2, berry); }
     }
 }

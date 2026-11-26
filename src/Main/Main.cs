@@ -4,9 +4,9 @@ using SpiritOfMurin.World;
 namespace SpiritOfMurin.Scenes;
 
 /// <summary>
-/// The engine base's main scene: a test field with the prototype's look, a few pines, boulders
+/// The engine base's test field (no longer the main scene: F5 opens the Planície, src/Plains/Plains.tscn; this field keeps the sword for the controls check): a test field with the prototype's look, a few pines, boulders
 /// and bamboo placed deterministically from the field's seed, the player and a following camera
-/// held inside the field. The seed-generated Planície Verdejante replaces the field next.
+/// held inside the field.
 /// </summary>
 public partial class Main : Node2D
 {

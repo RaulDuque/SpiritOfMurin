@@ -1,0 +1,25 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/Plains/PlainsGame.cs" id="1_game"]
+[ext_resource type="Script" path="res://src/Plains/PlainsWorld.cs" id="2_world"]
+[ext_resource type="PackedScene" path="res://src/Player/Player.tscn" id="3_player"]
+[ext_resource type="Script" path="res://src/Plains/PlainsHud.cs" id="4_hud"]
+[ext_resource type="Resource" path="res://assets/data/plains/RabbitTuning.tres" id="5_rabbit"]
+[ext_resource type="Resource" path="res://assets/data/plains/BoarTuning.tres" id="6_boar"]
+
+[node name="Plains" type="Node2D"]
+script = ExtResource("1_game")
+RabbitTuning = ExtResource("5_rabbit")
+BoarTuning = ExtResource("6_boar")
+
+[node name="World" type="Node2D" parent="."]
+script = ExtResource("2_world")
+
+[node name="Objects" type="Node2D" parent="World"]
+y_sort_enabled = true
+
+[node name="Player" parent="World/Objects" instance=ExtResource("3_player")]
+StartWeapon = 0
+
+[node name="Hud" type="CanvasLayer" parent="."]
+script = ExtResource("4_hud")

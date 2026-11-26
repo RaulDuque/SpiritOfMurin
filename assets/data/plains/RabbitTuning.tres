@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="RabbitTuning" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/Creatures/RabbitTuning.cs" id="1_t"]
+
+[resource]
+script = ExtResource("1_t")
+HearWalk = 95.0
+HearSneak = 26.0
+HearStill = 14.0
+HearLoud = 130.0
+AlertTime = 0.35
+DashSpeed = 165.0
+DashPause = 0.18
+HideTime = 4.5
+GrazeRadius = 44.0
+GrazeSpeed = 22.0
+BodyRadius = 6.0
+Health = 1
