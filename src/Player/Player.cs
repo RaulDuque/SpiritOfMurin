@@ -32,7 +32,62 @@ public partial class Player : CharacterBody2D
     public float Health { get; private set; }
 
     /// <summary>Maximum Vida (from the tuning).</summary>
-    public int MaxHealth => Tuning.MaxHealth;
+    public int MaxHealth => _maxHealth > 0 ? _maxHealth : Tuning.MaxHealth;
+
+    /// <summary>Sets the maximum Vida (VIT). Raising it adds the difference to the current Vida.</summary>
+    public void SetMaxHealth(int max)
+    {
+        int old = MaxHealth;
+        _maxHealth = Mathf.Max(1, max);
+        if (_maxHealth > old) Health += _maxHealth - old;
+        Health = Mathf.Min(Health, _maxHealth);
+    }
+
+    private int _maxHealth;
+
+    /// <summary>Walking speed multiplier (AGI). 1 = the tuning's speed.</summary>
+    public float MoveSpeedMultiplier { get; set; } = 1f;
+
+    /// <summary>Step distance multiplier (AGI).</summary>
+    public float StepDistanceMultiplier { get; set; } = 1f;
+
+    /// <summary>Recovery time multiplier of cuts and steps (AGI; below 1 is faster).</summary>
+    public float RecoveryMultiplier { get; set; } = 1f;
+
+    /// <summary>Current vigor (physical stamina; steps and cuts spend it).</summary>
+    public float Vigor { get; set; } = 1f;
+
+    /// <summary>Maximum vigor (CON). 0 disables the vigor rule (the sword test field).</summary>
+    public float MaxVigor { get; set; }
+
+    /// <summary>Vigor regained per second after <see cref="VigorRegenDelay"/>.</summary>
+    public float VigorRegen { get; set; }
+
+    /// <summary>Seconds after spending vigor before it comes back.</summary>
+    public float VigorRegenDelay { get; set; }
+
+    /// <summary>Vigor a step costs.</summary>
+    public float StepVigorCost { get; set; }
+
+    /// <summary>Vigor a cut costs.</summary>
+    public float CutVigorCost { get; set; }
+
+    /// <summary>Raised when a cut or a step was refused for lack of vigor.</summary>
+    public event Action? OutOfBreath;
+
+    private float _vigorWait;
+
+    /// <summary>Restores vigor at once (up to the maximum).</summary>
+    public void RestoreVigor(float amount) => Vigor = Mathf.Min(MaxVigor, Vigor + amount);
+
+    // spends vigor for an action; false when the vigor rule is on and there is not enough
+    private bool SpendVigor(float cost)
+    {
+        if (MaxVigor <= 0 || cost <= 0) return true;
+        if (Vigor < cost) { OutOfBreath?.Invoke(); return false; }
+        Vigor -= cost; _vigorWait = VigorRegenDelay;
+        return true;
+    }
 
     /// <summary>Vida still to be restored by herbs over time.</summary>
     public float PendingRegen => _regenLeft;
@@ -105,7 +160,7 @@ public partial class Player : CharacterBody2D
     public override void _Ready()
     {
         Equipped = StartWeapon;
-        Health = Tuning.MaxHealth;
+        Health = MaxHealth;
     }
 
     /// <summary>Takes damage from a hit coming from <paramref name="from"/>. Ignored while invulnerable. Returns true when it landed.</summary>
@@ -126,7 +181,7 @@ public partial class Player : CharacterBody2D
     public bool Invulnerable => _invulnerable > 0;
 
     /// <summary>Restores Vida at once (up to the maximum).</summary>
-    public void Heal(float amount) => Health = Mathf.Min(Tuning.MaxHealth, Health + amount);
+    public void Heal(float amount) => Health = Mathf.Min(MaxHealth, Health + amount);
 
     /// <summary>Restores <paramref name="amount"/> Vida gradually over <paramref name="seconds"/> (stacks with what is pending).</summary>
     public void AddRegen(float amount, float seconds)
@@ -136,7 +191,7 @@ public partial class Player : CharacterBody2D
     }
 
     /// <summary>Back to full Vida, nothing pending (after fainting).</summary>
-    public void Revive() { Health = Tuning.MaxHealth; _regenLeft = 0; _invulnerable = Tuning.HurtInvulnerability; _act = null; _buffer = null; }
+    public void Revive() { Health = MaxHealth; Vigor = MaxVigor; _regenLeft = 0; _invulnerable = Tuning.HurtInvulnerability; _act = null; _buffer = null; }
 
     /// <inheritdoc />
     public override void _PhysicsProcess(double delta)
@@ -149,9 +204,14 @@ public partial class Player : CharacterBody2D
         {
             float r = Mathf.Min(_regenLeft, _regenRate * dt);
             _regenLeft -= r; Heal(r);
-            if (Health >= Tuning.MaxHealth) _regenLeft = 0;
+            if (Health >= MaxHealth) _regenLeft = 0;
         }
         if (_regenLeft <= 0) _regenRate = 0;
+        if (MaxVigor > 0)
+        {
+            if (_vigorWait > 0) _vigorWait -= dt;
+            else Vigor = Mathf.Min(MaxVigor, Vigor + VigorRegen * dt);
+        }
         bool locked = InputLocked || Health <= 0;
         Vector2 move = locked ? Vector2.Zero : Input.GetVector("move_left", "move_right", "move_up", "move_down");
         bool sneaking = !locked && InputMap.HasAction("sneak") && Input.IsActionPressed("sneak");
@@ -176,7 +236,7 @@ public partial class Player : CharacterBody2D
         _moving = false;
         if (_act == null)
         {
-            Velocity = move * Tuning.MoveSpeed * (sneaking ? Tuning.SneakFactor : 1f);
+            Velocity = move * Tuning.MoveSpeed * MoveSpeedMultiplier * (sneaking ? Tuning.SneakFactor : 1f);
             if (move != Vector2.Zero) { Facing = move.Normalized(); _moving = true; _walk += dt * (sneaking ? 4f : 7f); }
         }
         else Velocity = _act.Kind == ActionKind.Step ? _act.StepVelocity : Vector2.Zero;
@@ -197,14 +257,14 @@ public partial class Player : CharacterBody2D
     {
         if (kind == ActionKind.Cut)
         {
-            if (Equipped == Weapon.None) return;
+            if (Equipped == Weapon.None || !SpendVigor(CutVigorCost)) return;
             int n = _act is { Kind: ActionKind.Cut } prev && prev.N < MaxChain ? prev.N + 1 : 1;
             _swingId++;
             if (Equipped == Weapon.Knife)
                 _act = new Act
                 {
                     Kind = ActionKind.Cut, N = n, Startup = Tuning.KnifeStartup, Active = Tuning.KnifeActive,
-                    Recovery = Tuning.KnifeRecovery, CancelAt = Tuning.KnifeCancelAt, Lunge = Tuning.KnifeLunge,
+                    Recovery = Tuning.KnifeRecovery * RecoveryMultiplier, CancelAt = Tuning.KnifeCancelAt * RecoveryMultiplier, Lunge = Tuning.KnifeLunge,
                 };
             else
             {
@@ -212,7 +272,7 @@ public partial class Player : CharacterBody2D
                 _act = new Act
                 {
                     Kind = ActionKind.Cut, N = n, Startup = Tuning.CutStartup + extra, Active = Tuning.CutActive + extra,
-                    Recovery = Tuning.CutRecovery + (n == 3 ? 0.1f : 0f), CancelAt = Tuning.CutCancelAt + (n == 3 ? 0.07f : 0f),
+                    Recovery = (Tuning.CutRecovery + (n == 3 ? 0.1f : 0f)) * RecoveryMultiplier, CancelAt = (Tuning.CutCancelAt + (n == 3 ? 0.07f : 0f)) * RecoveryMultiplier,
                     Lunge = n == 3 ? Tuning.ThirdCutLunge : Tuning.CutLunge,
                 };
             }
@@ -221,11 +281,12 @@ public partial class Player : CharacterBody2D
         }
         else
         {
+            if (!SpendVigor(StepVigorCost)) return;
             // with a direction held, step that way (and face it); with none, step back from the facing
             Vector2 dir = move != Vector2.Zero ? move.Normalized() : -Facing;
             if (move != Vector2.Zero) Facing = dir;
-            _act = new Act { Kind = ActionKind.Step, Startup = Tuning.StepTime, CancelAt = Tuning.StepTime * 0.85f,
-                StepVelocity = dir * Tuning.StepDistance / Tuning.StepTime };
+            _act = new Act { Kind = ActionKind.Step, Startup = Tuning.StepTime, CancelAt = Tuning.StepTime * 0.85f * RecoveryMultiplier,
+                StepVelocity = dir * Tuning.StepDistance * StepDistanceMultiplier / Tuning.StepTime };
             ActionStarted?.Invoke(kind, 0);
         }
     }
