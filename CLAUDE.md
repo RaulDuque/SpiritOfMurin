@@ -53,13 +53,38 @@ Every task follows: **Question -> Options -> Decision -> Draft -> Approval**
   its orchestrating skill named; see `.claude/rules/agent-memory.md`)
 - Agents MUST show drafts or summaries before requesting approval
 - Multi-file changes require explicit approval for the full changeset
-- No commits without user instruction
+- No commits without user instruction — except the per-delivery commit and push
+  the creator authorized permanently in "Fluxo de trabalho: fechamento de cada
+  entrega" below
 - A skipped or dismissed question is not an answer: act on nothing, re-ask in
   plain text and wait
 - Started outside this file's folder? Warn first: hooks, deny rules and the
   ask-first mode load only when Claude Code starts here
 
 See `docs/COLLABORATIVE-DESIGN-PRINCIPLE.md` for full protocol and examples.
+
+### Fluxo de trabalho: fechamento de cada entrega (regra permanente do criador, 2026-11-26)
+
+Ao concluir cada entrega que altere arquivos do projeto:
+
+1. Rode a compilação e os testes aplicáveis. Se houver uma falha causada pela
+   entrega, corrija e teste novamente.
+2. Atualize o relatório da entrega em `user-docs/relatorios/` e o índice
+   `README.md` dessa pasta.
+3. Revise o `git diff` e o `git status`. Inclua no commit os arquivos da tarefa,
+   o relatório e as evidências correspondentes. Preserve alterações locais de
+   outras tarefas.
+4. Faça um commit com uma mensagem que descreva o que foi entregue e faça push
+   para o repositório `RaulDuque/SpiritOfMurin`. **Esta instrução autoriza o
+   commit e o push de cada entrega, sem pedir confirmação novamente.**
+5. Confirme que o commit chegou à branch remota. Na resposta final, informe a
+   branch, o link do commit, o link do relatório e o resultado dos testes. Se o
+   push falhar, informe o motivo e o hash do commit local para que o envio possa
+   ser retomado.
+
+A regra vale também para entregas de documentação e configuração. Se a sessão
+foi apenas uma conversa e nenhum arquivo mudou, basta responder, sem criar
+commit vazio.
 
 > **First session?** Say "make me a game" (`/prototype`), or run `/start` to begin
 > the guided onboarding flow.
