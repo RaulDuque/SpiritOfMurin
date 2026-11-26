@@ -71,7 +71,7 @@ Pasta `production/qa/evidence/2026-11-26_tela-cheia-mapa/`:
 - `tela-cheia-antes-depois.png`: **a comparação pedida**, lado a lado. `tela-cheia-antes.png` e `tela-cheia-depois.png` são as capturas separadas;
 - `mapa-planicie.png` e `mapa-planicie-depois-de-carregar.png`: o mapa da Planície, com o marcador recuperado depois de carregar;
 - `vale/05b-mapa-vale.png`: o mapa do Vale;
-- `displaycheck-*-janela.log`: as linhas `MEDIDA`. `regressao/*.log`: as regressões.
+- `displaycheck-*-janela.log` (as linhas `MEDIDA`) e `regressao/*.log` (as regressões) ficam só na sua máquina: o `.gitignore` do projeto exclui `*.log`. Os números estão na tabela acima.
 
 ## Pendências
 
