@@ -160,6 +160,7 @@ O primeiro combate é uma lição de leitura. O javali avisa antes de investir, 
   - `RabbitTuning.tres`;
   - `BoarTuning.tres`.
 - **Mapa de entradas:** `tools/godot/setup_input.gd` acrescenta `inventory` (I, Tab) e `sneak` (Shift).
+- **Ampliado por** `design/gdd/plains-progression.md` (2026-11-26): nível, atributos, proficiências, trilhas, partes da carcaça por grau de Esfolar, fogueira, bolsa, Meditar e Continuar. O que ele mudou aqui: a erva passa a ter qualidade pela Erboristeria, a pele depende do Esfolar e o HUD ganha vigor, Qi e nível.
 - **Próximas dependências:** salvamento (Meditar e Continuar), espada simples no posto de vigia, ligação com o Vale de Bambus, carimbos de lugares feitos à mão.
 
 ## 7. Tuning Knobs

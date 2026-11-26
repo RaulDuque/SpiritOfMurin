@@ -30,6 +30,8 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-26 | [2026-11-26-planicie-primeiro-trecho.md](2026-11-26-planicie-primeiro-trecho.md) | Primeiro trecho jogável da Planície Verdejante no Godot: mundo por semente em blocos, coleta, faca de pedra, coelho, javali, ervas, barra de Vida em %, testes em duas sementes, testes no monitor 2, captura ampla e vídeo do javali, como jogar pelo F5 |
 | 2026-11-26 | [prompts/08-planicie-primeiro-trecho.md](prompts/08-planicie-primeiro-trecho.md) | Pedido do criador para o primeiro trecho da Planície (texto integral) |
 | 2026-11-26 | [2026-11-26-regra-fechamento-entregas.md](2026-11-26-regra-fechamento-entregas.md) | Regra permanente no CLAUDE.md: ao fim de cada entrega, compilar e testar, atualizar relatório e índice, fazer commit e push para RaulDuque/SpiritOfMurin sem pedir confirmação, e informar branch, commit, relatório e testes |
+| 2026-11-26 | [2026-11-26-planicie-progressao.md](2026-11-26-planicie-progressao.md) | Primeira progressão da Planície: nível, XP e pontos; VIT/INT/CON/AGI/SOR/QI; vigor e Qi; Esfolar, Preparo de Caça, Erboristeria, Rastreamento; pegadas até a toca; fogueira, tiras e bolsa; Meditar e Continuar no Godot; percurso normal × testes controlados; roteiro para o F5 |
+| 2026-11-26 | [prompts/09-planicie-progressao.md](prompts/09-planicie-progressao.md) | Pedido do criador para a primeira progressão da Planície (texto integral) |
 
 ## Prompts de imagem do criador
 
