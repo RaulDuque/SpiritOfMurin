@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/Campaign/CampaignRoot.cs" id="1_campaign"]
+[ext_resource type="Script" path="res://src/Plains/PlainsHud.cs" id="2_hud"]
+
+[node name="Campaign" type="Node"]
+script = ExtResource("1_campaign")
+
+[node name="TitleHud" type="CanvasLayer" parent="."]
+layer = 5
+script = ExtResource("2_hud")

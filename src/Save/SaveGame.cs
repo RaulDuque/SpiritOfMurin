@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using SpiritOfMurin.Plains;
+using SpiritOfMurin.Vale;
 
 namespace SpiritOfMurin.Save;
 
@@ -21,8 +22,8 @@ public sealed class SavedItem
 /// </summary>
 public sealed class SaveData
 {
-    /// <summary>Current format.</summary>
-    public const int CurrentFormat = 1;
+    /// <summary>Current format. Format 1 (Planície only, before the campaign) still loads, as a Planície journey.</summary>
+    public const int CurrentFormat = 2;
 
     /// <summary>Always "spiritofmurin".</summary>
     public string Game { get; set; } = "spiritofmurin";
@@ -70,6 +71,24 @@ public sealed class SaveData
     public List<string> PracticeKeys { get; set; } = new();
     /// <summary>Recipes already made once (first-craft XP).</summary>
     public List<string> Crafted { get; set; } = new();
+
+    // ---- the campaign (format 2) ----
+
+    /// <summary>
+    /// Campaign phase: "vale" (the prologue), "senior_won" (the Senior fell: Continuar resumes at the
+    /// awakening, the safe point of the ending), "planicie" (after the awakening; also every format-1 save).
+    /// </summary>
+    public string Phase { get; set; } = "planicie";
+    /// <summary>The prologue's story state (region "vale").</summary>
+    public ValeState? Vale { get; set; }
+    /// <summary>The prologue's items (region "vale"), lost at the awakening.</summary>
+    public List<SavedItem> ValeInventory { get; set; } = new();
+    /// <summary>The Livro de Técnicas (carried from the prologue into the Planície).</summary>
+    public List<BookEntry> Book { get; set; } = new();
+    /// <summary>True once the awakening took the prologue's equipment (it happens once).</summary>
+    public bool LossApplied { get; set; }
+    /// <summary>True once the weakened techniques came back at the unlock level (the message shows once).</summary>
+    public bool TechniquesReturned { get; set; }
 }
 
 /// <summary>What reading the save found.</summary>
@@ -92,7 +111,9 @@ public static class SaveGame
         try
         {
             var d = JsonSerializer.Deserialize<SaveData>(text, Json);
-            return d is { Game: "spiritofmurin", Format: SaveData.CurrentFormat } && d.Spot.Length == 2 ? d : null;
+            if (d is not { Game: "spiritofmurin" } || d.Spot.Length != 2 || d.Format is < 1 or > SaveData.CurrentFormat) return null;
+            if (d.Format == 1) { d.Region = "planicie"; d.Phase = "planicie"; d.Format = SaveData.CurrentFormat; } // migration: the journey stays in the Planície
+            return d;
         }
         catch (JsonException) { return null; }
     }

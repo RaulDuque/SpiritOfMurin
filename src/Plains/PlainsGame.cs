@@ -6,6 +6,9 @@ using SpiritOfMurin.Creatures;
 using SpiritOfMurin.Items;
 using SpiritOfMurin.Progression;
 using SpiritOfMurin.Save;
+using SpiritOfMurin.Audio;
+using SpiritOfMurin.Combat;
+using SpiritOfMurin.Vale;
 
 namespace SpiritOfMurin.Plains;
 
@@ -23,7 +26,28 @@ namespace SpiritOfMurin.Plains;
 public partial class PlainsGame : Node2D
 {
     /// <summary>How the scene starts.</summary>
-    public enum StartMode { Title, New, Continue }
+    public enum StartMode { Title, New, Continue, Awaken }
+
+    /// <summary>For <see cref="StartMode.Awaken"/>: the prologue's journey the swordsman wakes from (its book; its items are lost).</summary>
+    public SaveData? AwakenFrom { get; set; }
+
+    /// <summary>For <see cref="StartMode.Continue"/> from the campaign: the journey already read.</summary>
+    public SaveData? Preloaded { get; set; }
+
+    /// <summary>The Livro de Técnicas (from the prologue; the techniques it learned are sealed after the awakening).</summary>
+    public List<BookEntry> Book { get; private set; } = new();
+
+    /// <summary>The prologue techniques in force (sealed until the unlock level, then weakened).</summary>
+    public TechniqueSet Tech { get; private set; } = null!;
+
+    /// <summary>Sound (optional: the scene may have none).</summary>
+    public Sfx? Sfx { get; private set; }
+
+    /// <summary>True when this journey came from the prologue (its equipment was lost once, at the awakening).</summary>
+    public bool LossApplied { get; private set; }
+
+    /// <summary>True once the weakened techniques came back.</summary>
+    public bool TechniquesReturned { get; private set; }
 
     /// <summary>World seed for a new journey; 0 = a new random seed each time.</summary>
     [Export] public int Seed { get; set; }
@@ -63,7 +87,7 @@ public partial class PlainsGame : Node2D
     /// <summary>The screen layer.</summary>
     public PlainsHud Hud { get; private set; } = null!;
     /// <summary>Current Qi.</summary>
-    public float Qi { get; private set; }
+    public float Qi { get => Player.Qi; private set => Player.Qi = value; }
     /// <summary>True once a journey (new or continued) is running.</summary>
     public bool Started { get; private set; }
     /// <summary>Where the last meditation was (Continuar and fainting wake here).</summary>
@@ -79,6 +103,11 @@ public partial class PlainsGame : Node2D
     private SaveData? _saved;
     private SaveStatus _saveStatus;
     private bool _confirmNew;
+    private float _riseHintAt, _riseClock;
+    private bool _rising;
+
+    /// <summary>True while the swordsman still lies on the ground after the awakening.</summary>
+    public bool LyingDown => Player.Lying > 0;
 
     // ------------------------------------------------------------------ start
 
@@ -112,9 +141,14 @@ public partial class PlainsGame : Node2D
         Player.Equipped = Player.Weapon.None;
         Player.InputLocked = true;
         Player.Visible = false; // nothing of the world shows behind the title
-        (_saveStatus, _saved) = SaveGame.Read(SavePath);
+        Sfx = GetNodeOrNull<Sfx>("Sfx");
+        Tech = new TechniqueSet(TechniqueData.Load());
+        Player.Tech = Tech;
+        Player.LockTarget = () => Focused as Node2D;
+        (_saveStatus, _saved) = Preloaded != null ? (SaveStatus.Ok, Preloaded) : SaveGame.Read(SavePath);
         Inventory.Changed += (_, _) => { if (Started) RefreshRows(); };
-        if (Start == StartMode.Continue && _saved != null) Begin(_saved);
+        if (Start == StartMode.Awaken && AwakenFrom != null) Begin(null, AwakenFrom);
+        else if (Start == StartMode.Continue && _saved != null) Begin(_saved);
         else if (Start == StartMode.New || (Start == StartMode.Continue && _saved == null)) Begin(null);
         else ShowTitle();
     }
@@ -150,8 +184,8 @@ public partial class PlainsGame : Node2D
         }
     }
 
-    /// <summary>Starts the journey: a new one (null) or the saved one.</summary>
-    public void Begin(SaveData? d)
+    /// <summary>Starts the journey: a new one (null), the saved one, or the awakening after the prologue (<paramref name="awaken"/>).</summary>
+    public void Begin(SaveData? d, SaveData? awaken = null)
     {
         if (Started) return;
         Started = true;
@@ -169,6 +203,7 @@ public partial class PlainsGame : Node2D
         Player.BladeActive += OnBlade;
         Player.EmptyHanded += () => Hud.Toast("Mãos vazias: fabrique uma ferramenta no inventário (I).");
         Player.OutOfBreath += () => Hud.Toast("Sem fôlego: espere o vigor voltar ou coma carne assada.");
+        Player.TechniqueRefused += (_, m) => { Hud.Toast(m); Sfx?.Play("fizzle"); };
         Player.Fainted += () => { _faintTimer = 2.2f; Player.InputLocked = true; Hud.Overlay("Você desmaiou…", 1.4f); };
         Spot = Gen.StartPixel;
         Qi = Stats.MaxQi;
@@ -180,7 +215,17 @@ public partial class PlainsGame : Node2D
             Inventory.Restore(d.Inventory.Select(i => (i.Id, i.Count)));
             foreach (var c in d.Crafted) _crafted.Add(c);
             Spot = new Vector2(d.Spot[0], d.Spot[1]);
+            Book = d.Book ?? new();
+            LossApplied = d.LossApplied; TechniquesReturned = d.TechniquesReturned;
         }
+        if (awaken != null)
+        {
+            // the prologue's equipment and items were lost in the explosion; the book survives, sealed
+            Book = (awaken.Book.Count > 0 ? awaken.Book : awaken.Vale?.Book ?? new()).Select(b => new BookEntry { Name = b.Name, Kind = b.Kind, Key = b.Key, Where = b.Where, Tech = b.Tech, State = b.Tech.Length > 0 ? "Selada" : b.State }).ToList();
+            LossApplied = true;
+        }
+        foreach (var b in Book.Where(b => b.Tech.Length > 0))
+            Tech.Set(b.Tech, b.State switch { "Selada" => TechniqueState.Sealed, "Enfraquecida" => TechniqueState.Weakened, _ => TechniqueState.Full });
         ApplyStats(fill: d == null);
         if (d != null)
         {
@@ -193,12 +238,27 @@ public partial class PlainsGame : Node2D
         Player.GlobalPosition = Spot;
         Player.InputLocked = false;
         Player.Visible = true;
+        Player.MaxQi = Stats.MaxQi; Player.QiRegen = Data.Base.QiRegen;
         Hud.SetSeed(SeedInUse);
         World.UpdateAround(Player.GlobalPosition);
         _lastChunk = Gen.ChunkOfPixel(Player.GlobalPosition);
         Player.GetNode<Camera2D>("Camera").ResetSmoothing();
         RefreshHands(); RefreshRows(); RefreshSheet();
-        if (ShowIntro) Hud.Overlay(d == null ? "Você acorda sem nada. Planície Verdejante." : "Você desperta junto à esteira, onde meditou.", 1.6f);
+        if (awaken != null)
+        {
+            // from darkness into light: a pale glare that slowly clears, and the sounds of nature coming back
+            Hud.Overlay("", 0.8f, new Color(1f, 0.97f, 0.9f), 3.2f);
+            Sfx?.FadeMaster(0, 0); Sfx?.FadeMaster(1, 3.5f); Sfx?.Ambient(0.45f, 0.6f); Sfx?.Play("breath");
+            Player.Lying = 1; _riseHintAt = 2.5f; // he wakes on the ground, where the blast threw him
+            Hud.Toast("Você desperta na Planície Verdejante. A espada, a bolsa, tudo se perdeu na explosão.");
+            Hud.Toast("Só o Livro de Técnicas ficou: as páginas do Vale estão seladas (B).");
+            SaveGame.Write(SavePath, Snapshot()); // the loss and the change of region happen once: from now on Continuar is here
+        }
+        else
+        {
+            Sfx?.Ambient(0.35f, 0.5f);
+            if (ShowIntro) Hud.Overlay(d == null ? "Você acorda sem nada. Planície Verdejante." : "Você desperta junto à esteira, onde meditou.", 1.6f);
+        }
         GD.Print($"Planície: semente {SeedInUse} ({(d == null ? "nova jornada" : "continuação")})");
     }
 
@@ -217,6 +277,7 @@ public partial class PlainsGame : Node2D
         Player.CutVigorCost = Data.Base.CutVigorCost;
         if (fill) Player.Vigor = Player.MaxVigor;
         else if (Player.MaxVigor > oldMax && oldMax > 0) Player.Vigor += Player.MaxVigor - oldMax;
+        Player.MaxQi = Stats.MaxQi; Player.QiRegen = Data.Base.QiRegen;
         if (fill) Qi = Stats.MaxQi;
     }
 
@@ -229,7 +290,6 @@ public partial class PlainsGame : Node2D
         float dt = (float)delta;
         var c = Gen.ChunkOfPixel(Player.GlobalPosition);
         if (c != _lastChunk) { _lastChunk = c; World.UpdateAround(Player.GlobalPosition); }
-        Qi = Mathf.Min(Stats.MaxQi, Qi + Data.Base.QiRegen * dt);
         if (_faintTimer > 0)
         {
             _faintTimer -= dt;
@@ -240,6 +300,14 @@ public partial class PlainsGame : Node2D
                 Player.InputLocked = Hud.AnyPanelOpen;
                 Hud.Toast("Você volta a si junto à esteira de meditação.");
             }
+        }
+        if (Player.Lying > 0)
+        {
+            _riseClock += dt;
+            if (_riseHintAt > 0 && _riseClock >= _riseHintAt) { _riseHintAt = 0; Hud.Toast("Você está caído na relva. Mova-se (WASD) para se levantar."); }
+            bool wants = Input.GetVector("move_left", "move_right", "move_up", "move_down") != Vector2.Zero || Input.IsActionPressed("use");
+            if (!_rising && _riseClock > 1.2f && wants && !Hud.AnyPanelOpen) { _rising = true; Sfx?.Play("breath"); }
+            if (_rising) { Player.Lying = Mathf.Max(0, Player.Lying - dt / 0.9f); if (Player.Lying <= 0) { _rising = false; Hud.Toast("Você se levanta. Mãos vazias."); } }
         }
         Hud.SetHealth(Player.Health, Player.MaxHealth, Player.PendingRegen);
         Hud.SetEnergy(Player.Vigor, Player.MaxVigor, Qi, Stats.MaxQi);
@@ -262,6 +330,14 @@ public partial class PlainsGame : Node2D
             return;
         }
         if (!Started || _faintTimer > 0) return;
+        if (Hud.BookOpen)
+        {
+            if (e.IsActionPressed("move_up")) Hud.MoveBook(-1);
+            else if (e.IsActionPressed("move_down")) Hud.MoveBook(1);
+            else if (e.IsActionPressed("book") || e.IsActionPressed("ui_cancel")) { Hud.ShowBook(null); Player.InputLocked = false; }
+            else return;
+            Handled(); return;
+        }
         if (e.IsActionPressed("inventory") || (Hud.InventoryOpen && e.IsActionPressed("ui_cancel"))) { ToggleInventory(); Handled(); return; }
         if (e.IsActionPressed("sheet") || (Hud.SheetOpen && e.IsActionPressed("ui_cancel"))) { ToggleSheet(); Handled(); return; }
         if (Hud.InventoryOpen)
@@ -281,12 +357,66 @@ public partial class PlainsGame : Node2D
             Handled(); return;
         }
         if (e.IsActionPressed("use")) { TryInteract(false); Handled(); }
-        else if (e.IsActionPressed("qi")) { TryInteract(true); Handled(); }
+        else if (e.IsActionPressed("qi")) { QiKey(); Handled(); }
+        else if (e.IsActionPressed("book")) { ToggleBook(); Handled(); }
         else if (e.IsActionPressed("lock")) { ToggleFocus(); Handled(); }
         else if (e.IsActionPressed("heal")) { QuickHeal(); Handled(); }
     }
 
     private void Handled() => GetViewport().SetInputAsHandled();
+
+    /// <summary>What K will do here: "esfolar" next to a carcass (skin with Qi), otherwise "disparo" (the qi shot).</summary>
+    public string QiKeyAction => NearestInteractable() is Carcass ? "esfolar" : "disparo";
+
+    /// <summary>K: skins with Qi next to a carcass, otherwise asks for the qi shot. One press, one action.</summary>
+    public void QiKey()
+    {
+        if (QiKeyAction == "esfolar") TryInteract(true);
+        else Player.RequestQi();
+    }
+
+    /// <summary>Opens or closes the Livro de Técnicas.</summary>
+    public void ToggleBook()
+    {
+        if (Hud.BookOpen) { Hud.ShowBook(null); Player.InputLocked = false; return; }
+        if (Hud.InventoryOpen) Hud.ShowInventory(false);
+        if (Hud.SheetOpen) Hud.ShowSheet(false);
+        Hud.ShowBook(BookRows()); Player.InputLocked = true;
+    }
+
+    /// <summary>The book's rows, with the state of each prologue technique and its command, cost and effect in force.</summary>
+    public List<PlainsHud.Row> BookRows()
+    {
+        var rows = new List<PlainsHud.Row>(); string last = "";
+        if (Book.Count == 0) rows.Add(new PlainsHud.Row(false, "", "(vazio)", "Esta jornada começou direto na Planície: o Livro não traz páginas do Vale.", false));
+        foreach (var b in Book.OrderBy(b => b.Kind == "técnica" ? 0 : b.Kind == "combinação" ? 1 : 2))
+        {
+            string group = b.Kind != last ? (b.Kind == "técnica" ? "Técnicas" : b.Kind == "combinação" ? "Combinações" : "Fragmentos") : "";
+            last = b.Kind;
+            string detail = $"{b.Name} · {b.Kind}\nComando: {(b.Key.Length > 0 ? b.Key : "—")}\n{b.Where}";
+            if (b.Tech.Length > 0) detail += "\n" + TechniqueLine(b.Tech);
+            rows.Add(new PlainsHud.Row(false, b.Name, b.Name + (b.State.Length > 0 ? $"  [{b.State}]" : ""), detail, b.State != "Selada", group));
+        }
+        return rows;
+    }
+
+    /// <summary>The state, cost and effect in force of a prologue technique (one line for the book).</summary>
+    public string TechniqueLine(string id)
+    {
+        var st = Tech.State(id);
+        if (st == TechniqueState.Sealed) return $"Selada: volta enfraquecida no nível {Tech.Data.UnlockLevel}.";
+        var p = Tech.Params(id); if (p == null) return "";
+        string cost = $"custo: {p.QiCost:0} Qi, {p.VigorCost:0} vigor";
+        return id switch
+        {
+            "qi_wave" => $"{(st == TechniqueState.Weakened ? "Enfraquecida" : "Plena")} · {cost} · alcance {p.Range:0} px · dano {p.Damage}",
+            "side_step" => $"{(st == TechniqueState.Weakened ? "Enfraquecida" : "Plena")} · {cost} · contorna {p.Angle:0}° · raio até {p.RadiusMax:0} px",
+            "dash" => $"{(st == TechniqueState.Weakened ? "Enfraquecida" : "Plena")} · {cost} · {p.Distance:0} px",
+            "thrust" => $"{(st == TechniqueState.Weakened ? "Enfraquecida" : "Plena")} · {cost} · alcance {p.Reach:0} px · dano {p.Damage}",
+            "lamina" => $"{(st == TechniqueState.Weakened ? "Enfraquecida" : "Plena")} · dano {p.Damage} · alcance {p.Range:0} px",
+            _ => "",
+        };
+    }
 
     // ------------------------------------------------------------------ XP and practice
 
@@ -568,6 +698,7 @@ public partial class PlainsGame : Node2D
             Health = Player.Health, Vigor = Player.Vigor, Qi = Qi,
             Level = Stats.Level, Xp = Stats.Xp, Points = Stats.Points, TotalXp = Stats.TotalXp, Attributes = Stats.Attributes,
             Practice = practice, PracticeKeys = keys, Crafted = _crafted.ToList(),
+            Region = "planicie", Phase = "planicie", Book = Book, LossApplied = LossApplied, TechniquesReturned = TechniquesReturned,
         };
     }
 

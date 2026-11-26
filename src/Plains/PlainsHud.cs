@@ -38,7 +38,10 @@ public partial class PlainsHud : CanvasLayer
     private Control _root = null!, _bars = null!, _focusBar = null!;
     private Label _life = null!, _vigor = null!, _qi = null!, _level = null!, _hands = null!, _seed = null!, _controls = null!, _prompt = null!, _overlayText = null!, _focus = null!;
     private VBoxContainer _toasts = null!;
-    private Menu _inv = null!, _sheet = null!, _title = null!;
+    private Menu _inv = null!, _sheet = null!, _title = null!, _story = null!, _book = null!;
+    private Label _banner = null!, _speech = null!;
+    private float _bannerT, _speechT;
+    private bool _valeMode;
     private ColorRect _overlay = null!;
     private float _health, _max = 10, _pending, _vig, _maxVig, _qiNow, _maxQi, _focusFrac, _overlayTime, _overlayHold;
     private readonly List<(Label L, float T)> _toastLabels = new();
@@ -50,7 +53,24 @@ public partial class PlainsHud : CanvasLayer
     /// <summary>True while the title menu is shown.</summary>
     public bool TitleOpen => _title.Box.Visible;
     /// <summary>True while any panel is open.</summary>
-    public bool AnyPanelOpen => InventoryOpen || SheetOpen || TitleOpen;
+    public bool AnyPanelOpen => InventoryOpen || SheetOpen || TitleOpen || StoryOpen || BookOpen;
+
+    /// <summary>True while a story panel (a page, a seal, an inscription) is shown.</summary>
+    public bool StoryOpen => _story.Box.Visible;
+    /// <summary>True while the Livro de Técnicas is open.</summary>
+    public bool BookOpen => _book.Box.Visible;
+    /// <summary>The story panel's title and text.</summary>
+    public string StoryText => _story.Title.Text + "\n" + _story.Detail.Text;
+    /// <summary>The book rows.</summary>
+    public List<Row> BookRows => _book.Rows;
+    /// <summary>Selected book row.</summary>
+    public int BookSelected => _book.Selected;
+    /// <summary>The book's detail text (the selected page).</summary>
+    public string BookDetail => _book.Detail.Text;
+    /// <summary>The area banner text ("" when none).</summary>
+    public string BannerText => _banner.Visible ? _banner.Text : "";
+    /// <summary>The speech bubble text ("" when none).</summary>
+    public string SpeechText => _speech.Visible ? _speech.Text : "";
 
     /// <summary>Selected row of the inventory.</summary>
     public int Selected => _inv.Selected;
@@ -152,6 +172,12 @@ public partial class PlainsHud : CanvasLayer
         _inv.Empty = "(vazio: procure sílex e galhos na margem do riacho)";
         _sheet = MakeMenu("Ficha", "W/S escolher atributo · E gastar 1 ponto · C fechar", new Vector2(110, 22), new Vector2(420, 310));
         _title = MakeMenu("SpiritOfMurin — Planície Verdejante", "W/S escolher · E ou Enter confirmar", new Vector2(170, 110), new Vector2(300, 130));
+        _story = MakeMenu("", "E, Enter ou Esc: continuar", new Vector2(130, 90), new Vector2(380, 150));
+        _story.Title.AddThemeColorOverride("font_color", new Color("#d4fbf6"));
+        _book = MakeMenu("Livro de Técnicas", "W/S folhear · B fechar", new Vector2(70, 22), new Vector2(500, 312));
+        _banner = Add(MakeLabel(12, Text), new Vector2(0, 52)); _banner.HorizontalAlignment = HorizontalAlignment.Center; _banner.Size = new Vector2(640, 20); _banner.Visible = false;
+        _speech = Add(MakeLabel(9, new Color("#ece5d0")), Vector2.Zero); _speech.HorizontalAlignment = HorizontalAlignment.Center; _speech.Size = new Vector2(300, 12); _speech.Visible = false;
+        _speech.AutowrapMode = TextServer.AutowrapMode.WordSmart; _speech.CustomMinimumSize = new Vector2(300, 0);
 
         _overlay = new ColorRect { Color = new Color(0, 0, 0, 0), MouseFilter = Control.MouseFilterEnum.Ignore };
         _overlay.SetAnchorsPreset(Control.LayoutPreset.FullRect);
@@ -181,12 +207,51 @@ public partial class PlainsHud : CanvasLayer
     public void SetEnergy(float vigor, float maxVigor, float qi, float maxQi)
     {
         _vig = vigor; _maxVig = maxVigor; _qiNow = qi; _maxQi = maxQi;
-        _vigor.Text = $"Vigor {Mathf.FloorToInt(vigor)}/{maxVigor:0}";
+        _vigor.Text = maxVigor > 0 ? $"Vigor {Mathf.FloorToInt(vigor)}/{maxVigor:0}" : "";
         _qi.Text = $"Qi {Mathf.FloorToInt(qi)}/{maxQi:0}";
         _bars.QueueRedraw();
     }
 
     /// <summary>Updates the level line.</summary>
+    /// <summary>The prologue's corner: no vigor bar, no level line (the Vale has neither).</summary>
+    public void SetValeMode(bool vale) { _valeMode = vale; _level.Visible = !vale; _controls.Text = vale
+        ? "WASD andar · Espaço travar · J/clique corte · L/clique dir. passo · K Qi · E examinar · H bálsamo · I inventário · B livro"
+        : "WASD andar · Shift quieto · E pegar/examinar · I inventário · C ficha · B livro · Espaço focar · K Qi · H erva · J/clique corte · L/clique dir. passo"; }
+
+    /// <summary>Shows a story panel: a title and lines (a page of the manual, the seal, the inscription). Null hides it.</summary>
+    public void ShowStory(string? title, IEnumerable<string>? lines = null)
+    {
+        _story.Box.Visible = title != null;
+        if (title == null) return;
+        _story.Title.Text = title; _story.Rows.Clear(); Refresh(_story);
+        _story.Detail.Text = lines == null ? "" : string.Join("\n", lines);
+    }
+
+    /// <summary>Opens (with rows) or closes (null) the Livro de Técnicas.</summary>
+    public void ShowBook(List<Row>? rows)
+    {
+        _book.Box.Visible = rows != null;
+        if (rows != null) Fill(_book, rows);
+    }
+
+    /// <summary>Moves the book selection.</summary>
+    public void MoveBook(int d) { Move(_book, d); Refresh(_book); }
+
+    /// <summary>Shows the area banner for a while.</summary>
+    public void Banner(string text, float seconds = 2.4f) { _banner.Text = text; _banner.Visible = true; _bannerT = seconds; }
+
+    /// <summary>Shows a speech line over a screen point for a while (null hides it).</summary>
+    public void Speech(string? text, Vector2 screen, float seconds = 3.4f)
+    {
+        _speech.Visible = text != null;
+        if (text == null) return;
+        _speech.Text = text; _speechT = seconds;
+        _speech.Position = new Vector2(Mathf.Clamp(screen.X - 150, 4, 336), Mathf.Max(30, screen.Y - 74));
+    }
+
+    /// <summary>Moves the speech bubble over a screen point (it follows the speaker).</summary>
+    public void SpeechAt(Vector2 screen) { if (_speech.Visible) _speech.Position = new Vector2(Mathf.Clamp(screen.X - 150, 4, 336), Mathf.Max(30, screen.Y - 74)); }
+
     public void SetLevel(int level, int xp, int need, int points) =>
         _level.Text = $"Nv {level} · XP {xp}/{need} (faltam {need - xp})" + (points > 0 ? $" · {points} ponto{(points > 1 ? "s" : "")} (C)" : "");
 
@@ -222,7 +287,7 @@ public partial class PlainsHud : CanvasLayer
             float fill = Mathf.Round(w * k), extra = Mathf.Round(w * Mathf.Clamp((_health + _pending) / _max, 0, 1)) - fill;
             if (extra > 0) _bars.DrawRect(new Rect2(x + fill, 5, extra, 5), new Color(RegenC, 0.8f));
         }
-        Bar(x, 15, w, 3, _maxVig <= 0 ? 0 : _vig / _maxVig, VigBack, Vig, VigHi);
+        if (_maxVig > 0) Bar(x, 15, w, 3, _vig / _maxVig, VigBack, Vig, VigHi);
         Bar(x, 24, w, 4, _maxQi <= 0 ? 0 : _qiNow / _maxQi, QiBack, QiC, QiHi);
     }
 
@@ -250,11 +315,20 @@ public partial class PlainsHud : CanvasLayer
     }
 
     /// <summary>Starts a black overlay with a line of text that fades out after <paramref name="hold"/> seconds.</summary>
-    public void Overlay(string text, float hold)
+    public void Overlay(string text, float hold) => Overlay(text, hold, Colors.Black);
+
+    /// <summary>Starts an overlay of a colour (black: darkness; near white: the flash, the light of waking) that fades out after <paramref name="hold"/> seconds.</summary>
+    public void Overlay(string text, float hold, Color color, float fade = 1.2f)
     {
-        _overlayText.Text = text; _overlayHold = hold; _overlayTime = 0;
-        _overlay.Color = new Color(0, 0, 0, 1); _overlayText.Modulate = Colors.White;
+        _overlayText.Text = text; _overlayHold = hold; _overlayTime = 0; _overlayFade = fade; _overlayColor = color;
+        _overlay.Color = new Color(color, 1); _overlayText.Modulate = Colors.White;
     }
+
+    /// <summary>Opacity of the overlay now (0 when gone).</summary>
+    public float OverlayAlpha => _overlay.Color.A;
+
+    private float _overlayFade = 1.2f;
+    private Color _overlayColor = Colors.Black;
 
     // ------------------------------------------------------------------ panels
 
@@ -322,11 +396,13 @@ public partial class PlainsHud : CanvasLayer
             l.Modulate = new Color(1, 1, 1, Mathf.Min(1, t / 0.6f));
             _toastLabels[i] = (l, t);
         }
+        if (_bannerT > 0) { _bannerT -= dt; _banner.Modulate = new Color(1, 1, 1, Mathf.Min(1, _bannerT / 0.6f)); if (_bannerT <= 0) _banner.Visible = false; }
+        if (_speechT > 0) { _speechT -= dt; if (_speechT <= 0) _speech.Visible = false; }
         if (_overlay.Color.A > 0)
         {
             _overlayTime += dt;
-            float a = _overlayTime < _overlayHold ? 1 : Mathf.Max(0, 1 - (_overlayTime - _overlayHold) / 1.2f);
-            _overlay.Color = new Color(0, 0, 0, a);
+            float a = _overlayTime < _overlayHold ? 1 : Mathf.Max(0, 1 - (_overlayTime - _overlayHold) / Mathf.Max(0.05f, _overlayFade));
+            _overlay.Color = new Color(_overlayColor, a);
             _overlayText.Modulate = new Color(1, 1, 1, a);
         }
     }

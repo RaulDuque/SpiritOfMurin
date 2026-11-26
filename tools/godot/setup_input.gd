@@ -34,6 +34,10 @@ func _init() -> void:
 		"sneak": [key(KEY_SHIFT)],
 		"sheet": [key(KEY_C)],
 		"heal": [key(KEY_H)],
+		"book": [key(KEY_B)],
+		"map": [key(KEY_M)],
+		"fullscreen": [key(KEY_F11)],
+		"menu": [key(KEY_ESCAPE), key(KEY_P)],
 	}
 	for name in actions:
 		ProjectSettings.set_setting("input/" + name, {"deadzone": 0.2, "events": actions[name]})
