@@ -32,6 +32,8 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-26 | [2026-11-26-regra-fechamento-entregas.md](2026-11-26-regra-fechamento-entregas.md) | Regra permanente no CLAUDE.md: ao fim de cada entrega, compilar e testar, atualizar relatório e índice, fazer commit e push para RaulDuque/SpiritOfMurin sem pedir confirmação, e informar branch, commit, relatório e testes |
 | 2026-11-26 | [2026-11-26-planicie-progressao.md](2026-11-26-planicie-progressao.md) | Primeira progressão da Planície: nível, XP e pontos; VIT/INT/CON/AGI/SOR/QI; vigor e Qi; Esfolar, Preparo de Caça, Erboristeria, Rastreamento; pegadas até a toca; fogueira, tiras e bolsa; Meditar e Continuar no Godot; percurso normal × testes controlados; roteiro para o F5 |
 | 2026-11-26 | [prompts/09-planicie-progressao.md](prompts/09-planicie-progressao.md) | Pedido do criador para a primeira progressão da Planície (texto integral) |
+| 2026-11-26 | [2026-11-26-campanha-prologo.md](2026-11-26-campanha-prologo.md) | Campanha (entregas 0 e 1): Novo jogo no prólogo do Vale portado do protótipo; Sênior vencido de verdade; revivescência, fala, explosão que lança o espadachim para fora do quadro, escuridão e silêncio; despertar deitado na Planície de mãos vazias com o Livro selado; etapas persistentes; testes com janela e como rodá-los mais devagar |
+| 2026-11-26 | [prompts/10-campanha-inicial.md](prompts/10-campanha-inicial.md) | Pedido do criador para a campanha inicial e a próxima evolução da Planície, entregas 0 a 8 (texto integral) |
 
 ## Prompts de imagem do criador
 
