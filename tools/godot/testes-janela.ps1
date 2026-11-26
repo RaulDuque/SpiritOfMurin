@@ -10,5 +10,8 @@ $fail = 0
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/unit/UnitRunner.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ControlsCheck.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/PlainsCheck.tscn -- --seed=$Seed; if ($LASTEXITCODE -ne 0) { $fail++ }
+# the journey: a new one until meditating, then the game opened again (title, Continuar)
+& $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/JourneyCheck.tscn -- --phase=new --seed=$Seed; if ($LASTEXITCODE -ne 0) { $fail++ }
+& $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/JourneyCheck.tscn -- --phase=resume --seed=$Seed; if ($LASTEXITCODE -ne 0) { $fail++ }
 if ($fail -eq 0) { Write-Host "Todos os testes passaram." } else { Write-Host "$fail execucao(oes) com falha." }
 exit $fail
