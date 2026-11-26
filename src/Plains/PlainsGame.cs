@@ -9,6 +9,7 @@ using SpiritOfMurin.Save;
 using SpiritOfMurin.Audio;
 using SpiritOfMurin.Combat;
 using SpiritOfMurin.Vale;
+using SpiritOfMurin.Game;
 
 namespace SpiritOfMurin.Plains;
 
@@ -23,8 +24,58 @@ namespace SpiritOfMurin.Plains;
 /// Command line (after <c>--</c>): <c>--seed=N</c>, <c>--new</c> / <c>--continue</c> (skip the title),
 /// <c>--save=user://file.json</c> (another save file, for tests).
 /// </summary>
-public partial class PlainsGame : Node2D
+public partial class PlainsGame : Node2D, IMapSource
 {
+    // ------------------------------------------------------------------ map (campaign delivery 3)
+
+    /// <summary>Chunks the swordsman has entered (the map shows only these). Saved with the journey.</summary>
+    public HashSet<Vector2I> Explored { get; } = new();
+    /// <inheritdoc />
+    public List<Vector2> MapMarkers { get; } = new();
+    /// <inheritdoc />
+    public Vector2 MapPlayer => Player.GlobalPosition;
+    /// <inheritdoc />
+    public Vector2 MapFacing => Player.Facing;
+    /// <inheritdoc />
+    public string MapTitle => $"Planície Verdejante · semente {SeedInUse}";
+    /// <inheritdoc />
+    public string MapLegend => "verde relva · areia margem · azul água · marrom lamaçal · verde-escuro arbustos\nlaranja fogueira · ciano esteira · bege tocas · vermelho-escuro javalis · ✕ marcadores";
+    /// <summary>The pause menu and the map.</summary>
+    public GamePanels Panels { get; private set; } = null!;
+    private readonly Dictionary<Vector2I, ChunkData> _mapChunks = new();
+
+    private static Color TileColor(TileKind k) => k switch
+    {
+        TileKind.Water => new Color("#2f5560"), TileKind.Ford => new Color("#557f7c"), TileKind.Bank => new Color("#8f8466"),
+        TileKind.Mud => new Color("#4a3d2c"), TileKind.BushGrass => new Color("#3f4d34"), _ => new Color("#4c5a3e"),
+    };
+
+    /// <inheritdoc />
+    public void DrawMap(MapView v)
+    {
+        int n = Gen.Settings.ChunkTiles, ts = Gen.Settings.TileSize;
+        foreach (var c in Explored)
+        {
+            if (!_mapChunks.TryGetValue(c, out var data)) _mapChunks[c] = data = Gen.GenerateChunk(c);
+            for (int ly = 0; ly < n; ly++)
+                for (int lx = 0; lx < n; lx++)
+                    v.WorldRect(new Vector2((c.X * n + lx) * ts, (c.Y * n + ly) * ts), new Vector2(ts, ts), TileColor(data[lx, ly]));
+        }
+        foreach (var c in Explored)
+            foreach (var f in _mapChunks[c].Features)
+                switch (f.Kind)
+                {
+                    case FeatureKind.Campfire: v.WorldDot(f.Position, new Color("#e8a13a"), 3); break;
+                    case FeatureKind.MeditationMat: v.WorldDot(f.Position, new Color("#6fd8d2"), 3); break;
+                    case FeatureKind.Burrow: v.WorldDot(f.Position, new Color("#d8ccb0"), 1.5f); break;
+                    case FeatureKind.Boar: if (World.State.CarcassAt(PlainsGenerator.CreatureIdOf(f)) == null) v.WorldDot(f.Position, new Color("#7a3a32"), 2); break;
+                }
+        v.WorldLabel(Gen.StartPixel + new Vector2(0, -40), "clareira", new Color("#ece5d0"));
+    }
+
+    /// <summary>The map zoom when it opens.</summary>
+    public const float MapZoomDefault = 0.12f;
+
     /// <summary>How the scene starts.</summary>
     public enum StartMode { Title, New, Continue, Awaken }
 
@@ -206,6 +257,8 @@ public partial class PlainsGame : Node2D
         Player.OutOfBreath += () => Hud.Toast("Sem fôlego: espere o vigor voltar ou coma carne assada.");
         Player.TechniqueRefused += (_, m) => { Hud.Toast(m); Sfx?.Play("fizzle"); };
         Player.QiFired += OnQiShot;
+        Panels = new GamePanels(Hud, Player, this, MapZoomDefault);
+        Hud.RowClicked += OnRowClicked;
         Player.DashNeedsShift = true;
         Player.Fainted += () => { _faintTimer = 2.2f; Player.InputLocked = true; Hud.Overlay("Você desmaiou…", 1.4f); };
         Spot = Gen.StartPixel;
@@ -219,6 +272,8 @@ public partial class PlainsGame : Node2D
             foreach (var c in d.Crafted) _crafted.Add(c);
             Spot = new Vector2(d.Spot[0], d.Spot[1]);
             Book = d.Book ?? new();
+            foreach (var e in d.Explored) if (e.Length == 2) Explored.Add(new Vector2I(e[0], e[1]));
+            foreach (var mk in d.Markers) if (mk.Length == 2) MapMarkers.Add(new Vector2(mk[0], mk[1]));
             LossApplied = d.LossApplied; TechniquesReturned = d.TechniquesReturned;
         }
         if (awaken != null)
@@ -295,6 +350,8 @@ public partial class PlainsGame : Node2D
         float dt = (float)delta;
         var c = Gen.ChunkOfPixel(Player.GlobalPosition);
         if (c != _lastChunk) { _lastChunk = c; World.UpdateAround(Player.GlobalPosition); }
+        Explored.Add(c);
+        Panels.Process(dt);
         if (_faintTimer > 0)
         {
             _faintTimer -= dt;
@@ -337,11 +394,12 @@ public partial class PlainsGame : Node2D
             return;
         }
         if (!Started || _faintTimer > 0) return;
+        if (Panels.Input(e)) { Handled(); return; }
         if (Hud.BookOpen)
         {
             if (e.IsActionPressed("move_up")) Hud.MoveBook(-1);
             else if (e.IsActionPressed("move_down")) Hud.MoveBook(1);
-            else if (e.IsActionPressed("book") || e.IsActionPressed("ui_cancel")) { Hud.ShowBook(null); Player.InputLocked = false; }
+            else if (e.IsActionPressed("book") || e.IsActionPressed("ui_cancel")) { Hud.ShowBook(null); Player.InputLocked = false; Player.ReleaseGuard(); }
             else return;
             Handled(); return;
         }
@@ -371,6 +429,18 @@ public partial class PlainsGame : Node2D
     }
 
     private void Handled() => GetViewport().SetInputAsHandled();
+
+    // a click on a row: the row under the cursor is selected and acted on
+    private void OnRowClicked(string panel, int i)
+    {
+        switch (panel)
+        {
+            case "inv": ActOnSelection(); break;
+            case "sheet": RefreshSheet(); SpendPoint(PlayerStats.AttributeIds[Mathf.Clamp(i, 0, 5)]); break;
+            case "book": Hud.ShowBook(BookRows()); break;
+            case "title": TitleChoose(); break;
+        }
+    }
 
     /// <summary>What K will do here: "esfolar" next to a carcass (skin with Qi), otherwise "disparo" (the qi shot).</summary>
     public string QiKeyAction => NearestInteractable() is Carcass ? "esfolar" : "disparo";
@@ -440,7 +510,7 @@ public partial class PlainsGame : Node2D
     /// <summary>Opens or closes the Livro de Técnicas.</summary>
     public void ToggleBook()
     {
-        if (Hud.BookOpen) { Hud.ShowBook(null); Player.InputLocked = false; return; }
+        if (Hud.BookOpen) { Hud.ShowBook(null); Player.InputLocked = false; Player.ReleaseGuard(); return; }
         if (Hud.InventoryOpen) Hud.ShowInventory(false);
         if (Hud.SheetOpen) Hud.ShowSheet(false);
         Hud.ShowBook(BookRows()); Player.InputLocked = true;
@@ -762,6 +832,7 @@ public partial class PlainsGame : Node2D
             Level = Stats.Level, Xp = Stats.Xp, Points = Stats.Points, TotalXp = Stats.TotalXp, Attributes = Stats.Attributes,
             Practice = practice, PracticeKeys = keys, Crafted = _crafted.ToList(),
             Region = "planicie", Phase = "planicie", Book = Book, LossApplied = LossApplied, TechniquesReturned = TechniquesReturned,
+            Explored = Explored.Select(c => new[] { c.X, c.Y }).ToList(), Markers = MapMarkers.Select(m => new[] { m.X, m.Y }).ToList(),
         };
     }
 
@@ -775,6 +846,7 @@ public partial class PlainsGame : Node2D
         RefreshRows();
         Hud.ShowInventory(open);
         Player.InputLocked = open;
+        if (!open) Player.ReleaseGuard();
     }
 
     private void RefreshHands() => Hud.SetHands(Player.Equipped switch
@@ -897,6 +969,7 @@ public partial class PlainsGame : Node2D
         RefreshSheet();
         Hud.ShowSheet(open);
         Player.InputLocked = open;
+        if (!open) Player.ReleaseGuard();
     }
 
     private void RefreshSheet()

@@ -77,6 +77,14 @@ public partial class Player : CharacterBody2D
     /// <summary>Height above the ground while thrown, px.</summary>
     public float Airborne { get; set; }
 
+    /// <summary>
+    /// Ignores cut and step presses until the mouse buttons and the keys are released: the press that
+    /// closed a panel never becomes an attack, a step or a use in the world.
+    /// </summary>
+    public void ReleaseGuard() { _guard = true; _buffer = null; }
+
+    private bool _guard;
+
     /// <summary>Turns the body to face a direction (scenes and cutscenes).</summary>
     public void Face(Vector2 dir) { if (dir.LengthSquared() > 0.0001f) Facing = dir.Normalized(); }
 
@@ -291,8 +299,9 @@ public partial class Player : CharacterBody2D
         Vector2 move = locked ? Vector2.Zero : Input.GetVector("move_left", "move_right", "move_up", "move_down");
         bool sneaking = !locked && InputMap.HasAction("sneak") && Input.IsActionPressed("sneak");
 
+        if (_guard && !Input.IsActionPressed("cut") && !Input.IsActionPressed("step")) _guard = false;
         // a press waits in the buffer until the current action can be cancelled
-        if (locked) { }
+        if (locked || _guard) { }
         else if (Input.IsActionJustPressed("cut"))
         {
             if (Equipped == Weapon.None) EmptyHanded?.Invoke();

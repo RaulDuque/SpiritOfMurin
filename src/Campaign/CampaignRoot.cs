@@ -50,6 +50,7 @@ public partial class CampaignRoot : Node
             else if (a.StartsWith("--save=")) SavePath = a["--save=".Length..];
         }
         TitleHud = GetNode<PlainsHud>("TitleHud");
+        TitleHud.RowClicked += (panel, i) => { if (panel == "title" && TitleHud.Visible) Choose(TitleHud.TitleRows[i].Id); };
         (SaveStatus, Saved) = SaveGame.Read(SavePath);
         if (_start == "new") NewGame();
         else if (_start == "continue" && Saved != null) Continue();

@@ -61,6 +61,8 @@ public sealed class ValeState
     public string Seen { get; set; } = "";
     /// <summary>The Livro de Técnicas.</summary>
     public List<BookEntry> Book { get; set; } = new();
+    /// <summary>Manual map markers (world px), as [x, y].</summary>
+    public List<float[]> Markers { get; set; } = new();
 
     /// <summary>The book a new journey starts with: the swordsman's own art.</summary>
     public static List<BookEntry> StartingBook() => new()

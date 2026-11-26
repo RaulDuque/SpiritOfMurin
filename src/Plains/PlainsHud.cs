@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using Godot;
+using SpiritOfMurin.Game;
 
 namespace SpiritOfMurin.Plains;
 
@@ -38,7 +40,40 @@ public partial class PlainsHud : CanvasLayer
     private Control _root = null!, _bars = null!, _focusBar = null!;
     private Label _life = null!, _vigor = null!, _qi = null!, _level = null!, _hands = null!, _seed = null!, _controls = null!, _prompt = null!, _overlayText = null!, _focus = null!;
     private VBoxContainer _toasts = null!;
-    private Menu _inv = null!, _sheet = null!, _title = null!, _story = null!, _book = null!;
+    private Menu _inv = null!, _sheet = null!, _title = null!, _story = null!, _book = null!, _pause = null!;
+    private Vector2 _laidOut;
+
+    /// <summary>The world map panel.</summary>
+    public MapView Map { get; private set; } = null!;
+    /// <summary>True while the map is open.</summary>
+    public bool MapOpen => Map.Visible;
+    /// <summary>True while the pause menu is open.</summary>
+    public bool PauseOpen => _pause.Box.Visible;
+    /// <summary>The pause menu's rows.</summary>
+    public List<Row> PauseRows => _pause.Rows;
+    /// <summary>Selected pause row.</summary>
+    public int PauseSelected => _pause.Selected;
+
+    /// <summary>A row was clicked with the mouse: the panel ("inv", "sheet", "title", "book", "pause") and the row index.</summary>
+    public event Action<string, int>? RowClicked;
+
+    /// <summary>The screen rectangle (in window coordinates) of a row of a panel, for mouse checks; null when not shown.</summary>
+    public Rect2? RowScreenRect(string panel, int index)
+    {
+        var m = MenuOf(panel);
+        if (m == null || !m.Box.Visible) return null;
+        foreach (var c in m.List.GetChildren())
+            if (c is Label l && l.HasMeta("row") && (int)l.GetMeta("row") == index && !l.IsQueuedForDeletion())
+            {
+                var ft = GetViewport().GetFinalTransform();
+                Vector2 a = ft * l.GetGlobalTransformWithCanvas().Origin, b = ft * (l.GetGlobalTransformWithCanvas().Origin + l.Size);
+                return new Rect2(a, b - a); // window coordinates: what a mouse event carries
+            }
+        return null;
+    }
+
+    private Menu? MenuOf(string name) => name switch { "inv" => _inv, "sheet" => _sheet, "title" => _title, "book" => _book, "pause" => _pause, "story" => _story, _ => null };
+    private string NameOf(Menu m) => m == _inv ? "inv" : m == _sheet ? "sheet" : m == _title ? "title" : m == _book ? "book" : m == _pause ? "pause" : "story";
     private Label _banner = null!, _speech = null!;
     private float _bannerT, _speechT;
     private bool _valeMode;
@@ -53,7 +88,7 @@ public partial class PlainsHud : CanvasLayer
     /// <summary>True while the title menu is shown.</summary>
     public bool TitleOpen => _title.Box.Visible;
     /// <summary>True while any panel is open.</summary>
-    public bool AnyPanelOpen => InventoryOpen || SheetOpen || TitleOpen || StoryOpen || BookOpen;
+    public bool AnyPanelOpen => InventoryOpen || SheetOpen || TitleOpen || StoryOpen || BookOpen || PauseOpen || MapOpen;
 
     /// <summary>True while a story panel (a page, a seal, an inscription) is shown.</summary>
     public bool StoryOpen => _story.Box.Visible;
@@ -116,6 +151,25 @@ public partial class PlainsHud : CanvasLayer
 
     private Label Add(Label l, Vector2 pos) { l.Position = pos; _root.AddChild(l); return l; }
 
+    /// <summary>The screen size the layout was made for (the viewport grows with the window: "expand").</summary>
+    public Vector2 LaidOut => _laidOut;
+
+    // puts every element where it belongs for the real screen size (the base is 640 × 360; a bigger window shows more)
+    private void Layout(Vector2 sz)
+    {
+        _laidOut = sz;
+        float W = sz.X, H = sz.Y;
+        _focus.Position = new Vector2(W / 2 - 150, 3); _focusBar.Position = new Vector2(W / 2 - 61, 17);
+        _seed.Position = new Vector2(W - 156, 3);
+        _controls.Position = new Vector2(6, H - 14);
+        _toasts.Position = new Vector2(W / 2 - 200, H - 98);
+        _banner.Position = new Vector2(0, 52); _banner.Size = new Vector2(W, 20);
+        _overlayText.Position = new Vector2(0, H / 2 - 20); _overlayText.Size = new Vector2(W, 20);
+        foreach (var m in new[] { _inv, _sheet, _title, _story, _book, _pause })
+            m.Box.Position = new Vector2(Mathf.Round((W - m.Box.Size.X) / 2), Mathf.Round(Mathf.Max(18, (H - m.Box.Size.Y) / 2 - 6)));
+        Map.Size = new Vector2(Mathf.Min(W - 40, 900), H - 40); Map.Position = new Vector2((W - Map.Size.X) / 2, 20);
+    }
+
     private Menu MakeMenu(string title, string help, Vector2 pos, Vector2 size)
     {
         var m = new Menu();
@@ -175,6 +229,9 @@ public partial class PlainsHud : CanvasLayer
         _story = MakeMenu("", "E, Enter ou Esc: continuar", new Vector2(130, 90), new Vector2(380, 150));
         _story.Title.AddThemeColorOverride("font_color", new Color("#d4fbf6"));
         _book = MakeMenu("Livro de Técnicas", "W/S folhear · B fechar", new Vector2(70, 22), new Vector2(500, 312));
+        _pause = MakeMenu("Pausa", "W/S ou mouse escolher · E, Enter ou clique confirmar · Esc voltar", new Vector2(200, 90), new Vector2(240, 160));
+        Map = new MapView { Visible = false, Position = new Vector2(20, 20), Size = new Vector2(600, 320), MouseFilter = Control.MouseFilterEnum.Stop };
+        _root.AddChild(Map);
         _banner = Add(MakeLabel(12, Text), new Vector2(0, 52)); _banner.HorizontalAlignment = HorizontalAlignment.Center; _banner.Size = new Vector2(640, 20); _banner.Visible = false;
         _speech = Add(MakeLabel(9, new Color("#ece5d0")), Vector2.Zero); _speech.HorizontalAlignment = HorizontalAlignment.Center; _speech.Size = new Vector2(300, 12); _speech.Visible = false;
         _speech.AutowrapMode = TextServer.AutowrapMode.WordSmart; _speech.CustomMinimumSize = new Vector2(300, 0);
@@ -257,11 +314,11 @@ public partial class PlainsHud : CanvasLayer
         _speech.Visible = text != null;
         if (text == null) return;
         _speech.Text = text; _speechT = seconds;
-        _speech.Position = new Vector2(Mathf.Clamp(screen.X - 150, 4, 336), Mathf.Max(30, screen.Y - 74));
+        _speech.Position = new Vector2(Mathf.Clamp(screen.X - 150, 4, Mathf.Max(4, _laidOut.X - 304)), Mathf.Max(30, screen.Y - 74));
     }
 
     /// <summary>Moves the speech bubble over a screen point (it follows the speaker).</summary>
-    public void SpeechAt(Vector2 screen) { if (_speech.Visible) _speech.Position = new Vector2(Mathf.Clamp(screen.X - 150, 4, 336), Mathf.Max(30, screen.Y - 74)); }
+    public void SpeechAt(Vector2 screen) { if (_speech.Visible) _speech.Position = new Vector2(Mathf.Clamp(screen.X - 150, 4, Mathf.Max(4, _laidOut.X - 304)), Mathf.Max(30, screen.Y - 74)); }
 
     public void SetLevel(int level, int xp, int need, int points) =>
         _level.Text = $"Nv {level} · XP {xp}/{need} (faltam {need - xp})" + (points > 0 ? $" · {points} ponto{(points > 1 ? "s" : "")} (C)" : "");
@@ -360,12 +417,40 @@ public partial class PlainsHud : CanvasLayer
             if (r.Group.Length > 0) { var h = MakeLabel(9, Dim); h.Text = $"— {r.Group} —"; m.List.AddChild(h); }
             var l = MakeLabel(9, i == m.Selected ? Select : r.Enabled ? Text : Disabled);
             l.Text = (i == m.Selected ? "› " : "  ") + r.Text;
+            l.MouseFilter = Control.MouseFilterEnum.Stop;
+            l.SetMeta("row", i);
+            int index = i; var menu = m;
+            l.GuiInput += ev =>
+            {
+                // the row under the cursor is the one selected and the one a click acts on (Godot maps the
+                // click through the window's scaling, so this holds at any window size)
+                if (ev is InputEventMouseMotion && menu.Selected != index) { menu.Selected = index; Callable.From(() => Refresh(menu)).CallDeferred(); }
+                else if (ev is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+                {
+                    menu.Selected = index;
+                    GetViewport().SetInputAsHandled();
+                    RowClicked?.Invoke(NameOf(menu), index);
+                }
+            };
             m.List.AddChild(l);
         }
         if (m != _sheet) m.Detail.Text = m.Rows[m.Selected].Detail;
     }
 
     private static void Move(Menu m, int d) { if (m.Rows.Count > 0) m.Selected = Mathf.PosMod(m.Selected + d, m.Rows.Count); }
+
+    /// <summary>Opens (with rows) or closes (null) the pause menu.</summary>
+    public void ShowPause(List<Row>? rows) { _pause.Box.Visible = rows != null; if (rows != null) { _pause.Selected = Mathf.Clamp(_pause.Selected, 0, rows.Count - 1); Fill(_pause, rows); } }
+    /// <summary>Moves the pause selection.</summary>
+    public void MovePause(int d) { Move(_pause, d); Refresh(_pause); }
+
+    /// <summary>Opens the map on a region (null closes it).</summary>
+    public void ShowMap(IMapSource? source, float zoom)
+    {
+        Map.Visible = source != null;
+        if (source == null) return;
+        Map.Source = source; Map.Center = source.MapPlayer; Map.Zoom = zoom;
+    }
 
     /// <summary>Opens or closes the inventory.</summary>
     public void ShowInventory(bool open) { _inv.Box.Visible = open; if (open) Refresh(_inv); }
@@ -399,6 +484,8 @@ public partial class PlainsHud : CanvasLayer
     public override void _Process(double delta)
     {
         float dt = (float)delta;
+        Vector2 size = GetViewport().GetVisibleRect().Size;
+        if (size != _laidOut) Layout(size);
         for (int i = _toastLabels.Count - 1; i >= 0; i--)
         {
             var (l, t) = _toastLabels[i];

@@ -8,6 +8,7 @@ using SpiritOfMurin.Combat;
 using SpiritOfMurin.Items;
 using SpiritOfMurin.Plains;
 using SpiritOfMurin.Save;
+using SpiritOfMurin.Game;
 
 namespace SpiritOfMurin.Vale;
 
@@ -19,8 +20,45 @@ namespace SpiritOfMurin.Vale;
 /// which ends the prologue and hands over to the Planície. Meditating on the mat by the twin stones writes
 /// the journey.
 /// </summary>
-public partial class ValeGame : Node2D, IValeHost
+public partial class ValeGame : Node2D, IValeHost, IMapSource
 {
+    // ------------------------------------------------------------------ map (campaign delivery 3)
+
+    /// <inheritdoc />
+    public List<Vector2> MapMarkers { get; } = new();
+    /// <inheritdoc />
+    public Vector2 MapPlayer => Player.GlobalPosition;
+    /// <inheritdoc />
+    public Vector2 MapFacing => Player.Facing;
+    /// <inheritdoc />
+    public string MapTitle => "Vale de Bambus";
+    /// <inheritdoc />
+    public string MapLegend => "só o que você já viu · ciano: esteira de meditação · ocre: missão em andamento\n✕ marcadores";
+    /// <summary>The pause menu and the map.</summary>
+    public GamePanels Panels { get; private set; } = null!;
+
+    private static Color MapColor(VTile t) => t switch
+    {
+        VTile.Water => new Color("#2c5a5e"), VTile.Bridge => new Color("#7a5a3a"), VTile.Chasm => new Color("#090a0b"), VTile.Path => new Color("#86704f"),
+        VTile.Camp => new Color("#77684a"), VTile.TombFloor => new Color("#3a3a3f"), VTile.TombWall or VTile.CutWall or VTile.Door => new Color("#6c6b72"),
+        VTile.Rock => new Color("#8a877a"), VTile.Bamboo => new Color("#5f8f4a"), VTile.Pine => new Color("#2f5a3a"), VTile.Tent => new Color("#8f3d2c"),
+        VTile.Gate => new Color("#6d4f33"), VTile.Stele => new Color("#9a978b"), _ => new Color("#4c5a3e"),
+    };
+
+    /// <inheritdoc />
+    public void DrawMap(MapView v)
+    {
+        for (int ty = 0; ty < ValeMap.MH; ty++)
+            for (int tx = 0; tx < ValeMap.MW; tx++)
+                if (Seen(tx, ty)) v.WorldRect(new Vector2(tx * ValeMap.TS, ty * ValeMap.TS), new Vector2(ValeMap.TS, ValeMap.TS), MapColor(Map.At(tx, ty)));
+        foreach (var (name, at) in ValeMap.Landmarks)
+            if (Seen(Mathf.FloorToInt(at.X / ValeMap.TS), Mathf.FloorToInt(at.Y / ValeMap.TS))) v.WorldLabel(at, name, new Color("#ece5d0"));
+        if (Seen(Mathf.FloorToInt(ValeMap.Meditate.X / ValeMap.TS), Mathf.FloorToInt(ValeMap.Meditate.Y / ValeMap.TS))) v.WorldDot(ValeMap.Meditate, new Color("#6fd8d2"), 3);
+        foreach (var (id, done) in Story.Quests)
+            if (!done && QuestTarget(id) is { } q && Seen(Mathf.FloorToInt(q.X / ValeMap.TS), Mathf.FloorToInt(q.Y / ValeMap.TS))) v.WorldDot(q, new Color("#e2a640"), 3);
+    }
+
+    private static Vector2? QuestTarget(string id) => id switch { "guarda" or "manual" => ValeMap.Statue, "senior" => new Vector2(29 * ValeMap.TS, 7 * ValeMap.TS), _ => null };
     /// <summary>The save file.</summary>
     [Export] public string SavePath { get; set; } = SaveGame.DefaultPath;
     /// <summary>Show the opening overlay (tests turn it off).</summary>
@@ -120,6 +158,8 @@ public partial class ValeGame : Node2D, IValeHost
         cam.LimitLeft = 0; cam.LimitTop = 0; cam.LimitRight = ValeMap.MW * ValeMap.TS; cam.LimitBottom = ValeMap.MH * ValeMap.TS;
         Hud.SetValeMode(true);
         Player.InputLocked = true;
+        Panels = new GamePanels(Hud, Player, this, 0.15f);
+        Hud.RowClicked += (panel, i) => { if (panel == "inv") { UseItem(Hud.Rows[i].Id); RefreshInventory(); } else if (panel == "book") Hud.ShowBook(BookRows()); };
     }
 
     private void Spawn(string id, ValeFighter.Kind kind, float tx, float ty, Action<ValeFighter> set)
@@ -150,6 +190,7 @@ public partial class ValeGame : Node2D, IValeHost
             if (Story.DoorOpen) _built.Door.QueueFree();
             _chest.Open = Story.ChestOpen; _corpse.WithPage = !Story.HasManual;
             for (int i = 0; i < Story.Seen.Length && i < _seen.Length; i++) _seen[i] = Story.Seen[i] == '1';
+            foreach (var mk in Story.Markers) if (mk.Length == 2) MapMarkers.Add(new Vector2(mk[0], mk[1]));
             Player.GlobalPosition = new Vector2(d.Spot[0], d.Spot[1]);
             Player.Revive();
             Player.Heal(-(Player.MaxHealth - Mathf.Clamp(d.Health, 1, Player.MaxHealth)));
@@ -186,6 +227,7 @@ public partial class ValeGame : Node2D, IValeHost
         _shake = Mathf.Max(0, _shake - dt * 30);
         cam.Offset = _shake > 0 ? new Vector2((float)GD.RandRange(-_shake, _shake), (float)GD.RandRange(-_shake, _shake)) : Vector2.Zero;
         if (_speaker != null && IsInstanceValid(_speaker)) Hud.SpeechAt(GetViewport().GetCanvasTransform() * _speaker.GlobalPosition);
+        Panels.Process(dt);
         if (Finale != null) { Finale.Update(dt); return; }
         if (_reveal > 0)
         {
@@ -256,17 +298,18 @@ public partial class ValeGame : Node2D, IValeHost
     public override void _UnhandledInput(InputEvent e)
     {
         if (Finale != null) { Finale.Input(e); GetViewport().SetInputAsHandled(); return; }
+        if (!Hud.StoryOpen || Hud.PauseOpen || Hud.MapOpen) { if (Panels.Input(e)) { GetViewport().SetInputAsHandled(); return; } }
         if (Hud.StoryOpen)
         {
             if (e.IsActionPressed("use") || e.IsActionPressed("ui_accept") || e.IsActionPressed("ui_cancel") || e.IsActionPressed("cut"))
-            { Hud.ShowStory(null); Player.InputLocked = _reveal > 0; GetViewport().SetInputAsHandled(); }
+            { Hud.ShowStory(null); Player.InputLocked = _reveal > 0; Player.ReleaseGuard(); GetViewport().SetInputAsHandled(); }
             return;
         }
         if (Hud.BookOpen)
         {
             if (e.IsActionPressed("move_up")) Hud.MoveBook(-1);
             else if (e.IsActionPressed("move_down")) Hud.MoveBook(1);
-            else if (e.IsActionPressed("book") || e.IsActionPressed("ui_cancel")) { Hud.ShowBook(null); Player.InputLocked = false; }
+            else if (e.IsActionPressed("book") || e.IsActionPressed("ui_cancel")) { Hud.ShowBook(null); Player.InputLocked = false; Player.ReleaseGuard(); }
             else return;
             if (Hud.BookOpen) Hud.ShowBook(BookRows());
             GetViewport().SetInputAsHandled();
@@ -277,7 +320,7 @@ public partial class ValeGame : Node2D, IValeHost
             if (e.IsActionPressed("move_up")) Hud.MoveSelection(-1);
             else if (e.IsActionPressed("move_down")) Hud.MoveSelection(1);
             else if (e.IsActionPressed("use") || e.IsActionPressed("ui_accept")) { if (Hud.Rows.Count > 0) UseItem(Hud.Rows[Hud.Selected].Id); RefreshInventory(); }
-            else if (e.IsActionPressed("inventory") || e.IsActionPressed("ui_cancel")) { Hud.ShowInventory(false); Player.InputLocked = false; }
+            else if (e.IsActionPressed("inventory") || e.IsActionPressed("ui_cancel")) { Hud.ShowInventory(false); Player.InputLocked = false; Player.ReleaseGuard(); }
             else return;
             GetViewport().SetInputAsHandled();
             return;
@@ -685,6 +728,7 @@ public partial class ValeGame : Node2D, IValeHost
     public SaveData Snapshot(string phase = "vale")
     {
         Story.Seen = new string(_seen.Select(b => b ? '1' : '0').ToArray());
+        Story.Markers = MapMarkers.Select(m => new[] { m.X, m.Y }).ToList();
         return new SaveData
         {
             Region = "vale", Phase = phase, Seed = 0,

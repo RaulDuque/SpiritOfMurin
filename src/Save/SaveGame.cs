@@ -89,6 +89,10 @@ public sealed class SaveData
     public bool LossApplied { get; set; }
     /// <summary>True once the weakened techniques came back at the unlock level (the message shows once).</summary>
     public bool TechniquesReturned { get; set; }
+    /// <summary>Planície chunks explored (the map), as [x, y].</summary>
+    public List<int[]> Explored { get; set; } = new();
+    /// <summary>Manual map markers (world px), as [x, y].</summary>
+    public List<float[]> Markers { get; set; } = new();
 }
 
 /// <summary>What reading the save found.</summary>
