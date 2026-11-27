@@ -1,0 +1,24 @@
+---
+description: Regras do SpiritOfMurin — ler o contexto do projeto antes de qualquer tarefa
+alwaysApply: true
+---
+
+# SpiritOfMurin — leia antes de agir
+
+Este projeto foi conduzido no Claude Code. As regras dele valem aqui também.
+
+Antes de qualquer tarefa, leia nesta ordem:
+1. `docs/contexto-para-assistentes.md` — decisões, preferências do criador, tecnologia e testes (resumo feito para outras ferramentas).
+2. `CLAUDE.md` — protocolo de colaboração e o "Fluxo de trabalho: fechamento de cada entrega".
+3. `.claude/rules/commits-atomicos.md` — uma mudança lógica por commit.
+4. `production/session-state/active.md` (se existir) ou o relatório mais recente listado em `user-docs/relatorios/README.md`.
+
+O essencial:
+- Responda em português do Brasil, com uma decisão por vez. Mostre um rascunho antes de mudanças grandes.
+- Godot 4.7.2 .NET com C#. Código em `src/`, valores de jogo em `assets/data/`. Confira `docs/engine-reference/godot/` antes de usar APIs do Godot.
+- Ao terminar uma entrega que mude arquivos:
+  - rode `dotnet build` e os testes aplicáveis;
+  - atualize o relatório em `user-docs/relatorios/` e o `README.md` dessa pasta;
+  - faça commits atômicos (`git add` por arquivo) e push para `origin` (nunca para `upstream`).
+- Nunca capture a área de trabalho do Windows para evidências. Use a imagem do viewport do jogo.
+- As pastas `.claude/skills/` e `.claude/agents/` são instruções do Claude Code. Use-as como roteiro para ler e seguir à mão quando a tarefa pedir (por exemplo, `.claude/skills/subir-git/SKILL.md` para fechar uma entrega).
