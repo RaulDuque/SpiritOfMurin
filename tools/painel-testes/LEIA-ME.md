@@ -6,6 +6,7 @@ O `PainelDeTestes.exe`, na raiz do projeto, abre uma janela com botões:
 |---|---|
 | **▶ Jogar** | **Compila o código** e abre o jogo com a sua jornada normal |
 | **Vitrine (personagem e mobs)** | Compila e abre a vitrine: o protagonista nas 8 direções, com faca, mãos vazias, ajoelhado e deitado; um boneco que você controla (andar, corte, passo, Ki); discípulo, Sênior e estátua em todas as poses e caídos; javali e coelho. Comandos: roda dá zoom, botão direito arrasta a vista, R volta o boneco, Esc sai |
+| **Inspeção (elementos)** | Compila e abre a cena de inspeção: cada árvore, rocha, bambu e arbusto de `assets/data/elements` no tamanho do jogo, em todos os estados (inteiro, meio trabalhado, quase, caindo, esgotado), e o personagem com cada ferramenta. Comandos: ← → elemento, ↑ ↓ estado, J golpe, G rajada, A um corpo atravessando, Tab ferramenta, roda zoom, Esc sai |
 | **Rodar todos os testes (com janela)** | Roda todos os testes automáticos; você assiste o jogo se jogar sozinho no monitor escolhido |
 | **Rodar prólogo + recuperação (com janela)** | Só o Vale, a recuperação do protótipo e a unidade (mais curto) |
 | **Rodar todos sem janela (rápido)** | Os mesmos testes, sem abrir a janela do jogo; pula os poucos que só funcionam com janela |
@@ -13,7 +14,7 @@ O `PainelDeTestes.exe`, na raiz do projeto, abre uma janela com botões:
 | **Abrir último relatório** | Abre o relatório mais recente no navegador |
 | **Escolher o Godot…** | Só se o Godot não estiver em `C:\Users\<você>\Tools\Godot\4.7.2-stable-mono\…` |
 
-**Modo ao vivo** (marcado por padrão): com o jogo ou a vitrine aberta pelo painel, cada vez que você salva um `.cs` em `src/`, o painel:
+**Modo ao vivo** (marcado por padrão): com o jogo, a vitrine ou a inspeção aberta pelo painel, cada vez que você salva um `.cs` em `src/` ou um `.json` em `assets/data/`, o painel:
 - recompila;
 - se compilou, fecha e reabre a mesma tela com o código novo (alguns segundos);
 - se deu erro, mostra o arquivo, a linha e a mensagem, e a tela aberta continua com a versão anterior.
