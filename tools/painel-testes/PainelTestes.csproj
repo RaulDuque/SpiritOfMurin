@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- O Painel de Testes do SpiritOfMurin: um programa do Windows com botões para jogar e para rodar os
+       testes automáticos (assistindo o jogo se jogar sozinho ou sem janela), que no fim escreve um relatório.
+       Fica fora do código do jogo (tools/ não entra no SpiritOfMurin.csproj).
+       Gerar o .exe: dotnet publish tools/painel-testes -c Release -o . (veja tools/painel-testes/LEIA-ME.md) -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>PainelDeTestes</AssemblyName>
+    <RootNamespace>PainelTestes</RootNamespace>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>none</DebugType>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+  </PropertyGroup>
+</Project>

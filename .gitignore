@@ -175,3 +175,13 @@ $RECYCLE.BIN/
 # the project root. Anchored so a reports/ folder elsewhere stays tracked.
 /reports/
 /test-results/
+
+# Painel de Testes: compilação e rodadas locais (o PainelDeTestes.exe da raiz vai no Git)
+tools/painel-testes/bin/
+tools/painel-testes/obj/
+tools/painel-testes/publicado/
+tools/painel-testes/PainelDeTestes.json
+PainelDeTestes.json
+production/qa/execucoes/
+!/tools/painel-testes/PainelTestes.csproj
+!/PainelDeTestes.exe
