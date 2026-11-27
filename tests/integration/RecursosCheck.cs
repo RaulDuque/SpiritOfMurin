@@ -49,10 +49,10 @@ public partial class RecursosCheck : Node
             if (a.StartsWith("--seed=") && int.TryParse(a["--seed=".Length..], out int s)) _seed = s;
         }
         GD.Print($"window on screen {DisplayServer.WindowGetCurrentScreen()} of {DisplayServer.GetScreenCount()} ({DisplayServer.GetName()})");
-        if (_phase is "work" or "bush" or "oldsave") SaveGame.Erase(SavePath);
+        if (_phase is "work" or "bush" or "oldsave" or "video") SaveGame.Erase(SavePath);
         if (_phase != "resume" && Godot.FileAccess.FileExists(Prefs.Path)) DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(Prefs.Path));
         Bindings.Init(); Assist.Reload(); Aim.Reload(); Aim.UseForSession(false);
-        _ = _phase switch { "resume" => Resume(), "bush" => Bush(), "oldsave" => OldSave(), _ => Work() };
+        _ = _phase switch { "resume" => Resume(), "bush" => Bush(), "oldsave" => OldSave(), "video" => Video(), _ => Work() };
     }
 
     // ------------------------------------------------------------------ helpers
@@ -135,6 +135,7 @@ public partial class RecursosCheck : Node
         Check("a workable pine near the start", pine != null);
         if (pine == null) { Finish(); return; }
         await Beside(pine);
+        await Shot("00-pinheiro-inteiro"); // the "before" of the before/after (same spot as 03-toco)
         Check("the prompt says what J does with the axe", _g.Hud.PromptText.Contains("cortar") && _g.Hud.PromptText.Contains("golpes"), _g.Hud.PromptText);
         _g.UseItem("faca_pedra"); await Strike(1);
         Check("the knife does not cut the pine (refused, no work)", pine.Work == 0 && _g.Hud.Messages.LastOrDefault()?.Contains("machado") == true, _g.Hud.Messages.LastOrDefault() ?? "");
@@ -314,6 +315,33 @@ public partial class RecursosCheck : Node
     }
 
     private static float WindGustTime() => Wind.Def.GustPeriod * 0.5f;
+
+    // ------------------------------------------------------------------ the short video (run with --write-movie)
+    // a tree cut down, a rock broken, a bamboo clump giving way, a rabbit going through a bush — one after the other
+    private async Task Video()
+    {
+        await Open(PlainsGame.StartMode.New);
+        _g.Inventory.Add("machado_pedra", 1); _g.Inventory.Add("picareta_pedra", 1); _g.Inventory.Add("faca_pedra", 1); // controlled: the tools
+        _g.UseItem("machado_pedra");
+        var pine = await Find(e => e.Def.Id == "pinheiro");
+        if (pine != null) { await Beside(pine); await Frames(20); await Strike(6); await Frames(70); }
+        var rock = await Find(e => e.Def.Veined);
+        if (rock != null) { _g.UseItem("picareta_pedra"); await Beside(rock); await Frames(20); await Strike(Mathf.CeilToInt(rock.Def.Toughness)); await Frames(50); }
+        var bamboo = await Find(e => e.Def.Family == "bambu");
+        if (bamboo != null) { _g.UseItem("faca_pedra"); await Beside(bamboo); await Frames(20); await Strike(3); await Frames(50); }
+        var bush = Elements("arbusto").OrderBy(b => b.GlobalPosition.DistanceTo(P.GlobalPosition)).FirstOrDefault();
+        var rabbit = _g.World.Objects.GetChildren().OfType<Rabbit>().FirstOrDefault();
+        if (bush != null && rabbit != null)
+        {
+            rabbit.ProcessMode = ProcessModeEnum.Disabled;
+            P.GlobalPosition = bush.GlobalPosition + new Vector2(-30, 40); P.GetNode<Camera2D>("Camera").ResetSmoothing(); await Frames(20);
+            Vector2 a = bush.GlobalPosition + new Vector2(-50, 2), b = bush.GlobalPosition + new Vector2(50, 2);
+            for (int i = 0; i <= 50; i++) { rabbit.GlobalPosition = a.Lerp(b, i / 50f); rabbit.Velocity = (b - a); await Frames(1); }
+            rabbit.Velocity = Vector2.Zero; await Frames(60);
+        }
+        Check("the video ran to the end (tree, rock, bamboo, bush)", pine != null && rock != null && bamboo != null && bush != null);
+        Finish();
+    }
 
     // ------------------------------------------------------------------ a journey from before
     private async Task OldSave()
