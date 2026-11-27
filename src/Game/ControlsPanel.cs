@@ -34,7 +34,7 @@ public partial class ControlsPanel : Control
     /// <summary>Rectangles of the bottom buttons by id ("restore", "list", "back").</summary>
     public Dictionary<string, Rect2> ButtonRects { get; } = new();
 
-    private static readonly string[] Buttons = { "restore", "list", "back" };
+    private static readonly string[] Buttons = { "aim", "restore", "list", "back" };
     private int Rows => Bindings.Actions.Length + Buttons.Length;
     private float _scroll;
 
@@ -57,6 +57,10 @@ public partial class ControlsPanel : Control
         if (row < Bindings.Actions.Length) { BeginChange(row, Col); return; }
         switch (Buttons[row - Bindings.Actions.Length])
         {
+            case "aim":
+                Aim.ByMouse = !Aim.ByMouse;
+                Message = Aim.ByMouse ? "Mira pelo mouse: sem alvo travado, o golpe e o Qi vão para o cursor." : "Mira pela direção do personagem (só teclado): o golpe vai para onde você anda.";
+                break;
             case "restore": Bindings.Restore(); Message = "Controles restaurados para os padrões."; break;
             case "list": ListRequested?.Invoke(); break;
             case "back": Close(); break;
@@ -172,7 +176,7 @@ public partial class ControlsPanel : Control
         }
         // the buttons at the bottom
         ButtonRects.Clear();
-        string[] labels = { "Restaurar padrões", "Lista completa de comandos", "Voltar" };
+        string[] labels = { Aim.ByMouse ? "Mira: pelo mouse" : "Mira: direção do personagem", "Restaurar padrões", "Lista completa de comandos", "Voltar" };
         float bx = 10, by = Size.Y - 34;
         DrawRect(new Rect2(8, by - 4, Size.X - 16, 1), frame);
         for (int i = 0; i < Buttons.Length; i++)

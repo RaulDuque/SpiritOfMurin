@@ -108,6 +108,37 @@ public partial class Player : CharacterBody2D
     /// <summary>Turns the body to face a direction (scenes and cutscenes).</summary>
     public void Face(Vector2 dir) { if (dir.LengthSquared() > 0.0001f) Facing = dir.Normalized(); }
 
+    // ---- free aim by the mouse (pedido 13, item 7) ----
+    private Vector2 _mouseView;
+    private bool _mouseSeen;
+
+    /// <summary>Where the aim starts: the chest, a little above the feet.</summary>
+    public static readonly Vector2 AimOrigin = new(0, -14);
+
+    /// <inheritdoc />
+    public override void _Input(InputEvent e)
+    {
+        // the cursor as the game sees it (window → picture coordinates, already through the stretch)
+        if (e is InputEventMouse m) { _mouseView = m.Position; _mouseSeen = true; }
+    }
+
+    /// <summary>The cursor in the world (through the camera and the zoom), or null when aiming by facing or before the mouse moved.</summary>
+    public Vector2? AimWorld => !Game.Aim.ByMouse || !_mouseSeen ? null : GetCanvasTransform().AffineInverse() * _mouseView;
+
+    /// <summary>The direction an attack would go now: the locked target, else the cursor, else the facing.</summary>
+    public Vector2 AimDirection
+    {
+        get
+        {
+            if (LockTarget?.Invoke() is { } t && IsInstanceValid(t)) { Vector2 to = t.GlobalPosition - GlobalPosition; if (to.LengthSquared() > 1) return to.Normalized(); }
+            if (AimWorld is { } w) { Vector2 d = w - (GlobalPosition + AimOrigin); if (d.LengthSquared() > 4) return d.Normalized(); }
+            return Facing;
+        }
+    }
+
+    // turns the body to where the attack goes (the pose, the blade, the shot and the hit area all read Facing)
+    private void TurnToAim() => Facing = AimDirection;
+
     /// <summary>Asks for a qi shot (K). It waits in the buffer like a cut or a step.</summary>
     public void RequestQi() { if (!InputLocked && Health > 0 && Lying <= 0) _buffer = (ActionKind.Qi, Tuning.BufferTime); }
 
@@ -439,6 +470,7 @@ public partial class Player : CharacterBody2D
                 return;
             }
             if (!Pay("qi_wave", qp)) return;
+            TurnToAim();
             _act = new Act { Kind = ActionKind.Qi, Startup = 0.1f, Active = 0.02f, Recovery = 0.22f * RecoveryMultiplier, CancelAt = 0.16f };
             var lp = LaminaParams();
             if (lp != null && _hist.Count >= 2)
@@ -497,6 +529,7 @@ public partial class Player : CharacterBody2D
         if (kind == ActionKind.Cut)
         {
             if (Equipped == Weapon.None || !SpendVigor(CutVigorCost)) return;
+            TurnToAim();
             int n = _act is { Kind: ActionKind.Cut } prev && prev.N < MaxChain ? prev.N + 1 : 1;
             _swingId++;
             if (Equipped == Weapon.Knife)

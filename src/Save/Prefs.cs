@@ -20,6 +20,8 @@ public sealed class Prefs
     public bool Fullscreen { get; set; }
     /// <summary>Show the line on the ground along a fixed charge (an aid; can be reduced).</summary>
     public bool ChargeLine { get; set; } = true;
+    /// <summary>Aim attacks at the mouse cursor (true) or along the character's facing (keyboard only).</summary>
+    public bool AimMouse { get; set; } = true;
     /// <summary>Assist mode: show the combat areas (guard arc, live blade, announced attacks).</summary>
     public bool AssistAreas { get; set; }
     /// <summary>Controls: action → [main input, second input] ("k:physical keycode", "m:mouse button" or "").</summary>
