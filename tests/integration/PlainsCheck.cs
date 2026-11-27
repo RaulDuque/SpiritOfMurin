@@ -304,7 +304,7 @@ public partial class PlainsCheck : Node
             Check("the charge ran straight", Mathf.Abs(boar.GlobalPosition.Y - chargeStart.Y) < 2 && Mathf.Abs(boar.GlobalPosition.X - chargeStart.X) > 60, $"{chargeStart} → {boar.GlobalPosition}");
             await Shot("10-javali-recuperacao");
             // counter-attack in the opening
-            int bh = boar.Brain.Health;
+            float bh = boar.Brain.Health;
             await Teleport(boar.GlobalPosition + new Vector2(0, 16), Vector2.Up);
             string keys = string.Join("", new[] { "move_up", "move_down", "move_left", "move_right", "sneak", "cut" }.Where(a => Input.IsActionPressed(a)));
             string atJ = $"held [{keys}] {boar.Brain.State} {boar.Brain.StateTime:0.00}s, dist {boar.GlobalPosition.DistanceTo(_player.GlobalPosition):0}, facing {_player.Facing}";

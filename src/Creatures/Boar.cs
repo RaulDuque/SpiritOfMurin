@@ -32,7 +32,9 @@ public partial class Boar : CharacterBody2D, IHittable
     /// <inheritdoc />
     public int Level { get; set; } = 3;
     /// <inheritdoc />
-    public int HealthLeft => Brain.Health;
+    public int HealthLeft => Mathf.CeilToInt(Brain.Health - 0.001f);
+    /// <summary>Health left, exact (damage can be fractional: a reinforced knife cut takes 1.1).</summary>
+    public float HealthExact => Brain.Health;
     /// <inheritdoc />
     public int HealthMax => Tuning.Health;
     /// <inheritdoc />
@@ -78,7 +80,7 @@ public partial class Boar : CharacterBody2D, IHittable
     public bool BreakGuard(float seconds) { bool b = Brain.Break(seconds); if (b) _spark = 0.3f; return b; }
 
     /// <inheritdoc />
-    public HitResult ReceiveHit(int damage)
+    public HitResult ReceiveHit(float damage)
     {
         var r = Brain.TakeHit(damage);
         if (r == HitResult.Killed) Died?.Invoke(this, GlobalPosition);

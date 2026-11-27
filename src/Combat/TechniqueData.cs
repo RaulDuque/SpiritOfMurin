@@ -44,6 +44,12 @@ public sealed class TechniqueParams
     public float Hold { get; set; }
     /// <summary>Charged shot: Qi drawn into the palm per second while charging.</summary>
     public float Drain { get; set; }
+    /// <summary>Reinforce: melee strikes reinforced by one activation.</summary>
+    public int Charges { get; set; }
+    /// <summary>Reinforce: extra damage of a reinforced strike, as a fraction (0.10 = +10%).</summary>
+    public float Bonus { get; set; }
+    /// <summary>Reinforce: chance (0-1) that a reinforced strike breaks the guard it meets, rolled once per strike and guard.</summary>
+    public float Chance { get; set; }
 }
 
 /// <summary>A technique's name and its two versions.</summary>
@@ -79,11 +85,13 @@ public sealed class TechniqueData
     public TechniqueDef Lamina { get; set; } = new();
     /// <summary>The secret charged Qi shot (hold the Qi button): qi_cost is the full charge's total cost.</summary>
     public TechniqueDef QiCharge { get; set; } = new();
+    /// <summary>The Reforço de Qi (modifier + cut): hold = the gesture's seconds.</summary>
+    public TechniqueDef QiReinforce { get; set; } = new();
 
     /// <summary>The definition by id.</summary>
     public TechniqueDef Get(string id) => id switch
     {
-        "qi_wave" => QiWave, "side_step" => SideStep, "dash" => Dash, "thrust" => Thrust, "lamina" => Lamina, "qi_charge" => QiCharge, _ => new TechniqueDef { Name = id },
+        "qi_wave" => QiWave, "side_step" => SideStep, "dash" => Dash, "thrust" => Thrust, "lamina" => Lamina, "qi_charge" => QiCharge, "qi_reinforce" => QiReinforce, _ => new TechniqueDef { Name = id },
     };
 
     /// <summary>Parses the data.</summary>

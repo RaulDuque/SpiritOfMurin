@@ -52,7 +52,7 @@ public partial class ValeFighter : CharacterBody2D
     /// <summary>Where it stands when idle.</summary>
     public Vector2 Home { get; set; }
     /// <summary>Health points.</summary>
-    public int Hp { get; set; }
+    public float Hp { get; set; }
     /// <summary>Full health.</summary>
     public int Max { get; set; }
     /// <summary>Facing angle, radians.</summary>
@@ -278,7 +278,7 @@ public partial class ValeFighter : CharacterBody2D
     /// A blade or a qi shot reached it. Returns "parried", "flank", "hit", "killed" or "statue" (a flank
     /// strike on the statue, which only answers).
     /// </summary>
-    public string Strike(Vector2 from, int dmg, bool lamina, float stagger, bool heavy)
+    public string Strike(Vector2 from, float dmg, bool lamina, float stagger, bool heavy)
     {
         if (!lamina && WouldParry(from))
         {
@@ -291,7 +291,7 @@ public partial class ValeFighter : CharacterBody2D
         Vector2 back = (GlobalPosition - from).Normalized(); Knock = back * 160;
         if (lamina) { Stagger = stagger; Enter(St.Stagger); }
         else if (!HyperArmor) Enter(St.Flinch);
-        if (Hp <= 0) { Hp = 0; Enter(St.Dead); return "killed"; }
+        if (Hp <= 0.001f) { Hp = 0; Enter(St.Dead); return "killed"; }
         return flank ? "flank" : "hit";
     }
 

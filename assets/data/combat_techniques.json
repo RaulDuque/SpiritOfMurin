@@ -11,6 +11,7 @@
     "reach / lunge": "estocada: alcance (px) e avanço do corpo (px)",
     "combo_window": "Passo da Lâmina Silenciosa: segundos entre passo lateral → corte → Qi",
     "stagger": "Passo da Lâmina Silenciosa e Disparo Concentrado: segundos de guarda quebrada",
+    "qi_reinforce": "Reforço de Qi: segure o modificador (Shift) e aperte o corte. hold: segundos do gesto; qi_cost: gasto único ao completar; charges: golpes corpo a corpo reforçados (cada golpe executado gasta uma, mesmo errando; cada corte do combo conta); bonus: dano extra por golpe reforçado (fração, sem arredondar: a vida dos alvos aceita frações); chance: probabilidade de romper a guarda atingida, uma rolagem por golpe e guarda; stagger: segundos de guarda aberta na ruptura",
     "qi_charge": "técnica secreta: segure o botão de Qi. qi_cost é o custo TOTAL da carga completa (já inclui o disparo); hold: segundos segurando antes de a carga começar (um toque mais curto é o disparo comum); drain: Qi por segundo puxado para a palma; damage: dano da carga completa (a parcial dá dano proporcional ao Qi investido, mínimo 1); só a carga completa rompe a guarda (stagger)"
   },
   "unlock_level": 3,
@@ -33,6 +34,11 @@
     "name": "Estocada",
     "full": { "qi_cost": 0, "vigor_cost": 0, "reach": 64, "lunge": 22, "damage": 2 },
     "weak": { "qi_cost": 0, "vigor_cost": 8, "reach": 40, "lunge": 12, "damage": 1 }
+  },
+  "qi_reinforce": {
+    "name": "Reforço de Qi",
+    "full": { "qi_cost": 75, "vigor_cost": 0, "hold": 0.35, "charges": 3, "bonus": 0.10, "chance": 0.05, "stagger": 1.0 },
+    "weak": { "qi_cost": 75, "vigor_cost": 0, "hold": 0.35, "charges": 3, "bonus": 0.10, "chance": 0.05, "stagger": 1.0 }
   },
   "qi_charge": {
     "name": "Disparo de Qi Concentrado",

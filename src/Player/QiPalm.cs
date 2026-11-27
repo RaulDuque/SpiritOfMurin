@@ -19,13 +19,40 @@ public partial class QiPalm : Node2D
     public override void _Process(double delta)
     {
         _t += (float)delta;
-        if (GetParent() is Player p && (p.Charging || Visible)) QueueRedraw();
+        QueueRedraw();
+    }
+
+    // the Reforço de Qi: Qi running up the blade during the gesture, a jade shimmer on it while charges remain,
+    // and the charges as pips over the head (3, 2, 1)
+    private void DrawReinforce(Player p)
+    {
+        Vector2 hand = p.Facing * 9 + new Vector2(0, -16), tip = hand + p.Facing * 22;
+        if (p.Reinforcing)
+        {
+            float k = p.ReinforceProgress;
+            for (int i = 0; i < 8; i++) { float u = i / 7f; if (u > k) break; DrawRect(new Rect2(hand.Lerp(tip, u) - Vector2.One, new Vector2(2, 2)), new Color(Glow, 0.9f)); }
+            DrawCircle(hand.Lerp(tip, k), 2.5f, Core);
+        }
+        if (p.ReinforceCharges <= 0) return;
+        for (int i = 0; i < 5; i++)
+        {
+            float u = (_t * 1.6f + i / 5f) % 1f;
+            DrawRect(new Rect2(hand.Lerp(tip, u) - Vector2.One, new Vector2(2, 2)), new Color(Glow, 0.75f));
+        }
+        for (int i = 0; i < p.ReinforceCharges; i++)
+        {
+            Vector2 c = new(-6 + i * 6 - (p.ReinforceCharges - 1) * 0f, -52);
+            DrawRect(new Rect2(c - new Vector2(2, 2), new Vector2(4, 4)), new Color("#16140f"));
+            DrawRect(new Rect2(c - new Vector2(1, 1), new Vector2(2, 2)), Ring);
+        }
     }
 
     /// <inheritdoc />
     public override void _Draw()
     {
-        if (GetParent() is not Player p || !p.Charging) return;
+        if (GetParent() is not Player p) return;
+        DrawReinforce(p);
+        if (!p.Charging) return;
         float k = Mathf.Clamp(p.ChargeInvested / Mathf.Max(1, p.ChargeCost), 0, 1);
         Vector2 hand = p.Facing * 11 + new Vector2(0, -17);
         float r = 2 + 6 * k;

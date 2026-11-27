@@ -213,6 +213,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         Player.MaxVigor = 0;
         Player.Tech = Tech;
         Player.SecretFound += OnSecret;
+        Player.ReinforceResult += (ok, m) => { Hud.Toast(m); Sfx.Play(ok ? "chime" : "fizzle"); };
         Player.ChargeCancelled += back => { if (back > 0.5f) Hud.Toast($"A concentração se desfaz: {back:0} de Qi voltam à barra."); };
         Player.CutSlack = Combat.CutSlack; Player.ThrustSlack = Combat.ThrustSlack; // the prototype's hit test is a little wider than the blade
         Player.LockTarget = () => Lock;
@@ -237,7 +238,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     {
         var f = new ValeFighter { Id = id, Type = kind, Host = this, Name = id, Position = new Vector2(tx * ValeMap.TS, ty * ValeMap.TS) };
         f.Home = f.Position;
-        f.Max = f.Hp = kind switch { ValeFighter.Kind.Senior => Combat.SenHp, ValeFighter.Kind.Statue => 1, _ => Combat.DisHp };
+        f.Max = kind switch { ValeFighter.Kind.Senior => Combat.SenHp, ValeFighter.Kind.Statue => 1, _ => Combat.DisHp }; f.Hp = f.Max;
         set(f);
         _world.AddChild(f);
         Fighters[id] = f;
@@ -295,6 +296,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         Hud.SetHealth(Player.Health, Player.MaxHealth, Player.PendingRegen);
         Hud.SetEnergy(0, 0, Player.Qi, Player.MaxQi);
         Hud.SetCharge(Player.ChargeInvested, Player.ChargeCost);
+        Hud.SetReinforce(Player.ReinforceCharges);
         Hud.SetHands(Bindings.F($"espada · {Story.Book.Count} páginas no Livro ([book])"));
         Fx.Lock = Lock;
         // the locked target at the top, as in the prototype: name, health and what its guard is doing
@@ -473,7 +475,11 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
             if (!f.Alive || _hitThisSwing.Contains(f.Id)) continue;
             if (!Player.InBladeArc(origin, dir, r, Player.BladeArcDegrees, f.GlobalPosition, f.Radius)) continue;
             _hitThisSwing.Add(f.Id);
-            StrikeFighter(f, origin, damage, false, 0, Player.HeavyCut, melee: true);
+            // the Reforço de Qi: +10% damage (fractional, no rounding) and one break roll against the guard met
+            float dmg = damage * Player.StrikeScale;
+            bool breaks = f.Type != ValeFighter.Kind.Statue && f.WouldParry(origin) && Player.RollReinforceBreak();
+            string res = StrikeFighter(f, origin, dmg, breaks, breaks ? Tech.Data.QiReinforce.Full.Stagger : 0, Player.HeavyCut, melee: true);
+            if (breaks && res is "hit" or "killed") Fx.Say(f.GlobalPosition + new Vector2(0, -58), "guarda rompida", ValeTerrain.Learn, 1.2f);
             if (Player.Current == Player.ActionKind.Recoil) return; // parried: the recoil replaced the cut
         }
         foreach (var p in _pots.Where(p => IsInstanceValid(p) && !p.IsQueuedForDeletion()).ToList())
@@ -481,7 +487,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     }
 
     /// <summary>A blade or a wave reached a fighter: parry, flank, hit, kill.</summary>
-    public string StrikeFighter(ValeFighter f, Vector2 from, int dmg, bool lamina, float stagger, bool heavy, bool melee)
+    public string StrikeFighter(ValeFighter f, Vector2 from, float dmg, bool lamina, float stagger, bool heavy, bool melee)
     {
         Vector2 mid = (f.GlobalPosition + from) / 2 + new Vector2(0, -18);
         bool guarded = f.Guarding;
@@ -614,6 +620,15 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     // the first charged shot reveals the secret technique: the banner and a page in the book
     private void OnSecret(string id)
     {
+        if (id == "qi_reinforce")
+        {
+            if (Story.Book.Any(b => b.Tech == "qi_reinforce")) return;
+            Story.AddBook(new BookEntry { Name = Tech.Data.QiReinforce.Name, Kind = "técnica", Key = "modificador + corte", Where = $"Descoberta por você: {ValeMap.AreaName(Player.GlobalPosition)}. O Qi percorre a lâmina.", Tech = "qi_reinforce", State = "Plena" });
+            Tech.Set("qi_reinforce", TechniqueState.Full);
+            Hud.Banner(Tech.Data.QiReinforce.Name, 2.6f);
+            Sfx.Play("learn");
+            return;
+        }
         if (id != "qi_charge" || Story.Book.Any(b => b.Tech == "qi_charge")) return;
         Story.AddBook(new BookEntry { Name = Tech.Data.QiCharge.Name, Kind = "técnica", Key = "segurar Qi, soltar", Where = $"Descoberta por você: {ValeMap.AreaName(Player.GlobalPosition)}. O Qi se junta na palma enquanto o botão fica preso.", Tech = "qi_charge", State = "Plena" });
         Tech.Set("qi_charge", TechniqueState.Full);

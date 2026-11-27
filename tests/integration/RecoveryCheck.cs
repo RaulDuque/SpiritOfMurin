@@ -188,7 +188,7 @@ public partial class RecoveryCheck : Node
         Assist.Areas = false; await Frames(5);
         // a cut from outside the guard arc (controlled: the disciple held facing away) is a flank hit
         await Teleport(dis.GlobalPosition + new Vector2(40, 0), Vector2.Left); dis.Face = Mathf.Pi / 2; dis.Fooled = 1f; await Frames(1);
-        predicted = dis.WouldParry(P.GlobalPosition); int hp = dis.Hp; words = V.Fx.WordsShown.Count;
+        predicted = dis.WouldParry(P.GlobalPosition); float hp = dis.Hp; words = V.Fx.WordsShown.Count;
         await Tap(Key.J); await Frames(6);
         Check("a cut from outside the arc lands on the flank (the drawing and the result agree)", !predicted && dis.Hp < hp && V.Fx.WordsShown.Skip(words).Contains("flanco"), $"previsto aparar {predicted}, vida {hp}→{dis.Hp}");
         await Shot("06-ponte-flanco");
@@ -259,7 +259,7 @@ public partial class RecoveryCheck : Node
         await Frames(30);
         for (int i = 0; i < 3 && V.Lock != dis; i++) await Tap(Key.Space);
         Assist.Areas = true;
-        int hp = dis.Hp, words = V.Fx.WordsShown.Count;
+        float hp = dis.Hp; int words = V.Fx.WordsShown.Count;
         bool landed = false;
         for (int t = 0; t < 4 && !landed; t++)
         {

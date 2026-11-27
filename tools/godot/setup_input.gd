@@ -20,6 +20,7 @@ func _init() -> void:
 	# L or right click to step, K for the qi wave, Space to lock, E to examine / pick up,
 	# I or Tab for the inventory, Shift to sneak (walk quietly), C for the character sheet,
 	# H to use a herb from the bag. K (qi) skins with Qi, Space (lock) focuses an animal.
+	# Shift + cut is the Reforço de Qi ("reinforce", configurable apart from sneak).
 	var actions := {
 		"move_up": [key(KEY_W), key(KEY_UP)],
 		"move_down": [key(KEY_S), key(KEY_DOWN)],
@@ -32,6 +33,7 @@ func _init() -> void:
 		"use": [key(KEY_E)],
 		"inventory": [key(KEY_I), key(KEY_TAB)],
 		"sneak": [key(KEY_SHIFT)],
+		"reinforce": [key(KEY_SHIFT)], # held with the cut: the Reforço de Qi (Shift by default, shared with sneak on purpose)
 		"sheet": [key(KEY_C)],
 		"heal": [key(KEY_H)],
 		"book": [key(KEY_B)],

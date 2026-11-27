@@ -25,7 +25,7 @@ public static class Bindings
     {
         new("move_up", "Andar: cima"), new("move_down", "Andar: baixo"), new("move_left", "Andar: esquerda"), new("move_right", "Andar: direita"),
         new("cut", "Corte"), new("step", "Passo"), new("qi", "Qi (onda; esfolar com Qi)"), new("lock", "Travar no alvo / focar"),
-        new("use", "Examinar / pegar"), new("heal", "Bálsamo / erva da bolsa"), new("sneak", "Andar quieto (Planície)"),
+        new("use", "Examinar / pegar"), new("heal", "Bálsamo / erva da bolsa"), new("sneak", "Andar quieto (Planície)"), new("reinforce", "Modificador do Reforço de Qi (com o corte)"),
         new("inventory", "Inventário"), new("sheet", "Ficha"), new("book", "Livro de Técnicas"), new("map", "Mapa"),
         new("menu", "Pausa"), new("fullscreen", "Tela cheia"),
     };
@@ -137,10 +137,17 @@ public static class Bindings
         return m.Groups[2].Value == "+" ? Both(id) : Key1(id);
     });
 
-    /// <summary>Who uses an input now: (action, slot), or null.</summary>
-    public static (string Id, int Slot)? Owner(string code)
+    /// <summary>Pairs of actions that may share an input on purpose (a modifier held together with other keys).</summary>
+    private static readonly HashSet<(string, string)> Shared = new() { ("sneak", "reinforce"), ("reinforce", "sneak") };
+
+    /// <summary>Who uses an input now: (action, slot), or null. <paramref name="except"/> ignores an action and the ones allowed to share with it.</summary>
+    public static (string Id, int Slot)? Owner(string code, string except = "")
     {
-        foreach (var a in Actions) { var c = Current(a.Id); for (int s = 0; s < 2; s++) if (c[s] == code) return (a.Id, s); }
+        foreach (var a in Actions)
+        {
+            if (a.Id == except || Shared.Contains((except, a.Id))) continue;
+            var c = Current(a.Id); for (int s = 0; s < 2; s++) if (c[s] == code) return (a.Id, s);
+        }
         return null;
     }
 
@@ -156,7 +163,7 @@ public static class Bindings
         string old = mine[slot];
         if (old == code) return (true, $"{NameOf(id)} continua em {Label(code)}.");
         string msg = $"{NameOf(id)}: {Label(code)}.";
-        if (Owner(code) is { } o)
+        if (Owner(code, id) is { } o)
         {
             var theirs = Current(o.Id);
             if (o.Slot == 0 && old.Length == 0 && theirs[1].Length == 0)
@@ -169,6 +176,7 @@ public static class Bindings
                 ? $"{Label(code)} era de \"{NameOf(o.Id)}\": as duas trocaram ({NameOf(o.Id)} agora em {Label(old)})."
                 : $"{Label(code)} era de \"{NameOf(o.Id)}\" e saiu de lá.";
         }
+        if (mine[1 - slot] == code) mine[1 - slot] = old; // the same action's other slot had it: they trade
         mine[slot] = code;
         if (mine[0].Length == 0) { mine[0] = mine[1]; mine[1] = ""; }
         Apply(id, mine);

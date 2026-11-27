@@ -310,7 +310,7 @@ public partial class PlainsHud : CanvasLayer
     {
         _vig = vigor; _maxVig = maxVigor; _qiNow = qi; _maxQi = maxQi;
         _vigor.Text = maxVigor > 0 ? $"Vigor {Mathf.FloorToInt(vigor)}/{maxVigor:0}" : "";
-        _qi.Text = $"Qi {Mathf.FloorToInt(qi)}/{maxQi:0}" + (_palm > 0.5f ? (_palm >= _palmCost - 0.01f ? $" · palma {_palmCost:0} PRONTO" : $" · palma {Mathf.FloorToInt(_palm)}/{_palmCost:0}") : "");
+        _qi.Text = QiLine();
         _bars.QueueRedraw();
     }
 
@@ -319,9 +319,24 @@ public partial class PlainsHud : CanvasLayer
     {
         if (Mathf.IsEqualApprox(invested, _palm)) return;
         _palm = invested; _palmCost = cost;
-        _qi.Text = $"Qi {Mathf.FloorToInt(_qiNow)}/{_maxQi:0}" + (invested > 0.5f ? (invested >= cost - 0.01f ? $" · palma {cost:0} PRONTO" : $" · palma {Mathf.FloorToInt(invested)}/{cost:0}") : "");
+        _qi.Text = QiLine();
         _bars.QueueRedraw();
     }
+
+    private int _reinforce;
+
+    /// <summary>Shows the Reforço de Qi charges left next to the Qi line (0 hides them).</summary>
+    public void SetReinforce(int charges)
+    {
+        if (charges == _reinforce) return;
+        _reinforce = charges;
+        _qi.Text = QiLine();
+    }
+
+    // the Qi line: the bar's amount, the Qi gathered in the palm (charged shot) and the Reforço charges left
+    private string QiLine() => $"Qi {Mathf.FloorToInt(_qiNow)}/{_maxQi:0}"
+        + (_palm > 0.5f ? (_palm >= _palmCost - 0.01f ? $" · palma {_palmCost:0} PRONTO" : $" · palma {Mathf.FloorToInt(_palm)}/{_palmCost:0}") : "")
+        + (_reinforce > 0 ? $" · reforço {_reinforce}" : "");
 
     /// <summary>The Qi line now (checks).</summary>
     public string QiText => _qi.Text;

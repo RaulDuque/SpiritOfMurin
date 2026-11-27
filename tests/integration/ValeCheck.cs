@@ -118,7 +118,7 @@ public partial class ValeCheck : Node
         Vector2 to = f.GlobalPosition - P.GlobalPosition;
         Key lat = Mathf.Abs(to.X) > Mathf.Abs(to.Y) ? Key.W : Key.A;
         bool before = V.Story.ComboFound;
-        int hp = f.Hp;
+        float hp = f.Hp;
         await Chord(lat, Key.L);
         await Frames(4);
         await Tap(Key.J); await Frames(4);
@@ -143,7 +143,7 @@ public partial class ValeCheck : Node
         await Frames(30);
         await LockOn(bridge);
         Check("Space locks on the guardian", V.Lock == bridge);
-        int words = V.Fx.WordsShown.Count(w => w == "aparado"), hp0 = bridge.Hp;
+        int words = V.Fx.WordsShown.Count(w => w == "aparado"); float hp0 = bridge.Hp;
         for (int i = 0; i < 3; i++) { await Teleport(bridge.GlobalPosition + new Vector2(0, 40), Vector2.Up); await Tap(Key.J); await Frames(16); }
         Check("from the front, the Closed Guard parries (\"aparado\", no damage)", V.Fx.WordsShown.Count(w => w == "aparado") > words && bridge.Hp == hp0, $"hp {bridge.Hp}/{bridge.Max}");
         await Shot("02-guarda-apara");

@@ -99,7 +99,7 @@ public partial class PlainsCapture : Node
             foreach (var k in keys) Key(k, false);
         }
         Key(global::Godot.Key.D, true); await Frames(1); Key(global::Godot.Key.D, false);
-        int h0 = boar.Brain.Health;
+        float h0 = boar.Brain.Health;
         for (int c = 0; c < 2; c++) { Key(global::Godot.Key.J, true); await Frames(2); Key(global::Godot.Key.J, false); await Frames(10); }
         await Frames(50);
         GD.Print($"boar clip: seed {_seed}, boar health {h0} -> {boar.Brain.Health}, charges {boar.Brain.Charges}, player Vida {_game.Player.Health}");

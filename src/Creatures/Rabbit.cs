@@ -16,7 +16,7 @@ public interface IHittable
     /// <summary>False when hidden or dead.</summary>
     bool CanBeHit { get; }
     /// <summary>Applies a blade hit.</summary>
-    HitResult ReceiveHit(int damage);
+    HitResult ReceiveHit(float damage);
     /// <summary>Raised when it dies, with where it fell.</summary>
     event Action<IHittable, Vector2>? Died;
     /// <summary>Kind for data lookups ("rabbit", "boar").</summary>
@@ -56,7 +56,9 @@ public partial class Rabbit : CharacterBody2D, IHittable
     /// <inheritdoc />
     public int Level { get; set; } = 1;
     /// <inheritdoc />
-    public int HealthLeft => Brain.Health;
+    public int HealthLeft => Mathf.CeilToInt(Brain.Health - 0.001f);
+    /// <summary>Health left, exact (damage can be fractional: a reinforced knife cut takes 1.1).</summary>
+    public float HealthExact => Brain.Health;
     /// <inheritdoc />
     public int HealthMax => Tuning.Health;
     /// <inheritdoc />
@@ -96,7 +98,7 @@ public partial class Rabbit : CharacterBody2D, IHittable
     }
 
     /// <inheritdoc />
-    public HitResult ReceiveHit(int damage)
+    public HitResult ReceiveHit(float damage)
     {
         var r = Brain.TakeHit(damage);
         if (r == HitResult.Killed) Died?.Invoke(this, GlobalPosition);

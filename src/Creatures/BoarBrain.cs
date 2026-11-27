@@ -36,7 +36,7 @@ public sealed class BoarBrain
     /// <summary>Direction of the (coming) charge; also where the boar faces.</summary>
     public Vector2 Facing { get; private set; } = Vector2.Left;
     /// <summary>Remaining health.</summary>
-    public int Health { get; private set; }
+    public float Health { get; private set; }
     /// <summary>Home spot in the mud, world pixels.</summary>
     public Vector2 Home { get; }
     /// <summary>Pixels already run in the current charge.</summary>
@@ -141,7 +141,7 @@ public sealed class BoarBrain
     }
 
     /// <summary>A blade reached the boar. Damage only lands when it is open (rooting, recovering, walking home).</summary>
-    public HitResult TakeHit(int damage)
+    public HitResult TakeHit(float damage)
     {
         if (State == BoarState.Dead) return HitResult.None;
         if (!Vulnerable) return HitResult.Deflected;

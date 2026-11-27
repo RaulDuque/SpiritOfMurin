@@ -86,6 +86,7 @@ public sealed class BookPage
             ? (new() { ("key", "sneak"), ("plus", ""), ("dir", "direção"), ("plus", ""), ("key", "step") }, "Na Planície: sem trava, segure o andar quieto. Atravessa o que o passo curto não alcança.")
             : (new() { ("dir", "direção"), ("plus", ""), ("key", "step") }, "Sem trava: um passo longo que atravessa a fenda."),
         "Passo da Lâmina Silenciosa" => (new() { ("dir", "lado"), ("plus", ""), ("key", "step"), ("then", ""), ("key", "cut"), ("then", ""), ("key", "qi") }, "Quebra a guarda. O qi segue o corte sem ruído."),
+        "Reforço de Qi" => (new() { ("key", "reinforce"), ("plus", ""), ("hold", "cut") }, Bindings.F("Segure [reinforce] e aperte [cut]: o Qi percorre a lâmina. Os próximos golpes corpo a corpo saem reforçados; cada golpe gasta uma carga, mesmo errando.")),
         "Disparo de Qi Concentrado" => (new() { ("hold", "qi"), ("then", ""), ("release", "qi") }, Bindings.F("Segure [qi]: o Qi sai da barra e se junta na palma (dá para mirar). Solte para disparar. Um toque rápido continua sendo o disparo comum.")),
         _ => (new(), ""),
     };
@@ -102,6 +103,7 @@ public sealed class BookPage
             "dash" => $"custo: {p.QiCost:0} Qi, {p.VigorCost:0} vigor · {p.Distance:0} px",
             "thrust" => $"custo: {p.QiCost:0} Qi, {p.VigorCost:0} vigor · alcance {p.Reach:0} px · dano {p.Damage}",
             "lamina" => $"dano {p.Damage} · alcance {p.Range:0} px · guarda quebrada {p.Stagger:0.#} s",
+            "qi_reinforce" => $"custo: {p.QiCost:0} Qi, uma vez por ativação · {p.Charges} golpes reforçados · +{p.Bonus * 100:0}% de dano · {p.Chance * 100:0}% de chance de romper a guarda atingida ({p.Stagger:0.#} s aberta)",
             "qi_charge" => $"carga completa: {p.QiCost:0} Qi no total (já inclui o disparo){(p.VigorCost > 0 ? $" + {p.VigorCost:0} vigor" : "")} · dano {p.Damage} · alcance {p.Range:0} px · rompe a guarda ({p.Stagger:0.#} s aberta) | carga parcial: dano proporcional ao Qi investido, sem ruptura",
             _ => "",
         };

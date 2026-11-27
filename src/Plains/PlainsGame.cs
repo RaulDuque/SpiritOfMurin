@@ -296,6 +296,7 @@ public partial class PlainsGame : Node2D, IMapSource
         Player.OutOfBreath += () => Hud.Toast("Sem fôlego: espere o vigor voltar ou coma carne assada.");
         Player.TechniqueRefused += (_, m) => { Hud.Toast(m); Sfx?.Play("fizzle"); };
         Player.SecretFound += OnSecret;
+        Player.ReinforceResult += (ok, m) => { Hud.Toast(m); Sfx?.Play(ok ? "chime" : "fizzle"); };
         Player.ChargeCancelled += back => { if (back > 0.5f) Hud.Toast($"A concentração se desfaz: {back:0} de Qi voltam à barra."); };
         Player.QiFired += OnQiShot;
         Panels = new GamePanels(Hud, Player, this, MapZoomDefault);
@@ -418,6 +419,7 @@ public partial class PlainsGame : Node2D, IMapSource
         Hud.SetHealth(Player.Health, Player.MaxHealth, Player.PendingRegen);
         Hud.SetEnergy(Player.Vigor, Player.MaxVigor, Qi, Stats.MaxQi);
         Hud.SetCharge(Player.ChargeInvested, Player.ChargeCost);
+        Hud.SetReinforce(Player.ReinforceCharges);
         Hud.SetLevel(Stats.Level, Stats.Xp, Stats.XpToNext(Stats.Level), Stats.Points);
         UpdateWaves(dt);
         UpdateFocus();
@@ -525,6 +527,15 @@ public partial class PlainsGame : Node2D, IMapSource
     // the first charged shot reveals the secret technique (also when it was not found in the Vale)
     private void OnSecret(string id)
     {
+        if (id == "qi_reinforce")
+        {
+            if (Book.Any(b => b.Tech == "qi_reinforce")) return;
+            Book.Add(new BookEntry { Name = Tech.Data.QiReinforce.Name, Kind = "técnica", Key = "modificador + corte", Where = "Descoberta por você na Planície Verdejante. O Qi percorre a lâmina.", Tech = "qi_reinforce", State = "Plena" });
+            Tech.Set("qi_reinforce", TechniqueState.Full);
+            Hud.Banner(Tech.Data.QiReinforce.Name, 2.6f);
+            Sfx?.Play("learn");
+            return;
+        }
         if (id != "qi_charge" || Book.Any(b => b.Tech == "qi_charge")) return;
         Book.Add(new BookEntry { Name = Tech.Data.QiCharge.Name, Kind = "técnica", Key = "segurar Qi, soltar", Where = "Descoberta por você na Planície Verdejante. O Qi se junta na palma enquanto o botão fica preso.", Tech = "qi_charge",
             State = Tech.State("qi_wave") == TechniqueState.Weakened ? "Enfraquecida" : "Plena" });
@@ -667,7 +678,10 @@ public partial class PlainsGame : Node2D, IMapSource
             if (n is not IHittable h || !h.CanBeHit || _hitThisSwing.Contains(h.CreatureId)) continue;
             if (!Player.InBladeArc(origin, dir, reach, Player.Tuning.HitArcDegrees, h.GlobalPosition, h.BodyRadius)) continue;
             _hitThisSwing.Add(h.CreatureId);
-            h.ReceiveHit(damage);
+            // the Reforço de Qi: +10% damage (fractional, no rounding) and one break roll against a boar's defence
+            if (h is Boar bb && !bb.Brain.Vulnerable && Player.RollReinforceBreak() && bb.BreakGuard(Tech.Data.QiReinforce.Full.Stagger))
+                Hud.Toast("O golpe reforçado rompe a defesa do javali!");
+            h.ReceiveHit(damage * Player.StrikeScale);
         }
     }
 

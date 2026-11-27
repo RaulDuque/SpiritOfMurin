@@ -28,7 +28,7 @@ public sealed class RabbitBrain
     /// <summary>Where the rabbit faces.</summary>
     public Vector2 Facing { get; private set; } = Vector2.Right;
     /// <summary>Remaining health.</summary>
-    public int Health { get; private set; }
+    public float Health { get; private set; }
     /// <summary>True when it can be seen and hit (not inside the burrow, not dead).</summary>
     public bool Visible => State is not (RabbitState.Hidden or RabbitState.Dead);
     /// <summary>True with the ears up (alert or running).</summary>
@@ -105,7 +105,7 @@ public sealed class RabbitBrain
     }
 
     /// <summary>A blade reached the rabbit.</summary>
-    public HitResult TakeHit(int damage)
+    public HitResult TakeHit(float damage)
     {
         if (!Visible) return HitResult.None;
         Health -= damage;

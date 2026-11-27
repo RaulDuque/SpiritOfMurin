@@ -225,6 +225,62 @@ public partial class Player : CharacterBody2D
         if (Tech != null && Tech.State("qi_charge") == TechniqueState.Unknown) SecretFound?.Invoke("qi_charge");
     }
 
+    // ---- the Reforço de Qi (pedido 13, item 9) ----
+    private bool _reinforcing;
+    private float _reinforceT;
+
+    /// <summary>Reinforced melee strikes left (3, 2, 1, 0).</summary>
+    public int ReinforceCharges { get; set; }
+    /// <summary>True while the gesture (modifier + cut held) gathers Qi along the blade.</summary>
+    public bool Reinforcing => _reinforcing;
+    /// <summary>0-1 through the gesture.</summary>
+    public float ReinforceProgress => _reinforcing ? Mathf.Clamp(_reinforceT / Mathf.Max(0.01f, ReinforceParams?.Hold ?? 0.35f), 0, 1) : 0;
+    /// <summary>The damage factor of the strike in progress: 1 + bonus when it is reinforced, else 1. Regions multiply their damage by it.</summary>
+    public float StrikeScale => _act is { Reinforced: true } ? 1 + (ReinforceParams?.Bonus ?? 0) : 1;
+    /// <summary>True when the strike in progress is reinforced.</summary>
+    public bool StrikeReinforced => _act is { Reinforced: true };
+    /// <summary>The roll used for the break chance (0-1). Tests inject fixed values; the game uses a random draw.</summary>
+    public Func<float> ReinforceRoll { get; set; } = () => (float)Random.Shared.NextDouble();
+    /// <summary>Raised when the Reforço is activated (75 Qi spent, 3 charges) or refused (the message).</summary>
+    public event Action<bool, string>? ReinforceResult;
+
+    private TechniqueParams? ReinforceParams => Tech?.Data.QiReinforce.Full;
+
+    /// <summary>
+    /// One break roll for a reinforced strike that meets a guard: true with the data's chance. Regions call it
+    /// once per strike and guard (their per-swing hit set makes sure of it), never once per frame of contact.
+    /// </summary>
+    public bool RollReinforceBreak() => StrikeReinforced && ReinforceRoll() < (ReinforceParams?.Chance ?? 0);
+
+    private void BeginReinforce()
+    {
+        if (ReinforceParams == null) return;
+        if (ReinforceCharges > 0) { ReinforceResult?.Invoke(false, $"O Reforço de Qi ainda está ativo: {ReinforceCharges} golpe(s) reforçado(s)."); _guard = true; return; }
+        _reinforcing = true; _reinforceT = 0;
+    }
+
+    private void UpdateReinforce(float dt, bool locked)
+    {
+        var rp = ReinforceParams;
+        bool held = Input.IsActionPressed("cut") && InputMap.HasAction("reinforce") && Input.IsActionPressed("reinforce");
+        if (locked || rp == null || !held) { _reinforcing = false; _guard = true; return; } // let go early: nothing spent
+        _reinforceT += dt;
+        if (_reinforceT < rp.Hold) return;
+        _reinforcing = false; _guard = true; // holding on never activates it again
+        if (Qi < rp.QiCost) { ReinforceResult?.Invoke(false, $"{Tech!.Data.QiReinforce.Name}: falta Qi ({Mathf.FloorToInt(Qi)}/{rp.QiCost:0})."); return; }
+        Qi -= rp.QiCost;
+        ReinforceCharges = rp.Charges;
+        ReinforceResult?.Invoke(true, $"{Tech!.Data.QiReinforce.Name}: os próximos {rp.Charges} golpes estão reforçados (+{rp.Bonus * 100:0}% de dano).");
+        if (Tech.State("qi_reinforce") == TechniqueState.Unknown) SecretFound?.Invoke("qi_reinforce");
+    }
+
+    // a strike that starts spends one charge, whether it lands or not
+    private void SpendReinforce(Act a)
+    {
+        if (ReinforceCharges <= 0) return;
+        ReinforceCharges--; a.Reinforced = true;
+    }
+
     /// <summary>Stops a charge without a shot; the Qi already in the palm goes back to the bar (never charged twice).</summary>
     public void CancelCharge()
     {
@@ -368,7 +424,7 @@ public partial class Player : CharacterBody2D
         public float T, Startup, Active, Recovery, CancelAt, Lunge;
         public int N, Damage;
         public Vector2 StepVelocity, From, Dir;
-        public bool Live, Lamina, Fired;
+        public bool Live, Lamina, Fired, Reinforced;
         public float Reach, Radius, A0, A1;
         public Node2D? Orbit;
         public float Duration => Kind is ActionKind.Step or ActionKind.Side or ActionKind.Dash or ActionKind.Recoil ? Startup : Startup + Active + Recovery;
@@ -472,6 +528,8 @@ public partial class Player : CharacterBody2D
 
         if (_guard && !Input.IsActionPressed("cut") && !Input.IsActionPressed("step")) _guard = false;
         if (locked || _guard) { }
+        else if (Input.IsActionJustPressed("cut") && InputMap.HasAction("reinforce") && Input.IsActionPressed("reinforce") && Equipped != Weapon.None)
+            BeginReinforce();
         else if (Input.IsActionJustPressed("cut"))
         {
             if (Equipped == Weapon.None) EmptyHanded?.Invoke();
@@ -479,6 +537,7 @@ public partial class Player : CharacterBody2D
         }
         else if (Input.IsActionJustPressed("step")) _buffer = (ActionKind.Step, Tuning.BufferTime);
         if (_charge != ChargeState.None) UpdateCharge(dt, locked);
+        if (_reinforcing) UpdateReinforce(dt, locked);
         if (_buffer is { } b) _buffer = b.Time - dt > 0 ? (b.Kind, b.Time - dt) : null;
 
         if (_act != null) Advance(dt);
@@ -596,6 +655,7 @@ public partial class Player : CharacterBody2D
             if (!Pay("thrust", tp)) return;
             _swingId++;
             _act = new Act { Kind = ActionKind.Thrust, Startup = 0.09f, Active = 0.1f, Recovery = 0.28f * RecoveryMultiplier, CancelAt = 0.17f * RecoveryMultiplier, Lunge = tp.Lunge, Reach = tp.Reach, Damage = tp.Damage };
+            SpendReinforce(_act);
             _hist.Add((ActionKind.Thrust, _time)); if (_hist.Count > 6) _hist.RemoveAt(0);
             LastCutAngle = Facing.Angle();
             ActionStarted?.Invoke(ActionKind.Thrust, 0);
@@ -655,6 +715,7 @@ public partial class Player : CharacterBody2D
                 };
             }
             LastCutAngle = Facing.Angle();
+            SpendReinforce(_act);
             _hist.Add((ActionKind.Cut, _time)); if (_hist.Count > 6) _hist.RemoveAt(0);
             ActionStarted?.Invoke(kind, n);
         }
