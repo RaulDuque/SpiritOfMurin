@@ -12,6 +12,7 @@ public static class Suites
         ("aim", "Mira pelo mouse: andar para um lado e acertar para o outro; tecla remapeada; faca; Qi; alvo travado tem prioridade; destravar volta ao cursor; mira por teclado; outras janelas."),
         ("charge", "Disparo de Qi carregado (secreto): toque, carga parcial, carga completa de 100, guarda rompida, sem Qi, pausa/inventário/foco cancelam, tecla remapeada, descoberta e Livro; no máximo um projétil."),
         ("charge-plains", "Disparo carregado na Planície: selado antes do nível 3, enfraquecido depois; junto à carcaça o botão esfola."),
+        ("reinforce", "Reforço de Qi: ativar com 75, recusar com 74, três golpes +10% e o quarto normal, faca 1 → 1,1, rolagem de ruptura fixa (sucesso e falha), Shift sozinho anda quieto, teclas remapeadas."),
     };
 
     /// <summary>Monta a lista para as sementes escolhidas. <paramref name="quick"/> deixa só o prólogo, a recuperação e a unidade.</summary>

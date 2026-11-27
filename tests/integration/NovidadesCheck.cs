@@ -26,6 +26,11 @@ namespace SpiritOfMurin.Tests;
 /// book page; the bridge's retreat and flank still there.</item>
 /// <item><c>--phase=charge-plains</c>: in the Planície, the sealed Qi shot refuses the charge; next to a
 /// carcass the button skins with Qi (no charge); at level 3 the weakened charge works.</item>
+/// <item><c>--phase=reinforce</c>: the Reforço de Qi — modifier + cut with 75 Qi activates once (3 charges),
+/// 74 is refused and kept, holding on does not repeat it, a new try keeps the charges left; three reinforced
+/// strikes (+10%, fractional: the knife's 1 → 1.1) and the fourth normal; a miss and each cut of a combo spend
+/// a charge; one break roll per strike and guard, with fixed rolls for the success and the failure; Shift
+/// alone sneaks, the step still works; a remapped cut and modifier; the discovery kept by meditating.</item>
 /// </list>
 /// Teleports place the swordsman (named in the checks). Files: <c>user://teste_nov*.json</c>; preferences in
 /// <c>user://teste_nov_prefs.json</c> (pass <c>--prefs=user://teste_nov_prefs.json</c>).
@@ -54,6 +59,7 @@ public partial class NovidadesCheck : Node
             case "aim": Fresh(); Launch("new"); _ = AimPhase(); break;
             case "charge": Fresh(); Launch("new"); _ = ChargePhase(); break;
             case "charge-plains": Fresh(); _ = ChargePlains(); break;
+            case "reinforce": Fresh(); Launch("new"); _ = ReinforcePhase(); break;
         }
     }
 
@@ -257,7 +263,7 @@ public partial class NovidadesCheck : Node
         await Frames(20);
         for (int i = 0; i < 3 && V.Lock != dis; i++) await Tap(Key.Space);
         dis.Face = Mathf.Pi / 2;
-        P.Qi = 50; int words = V.Fx.WordsShown.Count, hp = dis.Hp;
+        P.Qi = 50; int words = V.Fx.WordsShown.Count; float hp = dis.Hp;
         await HoldQi(Key.K, 60); await Frames(25);
         Check("a partial charge against the Closed Guard is parried (no break)", dis.Hp == hp && dis.Stagger <= 0 && V.Fx.WordsShown.Skip(words).Contains("aparado"), $"vida {hp}→{dis.Hp}");
         await Frames(40);
@@ -266,7 +272,7 @@ public partial class NovidadesCheck : Node
         await HoldQi(Key.K, 120); await Frames(18);
         Check("the full charge breaks the Closed Guard: damage and an open window (stagger)", dis.Hp < hp && dis.Stagger > 0.5f && V.Fx.WordsShown.Skip(words).Contains("guarda rompida"), $"vida {hp}→{dis.Hp}, aberta {dis.Stagger:0.0} s");
         await Shot("05-guarda-rompida");
-        int hp2 = dis.Hp;
+        float hp2 = dis.Hp;
         await Tap(Key.J); await Frames(15);
         Check("during the window a frontal cut lands", dis.Hp < hp2, $"vida {hp2}→{dis.Hp}");
         await Tap(Key.Space);
@@ -362,6 +368,129 @@ public partial class NovidadesCheck : Node
             Check("next to a carcass the Qi button skins with Qi (no charge, no shot)", shots.Count == 0 && !p.Charging && _pg.Hud.Messages.TakeLast(4).Any(m => m.Contains("Esfolar") || m.Contains("Pele")), $"Qi {p.Qi:0}, ação {_pg.QiKeyAction}, partes [{string.Join(",", carcass.Parts)}], msgs {string.Join(" / ", _pg.Hud.Messages.TakeLast(3))}");
         }
         else Check("a carcass to test the skinning", false, "nenhum coelho por perto");
+        Finish();
+    }
+
+    // ------------------------------------------------------------------ 9. the Reforço de Qi
+    private async Task Gesture(Key mod, Key cut, int frames)
+    {
+        Press(mod, true); await Flush(); await Frames(1);
+        Press(cut, true); await Flush(); await Frames(frames);
+        Press(cut, false); await Flush(); await Frames(1);
+        Press(mod, false); await Flush(); await Frames(4);
+    }
+
+    private async Task ReinforcePhase()
+    {
+        await Frames(30);
+        if (_c.Vale == null) { Check("Novo jogo starts the Vale", false); Finish(); return; }
+        P.QiRegen = 0; // controlled: no regeneration while counting Qi
+        int cuts = 0; P.ActionStarted += (k, _) => { if (k is Player.ActionKind.Cut or Player.ActionKind.Thrust) cuts++; };
+        await Teleport(ValeMap.Start + new Vector2(0, -60), Vector2.Up);
+        await PointAt(P.GlobalPosition + new Vector2(0, -100));
+
+        // 75 Qi: the gesture (Shift + J held) activates once, spends 75, gives 3 charges, no cut during it
+        P.Qi = 75; int msgs = V.Hud.Messages.Count;
+        bool midGesture = false;
+        Press(Key.Shift, true); await Flush(); await Frames(1);
+        Press(Key.J, true); await Flush(); await Frames(10); midGesture = P.Reinforcing; await Shot("07-reforco-gesto");
+        await Frames(50); // held well past the gesture: still one activation
+        Press(Key.J, false); await Flush(); Press(Key.Shift, false); await Flush(); await Frames(5);
+        Check("Shift + J with 75 Qi: the Qi runs up the blade and the Reforço activates (3 charges, 75 spent once)", midGesture && P.ReinforceCharges == 3 && P.Qi < 0.6f && cuts == 0, $"cargas {P.ReinforceCharges}, Qi {P.Qi:0.0}, cortes {cuts}");
+        Check("holding the combination on did not activate it twice", V.Hud.Messages.Skip(msgs).Count(m => m.Contains("estão reforçados")) == 1);
+        Check("the discovery: banner and a book page (command, cost, charges, bonus, chance)", V.Story.Book.Any(b => b.Tech == "qi_reinforce") && V.BookRows().First(b => b.Name == "Reforço de Qi").Detail.Contains("75 Qi") && V.BookRows().First(b => b.Name == "Reforço de Qi").Command.StartsWith("Shift + segurar J"), V.BookRows().First(b => b.Name == "Reforço de Qi").Command);
+        Check("the HUD shows the charges (reforço 3) and the pips", V.Hud.QiText.Contains("reforço 3"), V.Hud.QiText);
+        await Shot("08-reforco-cargas");
+        // another try while charges remain: kept, nothing spent
+        P.Qi = 100;
+        await Gesture(Key.Shift, Key.J, 40);
+        Check("another try with charges left keeps them and spends nothing", P.ReinforceCharges == 3 && P.Qi > 99.4f, $"cargas {P.ReinforceCharges}, Qi {P.Qi:0}");
+        // 74: refused, the balance kept
+        P.ReinforceCharges = 0; P.Qi = 74; msgs = V.Hud.Messages.Count;
+        await Gesture(Key.Shift, Key.J, 40);
+        Check("with 74 Qi: a clear refusal (falta Qi 74/75), the Qi stays 74, no charges", P.ReinforceCharges == 0 && Mathf.IsEqualApprox(P.Qi, 74, 0.01f) && V.Hud.Messages.Skip(msgs).Any(m => m.Contains("falta Qi (74/75)")), string.Join(" / ", V.Hud.Messages.Skip(msgs)));
+
+        // three reinforced strikes (+10%) and the fourth normal, on the disciple's open flank (controlled: kept fooled)
+        var dis = V.Fighters["dis_herbs"];
+        async Task<float> FlankCut()
+        {
+            dis.Fooled = 5; dis.Face = Mathf.Pi / 2; dis.Stagger = 0; dis.State = ValeFighter.St.Guard;
+            await Teleport(dis.GlobalPosition + new Vector2(36, 0), Vector2.Left);
+            dis.Face = Mathf.Pi / 2;
+            float before = dis.Hp;
+            await PointAt(dis.GlobalPosition + new Vector2(0, -14));
+            await Tap(Key.J); await Frames(30);
+            return before - dis.Hp;
+        }
+        P.Qi = 75; await Gesture(Key.Shift, Key.J, 40);
+        var hits = new List<float>();
+        for (int i = 0; i < 4; i++) { hits.Add(await FlankCut()); dis.Hp = dis.Max; }
+        Check("three reinforced strikes do 2.2 (sword 2 + 10%) and the fourth is normal (2)", hits.Count == 4 && Mathf.IsEqualApprox(hits[0], 2.2f, 0.01f) && Mathf.IsEqualApprox(hits[1], 2.2f, 0.01f) && Mathf.IsEqualApprox(hits[2], 2.2f, 0.01f) && Mathf.IsEqualApprox(hits[3], 2f, 0.01f) && P.ReinforceCharges == 0,
+            $"danos {string.Join(" · ", hits.Select(h => h.ToString("0.##")))}");
+        // the knife: 1 → 1.1 in the real damage (no rounding lost)
+        P.Equipped = Player.Weapon.Knife;
+        P.Qi = 75; await Gesture(Key.Shift, Key.J, 40);
+        float knife = await FlankCut(); dis.Hp = dis.Max;
+        Check("with the knife the bonus survives the arithmetic: 1 → 1.1 taken from the health (not rounded back to 1)", Mathf.IsEqualApprox(knife, 1.1f, 0.01f), $"dano {knife:0.###}");
+        P.Equipped = Player.Weapon.Sword;
+        // a miss spends a charge; a combo spends one per cut
+        await Teleport(ValeMap.Start + new Vector2(0, -60), Vector2.Up);
+        await PointAt(P.GlobalPosition + new Vector2(0, -100));
+        int left = P.ReinforceCharges;
+        await Tap(Key.J); await Frames(30);
+        Check("a strike that hits nothing still spends a charge", P.ReinforceCharges == left - 1, $"{left} → {P.ReinforceCharges}");
+        P.ReinforceCharges = 0; P.Qi = 75; await Gesture(Key.Shift, Key.J, 40);
+        for (int i = 0; i < 3; i++) { await Tap(Key.J); await Frames(7); }
+        await Frames(30);
+        Check("each cut of a three-cut combo spends one charge", P.ReinforceCharges == 0, $"cargas {P.ReinforceCharges}");
+
+        // the break: one roll per strike and guard; a fixed roll makes the success and the failure reproducible
+        var bridge = V.Fighters["dis_bridge"];
+        int rolls = 0;
+        async Task<(bool Broke, float Dmg)> FrontCut(float roll)
+        {
+            P.ReinforceCharges = 0; P.Qi = 75; await Gesture(Key.Shift, Key.J, 40);
+            P.ReinforceRoll = () => { rolls++; return roll; };
+            bridge.ResetToHome(); await Frames(5);
+            await Teleport(bridge.GlobalPosition + new Vector2(0, 40), Vector2.Up); bridge.Face = Mathf.Pi / 2; bridge.State = ValeFighter.St.Guard;
+            float before = bridge.Hp; rolls = 0;
+            await PointAt(bridge.GlobalPosition + new Vector2(0, -14));
+            await Tap(Key.J); await Frames(8);
+            return (bridge.Stagger > 0, before - bridge.Hp);
+        }
+        var ok = await FrontCut(0.01f);
+        int rollsOk = rolls;
+        await Shot("09-reforco-ruptura");
+        Check("a roll under 5% (fixed 0.01): the reinforced cut breaks the Closed Guard (2.2 damage, open)", ok.Broke && Mathf.IsEqualApprox(ok.Dmg, 2.2f, 0.01f), $"rompeu {ok.Broke}, dano {ok.Dmg:0.##}");
+        Check("one roll for that strike, however many frames the blade touched", rollsOk == 1, $"{rollsOk} rolagem(ns)");
+        await Frames(60);
+        var fail = await FrontCut(0.99f);
+        Check("a roll over 5% (fixed 0.99): parried as usual (no damage, no break)", !fail.Broke && fail.Dmg < 0.01f && rolls == 1, $"rompeu {fail.Broke}, dano {fail.Dmg:0.##}, rolagens {rolls}");
+        P.ReinforceRoll = () => 0.5f;
+        bridge.ResetToHome();
+
+        // Shift alone sneaks; the step still works
+        await Teleport(ValeMap.Start + new Vector2(0, -60), Vector2.Up);
+        P.ReinforceCharges = 0;
+        float x0 = P.GlobalPosition.X;
+        Press(Key.Shift, true); Press(Key.D, true); await Flush(); await Frames(20);
+        bool quiet = P.Noise == Player.NoiseLevel.Sneak, moved = P.GlobalPosition.X > x0 + 3;
+        Press(Key.D, false); Press(Key.Shift, false); await Flush(); await Frames(4);
+        int steps = 0; P.ActionStarted += (k, _) => { if (k == Player.ActionKind.Step) steps++; };
+        await Tap(Key.L); await Frames(20);
+        Check("Shift alone still walks quietly and L still steps", quiet && moved && steps == 1 && P.ReinforceCharges == 0, $"quieto {quiet}, passos {steps}");
+        // a remapped cut (U) and a remapped modifier (Ctrl)
+        Bindings.Assign("cut", 0, $"k:{(long)Key.U}");
+        Bindings.Assign("reinforce", 0, $"k:{(long)Key.Ctrl}");
+        P.Qi = 75;
+        await Gesture(Key.Ctrl, Key.U, 40);
+        Check("with the cut on U and the modifier on Ctrl, Ctrl + U activates it", P.ReinforceCharges == 3, $"cargas {P.ReinforceCharges}");
+        Check("the book shows the remapped command (Ctrl + segurar U)", V.BookRows().First(b => b.Name == "Reforço de Qi").Command.StartsWith("Ctrl + segurar U"), V.BookRows().First(b => b.Name == "Reforço de Qi").Command);
+        Bindings.Restore();
+        // meditating keeps the discovery
+        await Teleport(ValeMap.Meditate + new Vector2(0, 8), Vector2.Up);
+        await Tap(Key.E); await Frames(3);
+        Check("meditating keeps the Reforço in the book", SaveGame.Read(SavePath).Data?.Vale?.Book.Any(b => b.Tech == "qi_reinforce") == true);
         Finish();
     }
 }
