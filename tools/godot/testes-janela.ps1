@@ -22,6 +22,10 @@ foreach ($phase in 'full', 'sealed', 'resume2', 'resume3', 'migrate', 'migrate2'
 foreach ($phase in 'measure', 'click', 'map', 'map2') {
   & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/DisplayCheck.tscn -- "--phase=$phase" '--prefs=user://teste_tela_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
 }
+# the prototype's recovery (pedido 11): bridge, guard, clues, map, book, controls, assist, layout
+foreach ($phase in 'vale', 'vale2', 'controls', 'controls2', 'assist', 'assist2', 'book', 'layout') {
+  & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/RecoveryCheck.tscn -- "--phase=$phase" '--prefs=user://teste_rec_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+}
 if ($SoPrologo) { if ($fail -eq 0) { Write-Host "Prologo: todos os testes passaram." } else { Write-Host "$fail execucao(oes) com falha." }; exit $fail }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/unit/UnitRunner.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ControlsCheck.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }

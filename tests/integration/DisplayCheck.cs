@@ -59,17 +59,6 @@ public partial class DisplayCheck : Node
         GetViewport().GetTexture().GetImage().SavePng($"{_shots}/{name}.png");
     }
 
-    private async Task ScreenShot(string name)
-    {
-        if (_shots == null || DisplayServer.GetName() == "headless") return;
-        await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
-        DirAccess.MakeDirRecursiveAbsolute(_shots);
-        var img = DisplayServer.ScreenGetImage(DisplayServer.WindowGetCurrentScreen()); // the whole monitor: borders included
-        // only used in full screen (the game covers the monitor); the bottom strip is cut because Windows draws its
-        // taskbar over a full-screen window that does not have the focus (the test window runs beside the user's)
-        img?.GetRegion(new Rect2I(0, 0, img.GetWidth(), img.GetHeight() - 48)).SavePng($"{_shots}/{name}.png");
-    }
-
     private async Task Apply(string how)
     {
         switch (how)
@@ -100,7 +89,9 @@ public partial class DisplayCheck : Node
                 GD.Print($"MEDIDA {tag} | {how} | janela {win.X}x{win.Y} | jogo {pic.Size.X:0}x{pic.Size.Y:0} em ({pic.Position.X:0},{pic.Position.Y:0}) | escala {scale:0}x | mundo visível {world.X:0}x{world.Y:0} px | bordas {bx:0}+{by:0} px");
                 if (aspect == Window.ContentScaleAspectEnum.Expand)
                     Check($"{tag}, {how}: the picture fills the window (borders under one game pixel), whole-number scale", bx < scale && by < scale && Mathf.IsEqualApprox(scale, Mathf.Round(scale)), $"{win.X}x{win.Y}: jogo {pic.Size.X:0}x{pic.Size.Y:0}, escala {scale}, mundo {world.X:0}x{world.Y:0}");
-                if (how == "tela cheia") await ScreenShot(aspect == Window.ContentScaleAspectEnum.Keep ? "tela-cheia-antes" : "tela-cheia-depois");
+                // the game's own picture (never a capture of the desktop: a capture of the screen can show other windows);
+                // the monitor is rebuilt from it with the measure printed above (tools/capture/monitor_compose.py)
+                if (how == "tela cheia") await GameShot(aspect == Window.ContentScaleAspectEnum.Keep ? "tela-cheia-antes-jogo" : "tela-cheia-depois-jogo");
                 if (how == "tela cheia" && aspect == Window.ContentScaleAspectEnum.Expand)
                     Check("full screen: the HUD follows the screen (controls line at the bottom, seed at the right)", _g.Hud.LaidOut == world, $"layout {_g.Hud.LaidOut}");
             }
