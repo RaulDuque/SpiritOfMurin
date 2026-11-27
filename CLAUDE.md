@@ -93,6 +93,16 @@ por arquivo e `git diff --staged` revisado antes de cada commit.
 > **First session?** Say "make me a game" (`/prototype`), or run `/start` to begin
 > the guided onboarding flow.
 
+## Elementos do jogo (regra do criador, pedido 14, 2026-11-27)
+
+Todo elemento (pedra, árvore, animal, arma, ferramenta, roupa, técnica, item, painel) tem um **id estável** e
+lugares previsíveis: **desenho** numa classe `<Nome>Art` própria (`src/Elements/<Família>/`), **dados** num JSON
+(`assets/data/elements/<família>/<id>.json` ou o catálogo da família), **comportamento** na classe da família e
+**prévia** na cena `src/Dev/Inspecao.tscn`. Um id publicado nunca muda: para algo parecido, crie uma **variante**.
+Migre famílias antigas só quando uma entrega mexer nelas. Padrão completo: `docs/elementos/PADRAO.md`; onde
+está cada elemento hoje: `docs/elementos/INDICE.md`; para criar: `/create <tipo> "<descrição>"`.
+O ponto de retomada das tarefas é `user-docs/tasks/README.md`.
+
 ## Coding Standards
 
 @.claude/docs/coding-standards.md
