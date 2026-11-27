@@ -62,7 +62,7 @@ O texto completo está no `CLAUDE.md`, em "Fluxo de trabalho: fechamento de cada
 
 - Unitários: `tests/unit/UnitRunner.tscn` (runner próprio com atributo `[UnitTest]`). O gdUnit4 **não** está instalado.
 - Integração: as cenas `*Check.tscn` em `tests/integration/`, com fases passadas por `-- --phase=...`.
-- Bateria completa com janela: `.\tools\godot\testes-janela.ps1` (padrão: monitor 2, isto é, `--screen 1`). Também roda pelo Painel em `tools/painel-testes/`. A última rodada completa deu 494/494 (2026-11-27).
+- Bateria completa com janela: `.\tools\godot\testes-janela.ps1` (padrão: monitor 2, isto é, `--screen 1`). Também roda pelo Painel em `tools/painel-testes/`. A última rodada completa deu 556/556 (2026-11-27, pedido 14).
 - Entrada simulada precisa de um `await ProcessFrame` depois de cada `ParseInputEvent`, senão os toques se perdem.
 - Os testes usam saves próprios (`user://teste_*.json`). Não toque na jornada nem nas teclas do criador.
 - **Nunca capture a área de trabalho do Windows** (`DisplayServer.ScreenGetImage`, `CopyFromScreen`). Isso já pegou o navegador e o Discord do criador. Use a imagem do viewport do jogo (`GetViewport().GetTexture().GetImage()`). Se precisar do monitor inteiro, reconstrua com `tools/capture/monitor_compose.py` e marque a imagem como reconstruída. Confira toda imagem antes do commit.

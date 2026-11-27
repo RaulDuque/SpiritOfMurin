@@ -69,7 +69,7 @@ Leia nesta ordem. Os itens marcados com ★ são obrigatórios antes de mexer em
 
 ### e) Testes e evidências
 18. `tools/painel-testes/LEIA-ME.md`: o `PainelDeTestes.exe` (Jogar, Vitrine, rodar testes com e sem janela).
-19. `tools/godot/testes-janela.ps1`: a bateria completa com janela no monitor 2. A última rodada deu 494/494.
+19. `tools/godot/testes-janela.ps1`: a bateria completa com janela no monitor 2. A última rodada (pedido 14) deu 556/556.
 20. Os testes ficam em `tests/unit/UnitRunner.tscn` (runner próprio, atributo `[UnitTest]`) e em `tests/integration/*Check.tscn` (fases via `-- --phase=...`).
 21. As evidências (capturas) de mudanças visíveis ficam em `production/qa/evidence/<data>_<tema>/`.
 

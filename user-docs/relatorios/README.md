@@ -49,6 +49,10 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-27 | [2026-11-27-pedido13-final.md](2026-11-27-pedido13-final.md) | Pedido 13, fechamento: validação com janela pelo próprio Painel (494/494 na 3ª rodada), roteiro curto pelo Painel → Jogar e roteiro das técnicas secretas em seção separada |
 | 2026-11-27 | [2026-11-27-continuar-com-outras-contas.md](2026-11-27-continuar-com-outras-contas.md) | Como continuar com a outra conta do Claude ou com o Cursor: resumo do contexto em `docs/contexto-para-assistentes.md` e regra do Cursor em `.cursor/rules/` |
 | 2026-11-27 | [2026-11-27-guia-para-agentes.md](2026-11-27-guia-para-agentes.md) | `GUIA.md` na raiz: o arquivo único para qualquer agente de IA saber o que estudar e em que ordem |
+| 2026-11-27 | [prompts/14-organizacao-criacao-conteudo.md](prompts/14-organizacao-criacao-conteudo.md) | Pedido 14 (texto integral) e a mensagem curta sobre Ki, FOR, barras com números e números de dano, com as decisões tomadas ao começar |
+| 2026-11-27 | [2026-11-27-atributos-ki.md](2026-11-27-atributos-ki.md) | Pedido 14, entrega 14.0: Qi → Ki (texto, código e saves antigos), FOR, defesa de CON, crítico, vida do inimigo em números na barra, números de dano no Modo de assistência |
+| 2026-11-27 | [2026-11-27-pedido14-organizacao-e-entrega5.md](2026-11-27-pedido14-organizacao-e-entrega5.md) | Pedido 14: pasta de tarefas (`user-docs/tasks/`), padrão de elementos, cena de Inspeção, `/create` (salgueiro e rocha de ferro), Entrega 5 (machado, picareta, pinheiro, rochas, bambu, arbustos vivos), brilho azul do Reforço, corte maior, ícones no minimapa, andar sobre a água; prompts das entregas futuras |
+| 2026-11-27 | [2026-11-27-como-criar-e-editar-elementos.md](2026-11-27-como-criar-e-editar-elementos.md) | Guia para editar à mão: tabela "quero mudar → abro → edito → testo", passo a passo e os dois exemplos testados do `/create` |
 
 ## Prompts de imagem do criador
 
