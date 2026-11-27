@@ -46,6 +46,7 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-26 | [2026-11-26-bolsa-visual.md](2026-11-26-bolsa-visual.md) | Pedido 13, entrega 4: bolsa com figuras inspirada no protótipo (ícone, pilha, marca de equipado, ações do item, fabricar), comparação com o inventário antigo |
 | 2026-11-26 | [2026-11-26-moedas.md](2026-11-26-moedas.md) | Pedido 13, entrega 5: Moedas (saldo na bolsa, despertar com 0, bolsinha de +25 na clareira a leste da esteira, receber/gastar com recusa, saves antigos com 0) |
 | 2026-11-27 | [2026-11-27-ambientacao.md](2026-11-27-ambientacao.md) | Pedido 13, entrega 6 (= entrega 4 da campanha): dia e noite com luz da fogueira e relógio, vento em rajadas (capim, copas, folhas), pássaros com sombra, terreno variado com transições suaves, vau lento com ondinhas, água funda distinta |
+| 2026-11-27 | [2026-11-27-pedido13-final.md](2026-11-27-pedido13-final.md) | Pedido 13, fechamento: validação com janela pelo próprio Painel (494/494 na 3ª rodada), roteiro curto pelo Painel → Jogar e roteiro das técnicas secretas em seção separada |
 
 ## Prompts de imagem do criador
 
