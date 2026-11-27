@@ -8,8 +8,8 @@ namespace SpiritOfMurin.Characters;
 /// <summary>
 /// The swordsman: walks with the move actions, cuts (sword: chain of up to three; stone knife: a
 /// short cut, chain of two) and steps. The cut follows the direction the character faces, which is
-/// the last direction walked. With empty hands there is no cut. Drawn in code with the HTML
-/// prototype's look (the creator's approved appearance).
+/// the last direction walked. With empty hands there is no cut. Drawn in code using pixel-run
+/// matrices with Jade Green &amp; Imperial Gold palette, slimmed side profile, and dual-arm walk swing.
 /// Input actions (Project Settings &gt; Input Map): move_left/right/up/down, cut, step, sneak.
 /// </summary>
 public partial class Player : CharacterBody2D
@@ -178,7 +178,6 @@ public partial class Player : CharacterBody2D
     /// <summary>Restores vigor at once (up to the maximum).</summary>
     public void RestoreVigor(float amount) => Vigor = Mathf.Min(MaxVigor, Vigor + amount);
 
-    // spends vigor for an action; false when the vigor rule is on and there is not enough
     private bool SpendVigor(float cost)
     {
         if (MaxVigor <= 0 || cost <= 0) return true;
@@ -251,10 +250,27 @@ public partial class Player : CharacterBody2D
     private readonly List<(Vector2 World, float Life)> _ghosts = new();
     private readonly PixelPainter _paint = new();
 
-    // the prototype's colours for the player (index.html, LOOK.player)
-    private static readonly Color Robe = new("#dce5d4"), Shade = new("#9db3a0"), Trim = new("#2f7f6c"), Sash = new("#2f7f6c"),
-        Skin = new("#e2b58e"), Hair = new("#1b191e"), Pants = new("#3d4a44"), Blade = new("#eef3f2"), Hilt = new("#7a5a3a"),
-        Outline = new("#16140f"), Learn = new("#d4fbf6"), LearnGlow = new("#6fd8d2"), Flint = new("#8c8a80");
+    // Paleta base: Verde Jade + Amarelo/Dourado Imperial e Marfim Quente
+    private static readonly Color
+        Robe = new("#f5eedc"),         // túnica marfim dourado claro
+        Shade = new("#cbb37c"),        // sombra ocre quente
+        Trim = new("#2f7a53"),         // debrum e detalhes verde jade
+        Sash = new("#1c4f35"),         // faixa principal verde esmeralda profundo
+        SashLight = new("#68c28e"),    // brilho verde jade claro da fita e faixa
+        Scabbard = new("#3d2817"),     // bainha marrom escuro
+        Skin = new("#e2b58e"),         // pele
+        SkinShade = new("#c48b6c"),    // sombra de pele (mão traseira)
+        Hair = new("#1c181d"),         // cabelo escuro quente
+        Pants = new("#3b352c"),        // calça marrom-carvão
+        Blade = new("#f7f9fc"),        // lâmina polida
+        BladeEdge = new("#d6c7a1"),    // fio dourado pálido
+        Hilt = new("#5c3a1e"),         // cabo de madeira escura
+        Gold = new("#f5cb5c"),         // guarda e fivela dourada
+        GoldDeep = new("#d49b27"),     // detalhes amarelo-dourado
+        Outline = new("#17130e"),      // contorno marrom-preto quente
+        Learn = new("#e6fff0"),        // centro do risco de Qi jade claro
+        LearnGlow = new("#4eb87d"),    // brilho de Qi verde esmeralda
+        Flint = new("#8c8a80");        // faca de pedra
 
     /// <inheritdoc />
     public override void _Ready()
@@ -320,7 +336,6 @@ public partial class Player : CharacterBody2D
         bool sneaking = !locked && InputMap.HasAction("sneak") && Input.IsActionPressed("sneak");
 
         if (_guard && !Input.IsActionPressed("cut") && !Input.IsActionPressed("step")) _guard = false;
-        // a press waits in the buffer until the current action can be cancelled
         if (locked || _guard) { }
         else if (Input.IsActionJustPressed("cut"))
         {
@@ -341,13 +356,13 @@ public partial class Player : CharacterBody2D
         if (_act == null)
         {
             Velocity = move * Tuning.MoveSpeed * MoveSpeedMultiplier * (sneaking ? Tuning.SneakFactor : 1f);
-            if (move != Vector2.Zero) { Facing = move.Normalized(); _moving = true; _walk += dt * (sneaking ? 4f : 7f); }
+            if (move != Vector2.Zero) { Facing = move.Normalized(); _moving = true; _walk += dt * (sneaking ? 4.5f : 8f); }
         }
         else if (_act.Kind is ActionKind.Step or ActionKind.Recoil) Velocity = _act.StepVelocity;
         else Velocity = Vector2.Zero;
         if (_act is { Kind: ActionKind.Recoil } rc) rc.StepVelocity *= 0.86f;
         if (_act == null || _act.Kind is not (ActionKind.Side or ActionKind.Dash)) MoveAndSlide();
-        // with a target locked, the body keeps facing it
+
         if (LockTarget?.Invoke() is { } lockedOn && IsInstanceValid(lockedOn) && _act is not { Kind: ActionKind.Side or ActionKind.Dash })
         {
             Vector2 to = lockedOn.GlobalPosition - GlobalPosition;
@@ -367,7 +382,6 @@ public partial class Player : CharacterBody2D
         QueueRedraw();
     }
 
-    // forward / back / lateral of the move keys relative to the locked target (or the facing)
     private (string Kind, int Side) Rel(Vector2 move)
     {
         if (move == Vector2.Zero) return ("none", 0);
@@ -378,7 +392,6 @@ public partial class Player : CharacterBody2D
         return (fwd > 0 ? "fwd" : "back", 0);
     }
 
-    // pays a technique's costs, or refuses with a clear message and spends nothing
     private bool Pay(string id, TechniqueParams p)
     {
         string name = Tech?.Data.Get(id).Name ?? id;
@@ -392,7 +405,6 @@ public partial class Player : CharacterBody2D
 
     private bool Sealed(string id) => Tech?.State(id) == TechniqueState.Sealed;
 
-    // the Silent Blade Step is found by doing it: while unknown it follows the side step's version; sealed, it never fires
     private TechniqueParams? LaminaParams()
     {
         if (Tech == null || Sealed("lamina")) return null;
@@ -403,7 +415,7 @@ public partial class Player : CharacterBody2D
     private void Refuse(string id, string what)
     {
         string m = $"{Tech?.Data.Get(id).Name ?? id} está selada: {what}";
-        if (m == _lastRefusal && _time - _lastRefusalAt < 2.5f) return; // the same refusal is not repeated at every press
+        if (m == _lastRefusal && _time - _lastRefusalAt < 2.5f) return;
         _lastRefusal = m; _lastRefusalAt = _time;
         TechniqueRefused?.Invoke(id, m);
     }
@@ -428,7 +440,6 @@ public partial class Player : CharacterBody2D
             }
             if (!Pay("qi_wave", qp)) return;
             _act = new Act { Kind = ActionKind.Qi, Startup = 0.1f, Active = 0.02f, Recovery = 0.22f * RecoveryMultiplier, CancelAt = 0.16f };
-            // the Silent Blade Step: a side step, then a cut, then qi, each within the window
             var lp = LaminaParams();
             if (lp != null && _hist.Count >= 2)
             {
@@ -511,7 +522,6 @@ public partial class Player : CharacterBody2D
         else
         {
             if (!SpendVigor(StepVigorCost)) return;
-            // with a direction held, step that way (and face it); with none, step back from the facing
             Vector2 dir = move != Vector2.Zero ? move.Normalized() : -Facing;
             if (move != Vector2.Zero) Facing = dir;
             _act = new Act { Kind = ActionKind.Step, Startup = Tuning.StepTime, CancelAt = Tuning.StepTime * 0.85f * RecoveryMultiplier,
@@ -523,20 +533,15 @@ public partial class Player : CharacterBody2D
 
     private int MaxChain => Equipped == Weapon.Knife ? Tuning.KnifeMaxChain : 3;
 
-    /// <summary>
-    /// True when a target at <paramref name="target"/> (feet) with body radius <paramref name="radius"/> is
-    /// inside a cut's reach and arc from <paramref name="origin"/> facing <paramref name="dir"/>.
-    /// </summary>
     public static bool InBladeArc(Vector2 origin, Vector2 dir, float reach, float arcDegrees, Vector2 target, float radius)
     {
         Vector2 v = target - origin;
         float d = v.Length();
         if (d > reach + radius) return false;
-        if (d < radius + 4f) return true; // point blank
+        if (d < radius + 4f) return true;
         return Mathf.Abs(Mathf.RadToDeg(dir.AngleTo(v))) <= arcDegrees;
     }
 
-    // moves the body to a point; gaps do not stop a side step or a dash
     private void Glide(Vector2 to)
     {
         uint mask = CollisionMask;
@@ -579,7 +584,7 @@ public partial class Player : CharacterBody2D
         }
         if (a.Kind is ActionKind.Cut or ActionKind.Thrust && !a.Live && a.T >= a.Startup)
         {
-            a.Live = true; // the blade goes live: lunge and leave the slash
+            a.Live = true;
             MoveAndCollide(Facing * a.Lunge);
             float side = a.Kind == ActionKind.Thrust ? 0f : a.N % 2 == 1 ? 55f : -55f;
             _slashes.Add(new Slash
@@ -597,14 +602,17 @@ public partial class Player : CharacterBody2D
     /// <inheritdoc />
     public override void _Draw()
     {
-        // step afterimages
+        // Step afterimages (silhouette-shaped trailing glow in Jade Qi)
         foreach (var (world, life) in _ghosts)
         {
             Vector2 o = world - GlobalPosition;
-            DrawRect(new Rect2(o.X - 6, o.Y - 40, 12, 40), new Color(LearnGlow, life / 0.22f * 0.25f));
+            float alpha = life / 0.22f * 0.30f;
+            DrawRect(new Rect2(o.X - 5, o.Y - 26, 10, 24), new Color(LearnGlow, alpha));
+            DrawRect(new Rect2(o.X - 4, o.Y - 37, 8, 11), new Color(LearnGlow, alpha));
+            DrawRect(new Rect2(o.X - 2, o.Y - 40, 4, 3), new Color(Learn, alpha * 1.2f));
         }
-        // ground shadow
-        var sh = new Color(8 / 255f, 10 / 255f, 8 / 255f, 0.38f);
+        // Ground shadow
+        var sh = new Color(10 / 255f, 8 / 255f, 6 / 255f, 0.38f);
         DrawRect(new Rect2(-11, -2, 22, 4), sh); DrawRect(new Rect2(-8, -3, 16, 6), sh);
         if (Game.Assist.Areas && BladeArea() is { } ba)
         {
@@ -618,7 +626,6 @@ public partial class Player : CharacterBody2D
         if (Lying > 0) { DrawKneeling(); return; }
         if (TumbleAngle != 0 || Airborne > 0)
         {
-            // thrown: the whole figure turns around its middle, above its shadow
             var t = Transform2D.Identity.Translated(new Vector2(0, 20)).Rotated(TumbleAngle).Translated(new Vector2(0, -20 - Airborne));
             DrawSetTransformMatrix(t);
             DrawFighter();
@@ -627,7 +634,6 @@ public partial class Player : CharacterBody2D
         }
         if (_invulnerable <= 0 || Mathf.PosMod(_time, 0.12f) < 0.08f) DrawFighter();
         if (_hurtFlash > 0) DrawRect(new Rect2(-8, -40, 16, 40), new Color(0.75f, 0.2f, 0.15f, _hurtFlash));
-        // the slash: straight and clean, like the cut in the master's stone
         foreach (var s in _slashes)
         {
             Vector2 c = s.World - GlobalPosition;
@@ -637,52 +643,226 @@ public partial class Player : CharacterBody2D
         }
     }
 
-    // the swordsman flat on the ground, head to the right, in the prototype's colours
     private void DrawLying()
     {
         var p = _paint;
-        p.Rect(-15, -7, 24, 7, Robe); p.Rect(-15, -7, 24, 2, Shade); p.Rect(-6, -7, 2, 7, Sash); p.Rect(-15, -2, 24, 1, Trim);
+        p.Rect(-15, -7, 24, 7, Robe); p.Rect(-15, -7, 24, 2, Shade); p.Rect(-6, -7, 3, 7, Sash); p.Rect(-15, -2, 24, 1, Trim);
         p.Rect(-21, -6, 6, 3, Pants); p.Rect(-21, -3, 6, 3, Pants);
         p.Rect(9, -9, 9, 9, Skin); p.Rect(9, -9, 9, 3, Hair); p.Rect(17, -8, 3, 4, Hair);
         p.Rect(13, -5, 1, 1, Outline);
         float ph = Mathf.Sin(_time * 2);
-        p.Line(18, -7, 23 + ph, -2, Trim, 1); // the ribbon in the grass
-        p.Rect(-4, -10, 8, 3, Robe); // the arm across the chest
+        p.Line(18, -7, 23 + ph, -2, Trim, 1);
+        p.Rect(-4, -10, 8, 3, Robe);
         p.Flush(this, Outline);
-        if (Mathf.Sin(_time * 1.6f) > 0.4f) DrawRect(new Rect2(3, -10, 1, 1), new Color(LearnGlow, 0.4f)); // breathing
+        if (Mathf.Sin(_time * 1.6f) > 0.4f) DrawRect(new Rect2(3, -10, 1, 1), new Color(LearnGlow, 0.4f));
     }
 
-    // getting up: on one knee, a hand on the ground
     private void DrawKneeling()
     {
         var p = _paint;
-        float x = 0, y = 0, k = 1 - Lying; // 0 = still down, 1 = standing
+        float x = 0, y = 0, k = 1 - Lying;
         float top = y - 18 - k * 9;
         p.Rect(x - 7, y - 5, 6, 5, Pants); p.Rect(x + 1, y - 8, 4, 8, Pants);
         for (int r = 0; r < 14; r++) { float w = 12 + Mathf.Floor(r * 3f / 14) * 2; p.Rect(x - w / 2, top + r, w, 1, Robe); p.Rect(x - w / 2, top + r, 3, 1, Shade); }
-        p.Rect(x - 6, top + 6, 12, 2, Sash);
+        p.Rect(x - 6, top + 6, 12, 3, Sash);
         float hy = top - 11;
         p.Rect(x - 5, hy + 1, 10, 9, Skin); p.Rect(x - 5, hy, 10, 4, Hair); p.Rect(x - 2, hy - 3, 4, 3, Hair);
         p.Rect(x - 3, hy + 6, 1, 1, Outline); p.Rect(x + 2, hy + 6, 1, 1, Outline);
-        p.Line(x + 5, top + 2, x + 11, y - 1, Robe, 3); p.Rect(x + 10, y - 2, 2, 2, Skin); // a hand on the ground
+        p.Line(x + 5, top + 2, x + 11, y - 1, Robe, 3); p.Rect(x + 10, y - 2, 2, 2, Skin);
         p.Flush(this, Outline);
     }
 
-    // A port of the prototype's drawFighter for the player (idle, walk, cut, step), feet at (0, 0).
+    // Pixel matrices (12x14 head; 20x21 front/back robe; slim 16x21 side robe)
+    private static readonly string[] CabecaFrente =
+    {
+        "......hh....",
+        ".....hvvh...",
+        ".....hhaa...",
+        "....ttjtt...",
+        "..hhvvvvhh..",
+        ".hvvahhhhvh.",
+        ".hvhhlphhvh.",
+        ".hhhplllphh.",
+        ".hhpplllphh.",
+        ".hhisssipph.",
+        ".hhplpllpvh.",
+        ".hhsppppph..",
+        "..hsspppsh..",
+        "....spps....",
+    };
+
+    private static readonly string[] CabecaCostas =
+    {
+        "......hh....",
+        ".....hvvh...",
+        ".....hvah...",
+        "....ttjtt...",
+        "..hhvvvvhh..",
+        ".hvvavvhvvh.",
+        ".hvahhvvhvh.",
+        ".hhvhvvhhvh.",
+        ".hhvhvhhhvh.",
+        ".hhvhhvhhvh.",
+        ".hhhhvvhhvh.",
+        "..hhhvhhvh..",
+        "...hhhhvh...",
+        ".....hhh....",
+    };
+
+    private static readonly string[] CabecaPerfil =
+    {
+        ".....hh.....",
+        "....hvah....",
+        "....hvvh....",
+        "...ttjjtt...",
+        "..hhvvvvhh..",
+        ".hvvavhhvvh.",
+        ".hvahhhhhlp.",
+        ".hvhhsppplp.",
+        ".hvhhpppllp.",
+        ".hhhhsppih..",
+        "..hvhppppll.",
+        "..hhhssppp..",
+        "...hhssppp..",
+        ".....sspp...",
+    };
+
+    private static readonly string[] TunicaFrente =
+    {
+        "....mmtmrrrrrtww....",
+        "...mmmtrrrrrrtrww...",
+        "...mmmmtrrrrtrrww...",
+        "...mmddtrrrrtrrww...",
+        "...mmddrtrrtrrrww...",
+        "...mmddrtrrtrrrww...",
+        "...mmmmrrttrrrrww...",
+        "....mmmmrttrrrww....",
+        "....ttttttttggtt....",
+        "....ttttttttggtt....",
+        "....dddddddddddd....",
+        "....mmmmmrrrwrtt....",
+        "...mmmmrmrrrwrttw...",
+        "...mmmmrmrrrwrttw...",
+        "..mmmmrrmrrrwrttww..",
+        "..mmmmrmrrrrrwrttw..",
+        "..mmmmrmrrrrrwrttw..",
+        ".mmmmrrmrrrrrwrjjww.",
+        ".mmmmrrmrrrrrwrjjww.",
+        ".tttttttttttttttttt.",
+        ".dddddddddmmmmmmmmm.",
+    };
+
+    private static readonly string[] TunicaCostas =
+    {
+        "....mmmmrrrrrrww....",
+        "...mmmdddddddddww...",
+        "...mmmmrdddddrrww...",
+        "...mmddrrrrrrrrww...",
+        "...mmddrrrrrrrrww...",
+        "...mmddrrrrrrrrww...",
+        "...mmmmrrrrrrrrww...",
+        "....mmmmrrrrrrww....",
+        "....tttttttttttt....",
+        "....tttttttttttt....",
+        "....dddddddddddd....",
+        "....mmmmmrrrwrww....",
+        "...mmmmrmrrrwrrww...",
+        "...mmmmrmrrrwrrww...",
+        "..mmmmrrmrrrwrrrww..",
+        "..mmmmrmrrrrrwrrww..",
+        "..mmmmrmrrrrrwrrww..",
+        ".mmmmrrmrrrrrwrrrww.",
+        ".mmmmrrmrrrrrwrrrww.",
+        ".tttttttttttttttttt.",
+        ".dddddddddmmmmmmmmm.",
+    };
+
+    private static readonly string[] TunicaPerfil =
+    {
+        "....mmmrrrrw....",
+        "...mmmmrrrrtw...",
+        "...mmmmmmmrtw...",
+        "...mmddmmmrtw...",
+        "...mmddmmmrtr...",
+        "...mmddmmmrtr...",
+        "...mmmmmmmrtr...",
+        "....ttttttgt....",
+        "....ttttttgt....",
+        "....dddddddd....",
+        "....mmmmmrtw....",
+        "...mmmmmmrtjw...",
+        "...mmmmmmrtjw...",
+        "..mmmmmmmrtjww..",
+        "..mmmmmmmrtjww..",
+        "..mmmmmmmrtjww..",
+        ".mmmmmmmmrrtjww.",
+        ".mmmmmmmmrrtjww.",
+        ".mmmmmmmmrrddww.",
+        ".tttttttttttttt.",
+        ".dddddddmmmmmmm.",
+    };
+
+    // Paleta Verde Jade + Amarelo/Dourado Imperial e Marfim Quente
+    private static readonly Dictionary<char, Color> Pigmentos = new()
+    {
+        ['i'] = new("#17130e"), // contorno / olhos
+        ['h'] = new("#1c181d"), // cabelo escuro
+        ['v'] = new("#3b333d"), // volume do cabelo
+        ['a'] = new("#5c505e"), // brilho no topo do cabelo
+        ['s'] = new("#c48b6c"), // sombra de pele
+        ['p'] = new("#e2b58e"), // pele base
+        ['l'] = new("#f3cca4"), // luz da pele
+        ['t'] = new("#2f7a53"), // faixa principal / debrum (verde jade)
+        ['j'] = new("#68c28e"), // brilho verde jade da faixa e fita
+        ['d'] = new("#1c4f35"), // sombra profunda da faixa e dobra (verde esmeralda escuro)
+        ['m'] = new("#cbb37c"), // sombra da túnica (ocre quente)
+        ['r'] = new("#f5eedc"), // túnica base (marfim dourado claro)
+        ['w'] = new("#fffbf0"), // luz da túnica
+        ['b'] = new("#4a4236"), // calça média
+        ['g'] = new("#f5cb5c"), // placa/fivela dourada
+        ['k'] = new("#1c1915"), // botas escuras
+    };
+
+    private void PintarLinhas(string[] rows, int left, int top, bool mirror, int hem = 0)
+    {
+        for (int y = 0; y < rows.Length; y++)
+        {
+            string row = rows[y];
+            for (int start = 0; start < row.Length;)
+            {
+                char pigment = row[start];
+                int end = start + 1;
+                while (end < row.Length && row[end] == pigment) end++;
+                if (pigment != '.')
+                {
+                    int offset = mirror ? row.Length - end : start;
+                    _paint.Rect(left + offset + (y >= 16 ? hem : 0), top + y, end - start, 1, Pigmentos[pigment]);
+                }
+                start = end;
+            }
+        }
+    }
+
     private void DrawFighter()
     {
         var p = _paint;
         float face = Facing.Angle(), fx = Mathf.Cos(face), fy = Mathf.Sin(face);
         string view = Mathf.Abs(fy) > Mathf.Abs(fx) * 0.8f ? (fy > 0 ? "down" : "up") : "side";
         int s = fx < 0 ? -1 : 1;
+
+        bool dashing = _act is { Kind: ActionKind.Step or ActionKind.Side or ActionKind.Dash };
+        float walkCycle = _moving ? Mathf.Sin(_walk) : 0f;
+        int leanX = dashing ? Mathf.RoundToInt(fx * 2f) : 0;
+
         float x = 0, y = 0, sy = y - 25, nx = -fy;
         Vector2 hand, tip;
         float bladeLen = Equipped == Weapon.Knife ? 0.4f : 1f;
+
         if (_act is { Kind: ActionKind.Cut } cut)
         {
             float k = Mathf.Clamp((cut.T - cut.Startup) / cut.Active, 0f, 1f), from = cut.N % 2 == 1 ? -75f : 75f;
             float a = face + Mathf.DegToRad(from + (-from * 2f) * k);
-            hand = new Vector2(x + Mathf.Cos(a) * 11, sy + 4 + Mathf.Sin(a) * 8);
+            hand = new Vector2(x + leanX + Mathf.Cos(a) * 11, sy + 4 + Mathf.Sin(a) * 8);
             tip = hand + new Vector2(Mathf.Cos(a) * 20, Mathf.Sin(a) * 14) * bladeLen;
         }
         else if (_act is { Kind: ActionKind.Thrust })
@@ -694,57 +874,156 @@ public partial class Player : CharacterBody2D
         {
             hand = new Vector2(x - nx * 7 * s, sy + 9);
             tip = hand + new Vector2(fx * 6, 12) * bladeLen;
-            p.Rect(x + fx * 11 + nx * 3, sy + 3 + fy * 8, 3, 3, LearnGlow); // the open palm, qi gathering
+            p.Rect(x + fx * 11 + nx * 3, sy + 3 + fy * 8, 3, 3, LearnGlow);
+            p.Rect(x + fx * 12 + nx * 3, sy + 4 + fy * 8, 1, 1, Learn);
+        }
+        else if (dashing)
+        {
+            hand = new Vector2(x + leanX - fx * 6 + nx * 6 * (view == "side" ? -s : 1), sy + 8);
+            tip = hand + new Vector2(-fx * 13, 8) * bladeLen;
+        }
+        else if (view == "side")
+        {
+            float armSwing = walkCycle * 2.5f;
+            hand = new Vector2(x + leanX - s * 1 + armSwing, sy + 9);
+            tip = hand + new Vector2(s * 14, 7) * bladeLen;
         }
         else
         {
-            hand = new Vector2(x + nx * 7 * (view == "side" ? -s : 1) + fx * 3, sy + 9);
-            tip = hand + new Vector2(fx * 14, 9 + fy * 4) * bladeLen;
+            float armSwing = walkCycle * 1.5f;
+            hand = new Vector2(x + leanX + nx * 7 + fx * 3, sy + 9 + armSwing);
+            tip = hand + new Vector2(fx * 14, 9 + fy * 4 + armSwing * 0.5f) * bladeLen;
         }
-        bool back = view == "up";
-        void Arms()
+
+        // Bainha diagonal nas costas quando está de frente com espada
+        if (Equipped == Weapon.Sword && view == "down")
         {
-            float shX = x + (view == "side" ? fx * 2 : nx * 6), shY = sy + 2;
-            p.Line(shX, shY, hand.X, hand.Y, Robe, 3);
-            if (Equipped == Weapon.Sword) { p.Line(hand.X, hand.Y, tip.X, tip.Y, Blade, 1); p.Rect(hand.X - 1, hand.Y - 1, 3, 3, Hilt); }
-            else if (Equipped == Weapon.Knife) { p.Line(hand.X, hand.Y, tip.X, tip.Y, Flint, 2); p.Rect(hand.X - 1, hand.Y - 1, 3, 3, Hilt); }
+            p.Line(x + leanX + 4, sy - 3, x + leanX - 6, sy + 11, Scabbard, 2);
+            p.Rect(x + leanX + 4, sy - 4, 2, 2, Gold);
+        }
+
+        bool back = view == "up";
+
+        // Segundo braço (oposto ao braço da espada): balança em oposição aos passos
+        void BackArm()
+        {
+            if (view == "side")
+            {
+                float backShX = x + leanX + s * 2f;
+                float backShY = sy + 2f;
+                float oppSwing = -walkCycle * 5.5f;
+                float backHandX = backShX + oppSwing + (_moving ? s * 1.5f : s * 2.5f);
+                float backHandY = sy + 8.5f - Mathf.Abs(walkCycle) * 1.2f;
+
+                p.Line(backShX, backShY, backHandX, backHandY, Outline, 4);
+                p.Line(backShX, backShY, backHandX, backHandY, Shade, 2);
+                p.Rect(backHandX - 1, backHandY - 1, 2, 2, Sash);
+                p.Rect(backHandX, backHandY, 2, 2, SkinShade);
+            }
+            else
+            {
+                float oppShX = x + leanX - nx * 6;
+                float oppShY = sy + 2;
+                float oppSwing = -walkCycle * 2.2f;
+                float oppHandX = oppShX - nx * 1f - fx * 1f;
+                float oppHandY = sy + 9f + oppSwing;
+
+                p.Line(oppShX, oppShY, oppHandX, oppHandY, Shade, 4);
+                p.Line(oppShX, oppShY, oppHandX, oppHandY, Robe, 2);
+                p.Rect(oppHandX - 1, oppHandY - 2, 3, 2, Trim);
+                p.Rect(oppHandX, oppHandY, 2, 2, Skin);
+            }
+        }
+
+        void FrontArm()
+        {
+            float shX = x + leanX + (view == "side" ? -s * 1f : nx * 6), shY = sy + 2;
+
+            if (view == "side")
+            {
+                // Contorno escuro para separar o braço da túnica no perfil
+                p.Line(shX, shY, hand.X, hand.Y, Outline, 5);
+                p.Line(shX, shY, hand.X, hand.Y, Shade, 3);
+                p.Line(shX, shY, hand.X, hand.Y, Robe, 2);
+                p.Rect(hand.X - 2, hand.Y - 3, 4, 2, Sash);
+                p.Rect(hand.X - 2, hand.Y - 1, 4, 1, GoldDeep);
+            }
+            else
+            {
+                p.Line(shX, shY, hand.X, hand.Y, Shade, 4);
+                p.Line(shX, shY, hand.X, hand.Y, Robe, 2);
+                float midX = Mathf.Round((shX + hand.X) * 0.5f), midY = Mathf.Round((shY + hand.Y) * 0.5f);
+                p.Rect(midX - 1, midY + 1, 3, 2, Shade);
+                p.Rect(hand.X - 1, hand.Y - 2, 3, 2, Trim);
+            }
+
+            if (Equipped == Weapon.Sword)
+            {
+                p.Line(hand.X, hand.Y, tip.X, tip.Y, Blade, 1);
+                Vector2 dir = (tip - hand).Normalized();
+                Vector2 perp = new(-dir.Y, dir.X);
+                p.Line(hand.X + dir.X * 3 + perp.X, hand.Y + dir.Y * 3 + perp.Y,
+                       tip.X - dir.X * 2 + perp.X, tip.Y - dir.Y * 2 + perp.Y, BladeEdge, 1);
+                p.Line(hand.X + dir.X * 2 - perp.X * 2, hand.Y + dir.Y * 2 - perp.Y * 2,
+                       hand.X + dir.X * 2 + perp.X * 2, hand.Y + dir.Y * 2 + perp.Y * 2, Gold, 1);
+                p.Line(hand.X - dir.X * 2, hand.Y - dir.Y * 2, hand.X + dir.X, hand.Y + dir.Y, Hilt, 2);
+                p.Rect(hand.X - dir.X * 3, hand.Y - dir.Y * 3, 1, 1, Gold);
+            }
+            else if (Equipped == Weapon.Knife)
+            {
+                p.Line(hand.X, hand.Y, tip.X, tip.Y, Flint, 2);
+                p.Rect(hand.X - 1, hand.Y - 1, 3, 3, Hilt);
+            }
             p.Rect(hand.X, hand.Y, 2, 2, Skin);
         }
-        if (back) Arms();
-        // legs
-        float wk = _moving ? Mathf.Sin(_walk) : 0f;
-        p.Rect(x - 5, y - 7 - Mathf.Max(0, wk) * 2, 4, 7, Pants);
-        p.Rect(x + 1, y - 7 - Mathf.Max(0, -wk) * 2, 4, 7, Pants);
-        // robe, flaring to the hem
-        float top = y - 27; const int rows = 21;
-        int hem = _moving ? Mathf.RoundToInt(Mathf.Sin(_walk * 2)) : 0;
-        for (int r = 0; r < rows; r++)
+
+        if (view == "side" || back) BackArm();
+        if (back) FrontArm();
+
+        float stride = walkCycle;
+        int legSpread = dashing ? 2 : 0;
+        int legShift = view == "side" ? Mathf.RoundToInt(stride * 2f) : 0;
+        void Boot(int left, float lift)
         {
-            float w = 12 + Mathf.Floor(r * 4f / rows) * 2, rx = x - w / 2 + (r > rows - 6 ? hem : 0);
-            p.Rect(rx, top + r, w, 1, Robe); p.Rect(rx + (s > 0 ? 0 : w - 3), top + r, 3, 1, Shade);
-            if (r == 2 || r == rows - 1) p.Rect(rx + 3, top + r, w - 6, 1, r == 2 ? Trim : Shade);
+            int top = -8 - Mathf.RoundToInt(lift * 2);
+            p.Rect(left, top, 4, 7, Pants);
+            p.Rect(left, top + 3, 4, 1, Shade);
+            p.Rect(left - 1, top + 6, 6, 2, Pigmentos['k']);
+            p.Rect(left + 1, top + 6, 2, 1, GoldDeep);
         }
-        p.Rect(x - 6, top + 9, 12, 2, Sash);
-        if (view != "up") p.Rect(x - 1 + (view == "side" ? s * 2 : 0), top, 2, 10, Trim);
-        // head
-        int breath = _act == null && !_moving && Mathf.Sin(_time * 2.4f) > 0.55f ? 1 : 0;
-        float hx = x, hy = y - 38 + breath;
-        p.Rect(hx - 5, hy + 1, 10, 9, Skin); p.Rect(hx - 4, hy, 8, 1, Skin); p.Rect(hx - 4, hy + 10, 8, 1, Skin);
-        if (view == "down")
+        if (view == "side")
         {
-            p.Rect(hx - 5, hy, 10, 4, Hair); p.Rect(hx - 6, hy + 1, 1, 4, Hair); p.Rect(hx + 5, hy + 1, 1, 4, Hair);
-            p.Rect(hx - 3, hy + 6, 1, 1, Outline); p.Rect(hx + 2, hy + 6, 1, 1, Outline);
+            Boot(-4 - legSpread - legShift, Mathf.Max(0, stride));
+            Boot(-2 + legSpread + legShift, Mathf.Max(0, -stride));
         }
-        else if (view == "up") p.Rect(hx - 5, hy, 10, 10, Hair);
         else
         {
-            p.Rect(hx - 5 * s - (s < 0 ? 2 : 0), hy, 7, 7, Hair); p.Rect(hx - 5, hy, 10, 3, Hair);
-            p.Rect(hx + 3 * s - (s < 0 ? 1 : 0), hy + 5, 1, 1, Outline); p.Rect(hx + 5 * s - (s < 0 ? 1 : 0), hy + 5, 1, 2, Skin);
+            Boot(-6 - legSpread, Mathf.Max(0, stride));
+            Boot(2 + legSpread, Mathf.Max(0, -stride));
         }
-        p.Rect(hx - 2, hy - 3, 4, 3, Hair); // topknot
-        float ph = Mathf.Sin(_time * 6);
-        p.Line(hx, hy - 2, hx - fx * 7 + ph, hy - 1 - fy * 2 + 3, Trim, 1); // ribbon
-        if (!back) Arms();
+
+        bool profile = view == "side", mirror = profile && s < 0;
+        int hem = _moving ? Mathf.RoundToInt(Mathf.Sin(_walk * 2)) : (dashing ? -Mathf.RoundToInt(fx) : 0);
+        int robeLeft = profile ? -8 : -10;
+        PintarLinhas(back ? TunicaCostas : profile ? TunicaPerfil : TunicaFrente, robeLeft + leanX, -27, mirror, hem);
+
+        int breath = _act == null && !_moving && Mathf.Sin(_time * 2.4f) > 0.55f ? 1 : 0;
+        int hy = -41 + breath;
+        float speedFactor = _moving ? 1.5f : 1f;
+        float flutter = Mathf.Sin(_time * 6f * speedFactor);
+        float flutterTip = Mathf.Sin(_time * 6f * speedFactor - 1.1f);
+        float tail = profile ? -s * 9 : back ? 8 : -8;
+
+        p.Line(leanX, hy + 3, leanX + tail / 2, hy + 4 + flutter * 0.5f, Trim, 1);
+        p.Line(leanX + tail / 2, hy + 4 + flutter * 0.5f, leanX + tail + flutterTip, hy + 7, Pigmentos['j'], 1);
+
+        PintarLinhas(back ? CabecaCostas : profile ? CabecaPerfil : CabecaFrente, -6 + leanX, hy, mirror);
+
+        if (!back)
+        {
+            if (view != "side") BackArm();
+            FrontArm();
+        }
         p.Flush(this, Outline);
     }
 }
