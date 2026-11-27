@@ -64,6 +64,9 @@ public static class Suites
                 ("resume", "Entrega 5: Continuar traz toco, pinheiro meio cortado, rocha quebrada e inventário, sem materiais em dobro."),
                 ("bush", "Entrega 5: coelho e personagem atravessando o arbusto (folhas inclinam e voltam), também na rajada.") })
                 l.Add(new("Recursos (Entrega 5)", $"{ph}, semente {s}", "res://tests/integration/RecursosCheck.tscn", new[] { $"--phase={ph}", $"--seed={s}", "--prefs=user://teste_rec5_prefs.json" }, About: about));
+        l.Add(new("Elementos (padrão)", "catálogo", "res://tests/integration/ElementosCheck.tscn", new[] { "--phase=catalogo" }, About: "Todo arquivo de assets/data/elements: carrega, id estável, arte existe, habitat, ferramenta errada recusada, esgota com a certa e dá itens reais (inclui o que o /create criar)."));
+        foreach (int s in seeds)
+            l.Add(new("Elementos (padrão)", $"no mundo, semente {s}", "res://tests/integration/ElementosCheck.tscn", new[] { "--phase=mundo", $"--seed={s}" }, About: "Cada família aparece em volta da clareira; cada elemento trabalhável responde à ferramenta no seu habitat."));
         l.Add(new("Recursos (Entrega 5)", "save antigo", "res://tests/integration/RecursosCheck.tscn", new[] { "--phase=oldsave", "--prefs=user://teste_rec5_prefs.json" }, About: "Jornada de antes da Entrega 5: tudo em pé, faca na mão corta bambu."));
         foreach (int s in seeds)
         {

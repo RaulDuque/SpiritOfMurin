@@ -41,6 +41,11 @@ foreach ($sd in 20261126, 777) {
   }
 }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/RecursosCheck.tscn -- '--phase=oldsave' '--prefs=user://teste_rec5_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+# pedido 14: every element in assets/data/elements (isolated catalogue, then the world in both seeds)
+& $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ElementosCheck.tscn -- '--phase=catalogo' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+foreach ($sd in 20261126, 777) {
+  & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ElementosCheck.tscn -- '--phase=mundo' "--seed=$sd" @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+}
 if ($SoPrologo) { if ($fail -eq 0) { Write-Host "Prologo: todos os testes passaram." } else { Write-Host "$fail execucao(oes) com falha." }; exit $fail }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/unit/UnitRunner.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ControlsCheck.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
