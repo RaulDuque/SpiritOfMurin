@@ -207,7 +207,7 @@ public partial class ValeWater : Node2D
                 var t = Map.At(tx, ty);
                 if (t is not (VTile.Water or VTile.Bridge)) continue;
                 float X = tx * TS, Y = ty * TS; uint hv = ValeTerrain.H(tx, ty);
-                if (t == VTile.Bridge) { DrawRect(new Rect2(X, Y, TS, TS), ValeTerrain.Water); continue; }
+                if (t == VTile.Bridge) continue; // the planks are the ground's (this layer used to paint water over them)
                 DrawRect(new Rect2(X, Y, TS, TS), ((tx + ty) & 1) == 1 ? ValeTerrain.Water : ValeTerrain.Water2);
                 int ph = Mathf.FloorToInt(_t * 2 + hv % 5);
                 if (ph % 3 == 0) DrawRect(new Rect2(X + hv % 20, Y + 8 + (hv >> 4) % 16, 7, 1), ValeTerrain.WaterHi);
