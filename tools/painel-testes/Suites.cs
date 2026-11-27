@@ -14,6 +14,9 @@ public static class Suites
         ("charge-plains", "Disparo carregado na Planície: selado antes do nível 3, enfraquecido depois; junto à carcaça o botão esfola."),
         ("reinforce", "Reforço de Qi: ativar com 75, recusar com 74, três golpes +10% e o quarto normal, faca 1 → 1,1, rolagem de ruptura fixa (sucesso e falha), Shift sozinho anda quieto, teclas remapeadas."),
         ("bag", "Bolsa com figuras: ícones e pilhas; fabricar a faca pelo teclado (materiais diminuem, faca aparece); equipar com clique; usar a erva pelo teclado e pelo botão; tela cheia."),
+        ("money", "Moedas: começa sem dinheiro; bolsinha junto à esteira dá +25; voltar ao bloco mantém recolhida; receber e gastar, recusa por saldo; meditar salva."),
+        ("money2", "Continuar: saldo e bolsinha recolhida voltam."),
+        ("oldsave", "Save de antes desta entrega (sem moedas) carrega com itens e equipamento; o despertar começa sem dinheiro."),
     };
 
     /// <summary>Monta a lista para as sementes escolhidas. <paramref name="quick"/> deixa só o prólogo, a recuperação e a unidade.</summary>

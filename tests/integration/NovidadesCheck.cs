@@ -35,6 +35,11 @@ namespace SpiritOfMurin.Tests;
 /// the knife is crafted by keyboard (the flint and the branch go down, the knife appears in the same bag),
 /// equipped by a click (marked in use), a herb is found and used by keyboard and another by the action
 /// button; window and full screen.</item>
+/// <item><c>--phase=money</c> then <c>--phase=money2</c>: the coins — none at the start; the pouch by the
+/// meditation mat gives +25 with E; leaving the chunk and coming back keeps it taken; receiving and spending,
+/// with a short balance refused; meditating saves; in a new process the balance and the taken pouch are back.</item>
+/// <item><c>--phase=oldsave</c>: a journey saved before this delivery (no coins field) loads with its items and
+/// its equipment, 0 coins and the pouch still there; the awakening starts without money.</item>
 /// </list>
 /// Teleports place the swordsman (named in the checks). Files: <c>user://teste_nov*.json</c>; preferences in
 /// <c>user://teste_nov_prefs.json</c> (pass <c>--prefs=user://teste_nov_prefs.json</c>).
@@ -65,6 +70,9 @@ public partial class NovidadesCheck : Node
             case "charge-plains": Fresh(); _ = ChargePlains(); break;
             case "reinforce": Fresh(); Launch("new"); _ = ReinforcePhase(); break;
             case "bag": Fresh(); _ = BagPhase(); break;
+            case "money": Fresh(); _ = MoneyPhase(); break;
+            case "money2": _ = MoneyResume(); break;
+            case "oldsave": Fresh(); _ = OldSavePhase(); break;
         }
     }
 
@@ -575,6 +583,82 @@ public partial class NovidadesCheck : Node
         DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed); DisplayServer.WindowSetSize(new Vector2I(1280, 720)); await Frames(20);
         await Tap(Key.I);
         Check("I closes the bag", !hud.InventoryOpen);
+        Finish();
+    }
+
+    // ------------------------------------------------------------------ 11. money
+    private Pickup? Pouch(PlainsGame g) => g.World.Objects.GetChildren().OfType<Pickup>().FirstOrDefault(p => p.ItemId == "moedas");
+
+    private async Task MoneyPhase()
+    {
+        _pg = StartPlains(StartModeArg.New);
+        await Frames(30);
+        var g = _pg;
+        Check("a new journey starts with no money (0 coins)", g.Wallet.Coins == 0);
+        var mat = g.World.Objects.GetChildren().OfType<MeditationMat>().First();
+        var pouch = Pouch(g);
+        Check("the coin pouch lies by the meditation mat, two steps east", pouch != null && pouch.GlobalPosition.DistanceTo(mat.GlobalPosition) < 90, pouch == null ? "não achada" : $"a {pouch.GlobalPosition.DistanceTo(mat.GlobalPosition):0} px da esteira");
+        if (pouch == null) { Finish(); return; }
+        g.Player.GlobalPosition = pouch.GlobalPosition + new Vector2(-8, 4); g.Player.GetNode<Camera2D>("Camera").ResetSmoothing(); await Frames(6);
+        Check("next to it the prompt says so", g.Hud.PromptText.Contains("moedas"), g.Hud.PromptText);
+        await Shot("13-bolsinha-de-moedas");
+        int m = g.Hud.Messages.Count;
+        await Tap(Key.E); await Frames(3);
+        Check("E: +25 moedas, the balance updates at once", g.Wallet.Coins == 25 && g.Hud.Messages.Skip(m).Any(x => x.Contains("+25 moedas")) && Pouch(g) == null, string.Join(" / ", g.Hud.Messages.Skip(m)));
+        await Tap(Key.I);
+        Check("the bag shows the balance with its picture (Moedas: 25)", g.Hud.Bag.Money == 25);
+        await Shot("14-bolsa-com-moedas");
+        await Tap(Key.I);
+        // leave the chunk and come back
+        Vector2 back = g.Player.GlobalPosition;
+        g.Player.GlobalPosition += new Vector2(-2200, 0); await Frames(20);
+        g.Player.GlobalPosition = back; await Frames(20);
+        Check("leaving the chunk and coming back: the pouch stays taken", Pouch(g) == null && g.Wallet.Coins == 25);
+        // receive and spend (the operations merchants will use)
+        g.ReceiveCoins(5, "teste"); bool paid = g.SpendCoins(12, "teste"); m = g.Hud.Messages.Count; bool refused = !g.SpendCoins(100, "teste");
+        Check("receive 5 and spend 12 (25 → 18); spending 100 is refused and keeps 18", paid && refused && g.Wallet.Coins == 18 && g.Hud.Messages.Skip(m).Any(x => x.Contains("insuficientes")), $"saldo {g.Wallet.Coins}");
+        // meditate: saved (the mat is found again: leaving the chunk unloaded the old node)
+        mat = g.World.Objects.GetChildren().OfType<MeditationMat>().First();
+        g.Player.GlobalPosition = mat.GlobalPosition + new Vector2(0, 10); await Frames(5);
+        await Tap(Key.E); await Frames(3);
+        var d = SaveGame.Read(SavePath).Data;
+        Check("meditating saves the balance and the taken pouch", d != null && d.Coins == 18 && d.Collected.Any(c => c.StartsWith("coinpouch")), d == null ? "sem save" : $"moedas {d.Coins}");
+        Finish();
+    }
+
+    private async Task MoneyResume()
+    {
+        _pg = StartPlains(StartModeArg.Continue);
+        await Frames(30);
+        Check("Continuar: the balance (18) and the taken pouch are back", _pg.Wallet.Coins == 18 && Pouch(_pg) == null, $"moedas {_pg.Wallet.Coins}");
+        Finish();
+    }
+
+    private async Task OldSavePhase()
+    {
+        // a journey written before this delivery: the same JSON without "coins"
+        var old = new SaveData { Region = "planicie", Phase = "planicie", Seed = 20261126, Spot = new[] { 16f, 16f }, LossApplied = true,
+            Inventory = { new SavedItem { Id = "faca_pedra", Count = 1 }, new SavedItem { Id = "grama_sangue_q1", Count = 3 } }, Equipped = "knife", Health = 8, Vigor = 50, Qi = 100, Level = 2, Xp = 5 };
+        SaveGame.Write(SavePath, old);
+        string text = Godot.FileAccess.GetFileAsString(SavePath);
+        var json = System.Text.Json.Nodes.JsonNode.Parse(text)!.AsObject();
+        json.Remove("coins");
+        using (var f = Godot.FileAccess.Open(SavePath, Godot.FileAccess.ModeFlags.Write)) f.StoreString(json.ToJsonString());
+        Check("the old save really has no coins field", !Godot.FileAccess.GetFileAsString(SavePath).Contains("\"coins\""));
+        _pg = StartPlains(StartModeArg.Continue);
+        await Frames(30);
+        var g = _pg;
+        Check("it loads: items, quantities and the equipment kept, 0 coins", g.Inventory.Count("faca_pedra") == 1 && g.Inventory.Count("grama_sangue_q1") == 3 && g.Player.Equipped == Player.Weapon.Knife && g.Wallet.Coins == 0, $"moedas {g.Wallet.Coins}");
+        Check("the pouch is still there to be found", Pouch(g) != null);
+        g.QueueFree(); await Frames(5);
+        // the awakening: the swordsman wakes without money (the prologue's silver is lost with everything else)
+        var vale = new SaveData { Region = "vale", Phase = "senior_won", Seed = 0, Spot = new[] { 100f, 100f }, Vale = new ValeState { Book = ValeState.StartingBook() },
+            ValeInventory = { new SavedItem { Id = "prata", Count = 13 } }, Equipped = "sword", Health = 10, Qi = 100 };
+        _pg = GD.Load<PackedScene>("res://src/Plains/Plains.tscn").Instantiate<PlainsGame>();
+        _pg.Seed = 20261126; _pg.SavePath = SavePath; _pg.ShowIntro = false; _pg.Start = PlainsGame.StartMode.Awaken; _pg.AwakenFrom = vale;
+        AddChild(_pg);
+        await Frames(40);
+        Check("the awakening in the Planície starts with 0 coins", _pg.Wallet.Coins == 0 && _pg.Inventory.Count("prata") == 0, $"moedas {_pg.Wallet.Coins}");
         Finish();
     }
 }
