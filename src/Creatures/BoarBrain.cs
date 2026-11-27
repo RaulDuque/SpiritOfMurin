@@ -129,7 +129,7 @@ public sealed class BoarBrain
     public void NotifyBlocked() { if (State == BoarState.Charge) EnterRecover(); }
 
     /// <summary>
-    /// A guard-breaking hit (the full charged Qi shot, a reinforced strike that rolled the break): the warning
+    /// A guard-breaking hit (the full charged Ki shot, a reinforced strike that rolled the break): the warning
     /// or the charge stops and the boar stays open for <paramref name="seconds"/> more, so the hit that follows lands.
     /// Returns true when there was a defence to break.
     /// </summary>

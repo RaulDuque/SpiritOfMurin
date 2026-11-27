@@ -299,19 +299,19 @@ public partial class RecoveryCheck : Node
         await Shot("21-controles-esperando");
         await Tap(Key.U);
         Check("U pressed: the cut is on U at once", Bindings.Current("cut")[0] == $"k:{(long)Key.U}" && V.Hud.Controls.Waiting == null, V.Hud.Controls.Message);
-        // a key another action uses: K (Qi) → they trade, with a message
+        // a key another action uses: K (Ki) → they trade, with a message
         cell = V.Hud.Controls.ChangeRects[(cutRow, 0)];
         await Click(ToWindow(V.Hud.Controls, new Vector2(cell.End.X - 10, cell.GetCenter().Y)));
         await Tap(Key.K);
-        Check("K (used by Qi) on the cut: a message says so and the two trade", V.Hud.Controls.Message.Contains("era de") && Bindings.Key1("qi") == "U" && Bindings.Key1("cut") == "K", V.Hud.Controls.Message);
+        Check("K (used by Ki) on the cut: a message says so and the two trade", V.Hud.Controls.Message.Contains("era de") && Bindings.Key1("ki") == "U" && Bindings.Key1("cut") == "K", V.Hud.Controls.Message);
         await Shot("22-controles-conflito");
-        // back to U for the cut (Qi gets K back)
+        // back to U for the cut (Ki gets K back)
         await Click(ToWindow(V.Hud.Controls, new Vector2(cell.End.X - 10, cell.GetCenter().Y)));
         await Tap(Key.U);
         // cancel with Esc while waiting
         await Click(ToWindow(V.Hud.Controls, new Vector2(cell.End.X - 10, cell.GetCenter().Y)));
         await Tap(Key.Escape);
-        Check("Esc while waiting cancels (the cut stays on U, Qi on K)", V.Hud.Controls.Waiting == null && Bindings.Key1("cut") == "U" && Bindings.Key1("qi") == "K" && V.Hud.ControlsOpen, V.Hud.Controls.Message);
+        Check("Esc while waiting cancels (the cut stays on U, Ki on K)", V.Hud.Controls.Waiting == null && Bindings.Key1("cut") == "U" && Bindings.Key1("ki") == "K" && V.Hud.ControlsOpen, V.Hud.Controls.Message);
         // close with clicks: Voltar → pause → Voltar ao jogo; none of the clicks cuts
         int started = 0; P.ActionStarted += (k, _) => { if (k == Player.ActionKind.Cut) started++; };
         await Click(ToWindow(V.Hud.Controls, V.Hud.Controls.ButtonRects["back"].GetCenter()));
@@ -391,7 +391,7 @@ public partial class RecoveryCheck : Node
         SaveGame.Write(PlainsSave, new SaveData
         {
             Region = "planicie", Phase = "planicie", Seed = 20261126, Spot = new[] { 16f, 16f }, Book = book, LossApplied = true,
-            Equipped = "none", Health = 10, Vigor = 50, Qi = 100, Level = 2, Xp = 20,
+            Equipped = "none", Health = 10, Vigor = 50, Ki = 100, Level = 2, Xp = 20,
         });
         _pg = GD.Load<PackedScene>("res://src/Plains/Plains.tscn").Instantiate<PlainsGame>();
         _pg.SavePath = PlainsSave; _pg.ShowIntro = false; _pg.Start = PlainsGame.StartMode.Continue;
@@ -400,18 +400,18 @@ public partial class RecoveryCheck : Node
         _pg.ToggleBook(); await Frames(3);
         var pages = _pg.Hud.BookRows;
         Check("the Planície book keeps the Vale: techniques, the combination and the fragments", pages.Any(p => p.Name == "Passo Lateral") && pages.Any(p => p.Kind == "combinação") && pages.Count(p => p.Kind == "fragmento") == 2);
-        var qi = pages.First(p => p.Name == "Disparo de Qi");
-        Check("a sealed technique says so, with the numbers of both versions", qi.State == "Selada" && !qi.Enabled && qi.Detail.Contains("volta enfraquecida no nível 3") && qi.Detail.Contains("custo: 30 Qi, 0 vigor") && qi.Detail.Contains("custo: 45 Qi, 10 vigor"), qi.Detail.Replace("\n", " | "));
+        var ki = pages.First(p => p.Name == "Disparo de Ki");
+        Check("a sealed technique says so, with the numbers of both versions", ki.State == "Selada" && !ki.Enabled && ki.Detail.Contains("volta enfraquecida no nível 3") && ki.Detail.Contains("custo: 30 Ki, 0 vigor") && ki.Detail.Contains("custo: 45 Ki, 10 vigor"), ki.Detail.Replace("\n", " | "));
         var dash = pages.First(p => p.Name == "Passo longo");
         Check("the long step's command in the Planície: Shift + direção + L", dash.Command.StartsWith("Shift + direção + L"), dash.Command);
-        for (int i = 0; i < 8 && _pg.Hud.BookRows[_pg.Hud.BookSelected].Name != "Disparo de Qi"; i++) await Tap(Key.S);
+        for (int i = 0; i < 8 && _pg.Hud.BookRows[_pg.Hud.BookSelected].Name != "Disparo de Ki"; i++) await Tap(Key.S);
         await Shot("16-livro-planicie-selada");
         _pg.ToggleBook(); await Frames(2);
         _pg.GainXp(_pg.Stats.XpMissing, "teste"); await Frames(5); // controlled: the XP still missing for level 3
         _pg.ToggleBook(); await Frames(3);
-        qi = _pg.Hud.BookRows.First(p => p.Name == "Disparo de Qi");
-        Check("level 3: the page says weakened, with the real numbers in force and the full ones for comparison", qi.State == "Enfraquecida" && qi.Detail.Contains("Enfraquecida, em uso: custo: 45 Qi, 10 vigor · alcance 105 px · dano 1") && qi.Detail.Contains("Plena era: custo: 30 Qi"), qi.Detail.Replace("\n", " | "));
-        for (int i = 0; i < 8 && _pg.Hud.BookRows[_pg.Hud.BookSelected].Name != "Disparo de Qi"; i++) await Tap(Key.S);
+        ki = _pg.Hud.BookRows.First(p => p.Name == "Disparo de Ki");
+        Check("level 3: the page says weakened, with the real numbers in force and the full ones for comparison", ki.State == "Enfraquecida" && ki.Detail.Contains("Enfraquecida, em uso: custo: 45 Ki, 10 vigor · alcance 105 px · dano 1") && ki.Detail.Contains("Plena era: custo: 30 Ki"), ki.Detail.Replace("\n", " | "));
+        for (int i = 0; i < 8 && _pg.Hud.BookRows[_pg.Hud.BookSelected].Name != "Disparo de Ki"; i++) await Tap(Key.S);
         await Shot("17-livro-planicie-enfraquecida");
         // a narrow panel: the list goes on top, the page below, and both scroll
         var bp = _pg.Hud.Book;

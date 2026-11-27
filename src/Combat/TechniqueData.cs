@@ -10,15 +10,15 @@ public enum TechniqueState { Unknown, Full, Sealed, Weakened }
 /// <summary>One version (full or weakened) of a technique. Unused fields stay 0.</summary>
 public sealed class TechniqueParams
 {
-    /// <summary>Qi spent per use.</summary>
-    public float QiCost { get; set; }
+    /// <summary>Ki spent per use.</summary>
+    public float KiCost { get; set; }
     /// <summary>Vigor spent per use (ignored where there is no vigor).</summary>
     public float VigorCost { get; set; }
     /// <summary>Damage in points.</summary>
     public int Damage { get; set; }
-    /// <summary>Qi wave / lamina: distance travelled, px.</summary>
+    /// <summary>Ki wave / lamina: distance travelled, px.</summary>
     public float Range { get; set; }
-    /// <summary>Qi wave / lamina: speed, px/s.</summary>
+    /// <summary>Ki wave / lamina: speed, px/s.</summary>
     public float Speed { get; set; }
     /// <summary>Dash: distance, px.</summary>
     public float Distance { get; set; }
@@ -36,13 +36,13 @@ public sealed class TechniqueParams
     public float Reach { get; set; }
     /// <summary>Thrust: body lunge, px.</summary>
     public float Lunge { get; set; }
-    /// <summary>Lamina: seconds allowed between side step → cut → qi.</summary>
+    /// <summary>Lamina: seconds allowed between side step → cut → ki.</summary>
     public float ComboWindow { get; set; }
     /// <summary>Lamina / charged shot: seconds the guard stays broken.</summary>
     public float Stagger { get; set; }
     /// <summary>Charged shot: seconds the button must be held before the charge starts (a shorter press is the plain shot).</summary>
     public float Hold { get; set; }
-    /// <summary>Charged shot: Qi drawn into the palm per second while charging.</summary>
+    /// <summary>Charged shot: Ki drawn into the palm per second while charging.</summary>
     public float Drain { get; set; }
     /// <summary>Reinforce: melee strikes reinforced by one activation.</summary>
     public int Charges { get; set; }
@@ -69,12 +69,12 @@ public sealed class TechniqueData
     /// <summary>Default path.</summary>
     public const string DefaultPath = "res://assets/data/combat_techniques.json";
     /// <summary>Ids of the techniques the seal covers.</summary>
-    public static readonly string[] SealedIds = { "thrust", "qi_wave", "side_step", "dash", "lamina", "qi_charge" };
+    public static readonly string[] SealedIds = { "thrust", "ki_wave", "side_step", "dash", "lamina", "ki_charge" };
 
     /// <summary>Plains level at which sealed techniques come back weakened.</summary>
     public int UnlockLevel { get; set; } = 3;
-    /// <summary>Qi wave.</summary>
-    public TechniqueDef QiWave { get; set; } = new();
+    /// <summary>Ki wave.</summary>
+    public TechniqueDef KiWave { get; set; } = new();
     /// <summary>Side step.</summary>
     public TechniqueDef SideStep { get; set; } = new();
     /// <summary>Dash (passo longo).</summary>
@@ -83,15 +83,15 @@ public sealed class TechniqueData
     public TechniqueDef Thrust { get; set; } = new();
     /// <summary>The Silent Blade Step combination.</summary>
     public TechniqueDef Lamina { get; set; } = new();
-    /// <summary>The secret charged Qi shot (hold the Qi button): qi_cost is the full charge's total cost.</summary>
-    public TechniqueDef QiCharge { get; set; } = new();
-    /// <summary>The Reforço de Qi (modifier + cut): hold = the gesture's seconds.</summary>
-    public TechniqueDef QiReinforce { get; set; } = new();
+    /// <summary>The secret charged Ki shot (hold the Ki button): ki_cost is the full charge's total cost.</summary>
+    public TechniqueDef KiCharge { get; set; } = new();
+    /// <summary>The Reforço de Ki (modifier + cut): hold = the gesture's seconds.</summary>
+    public TechniqueDef KiReinforce { get; set; } = new();
 
     /// <summary>The definition by id.</summary>
     public TechniqueDef Get(string id) => id switch
     {
-        "qi_wave" => QiWave, "side_step" => SideStep, "dash" => Dash, "thrust" => Thrust, "lamina" => Lamina, "qi_charge" => QiCharge, "qi_reinforce" => QiReinforce, _ => new TechniqueDef { Name = id },
+        "ki_wave" => KiWave, "side_step" => SideStep, "dash" => Dash, "thrust" => Thrust, "lamina" => Lamina, "ki_charge" => KiCharge, "ki_reinforce" => KiReinforce, _ => new TechniqueDef { Name = id },
     };
 
     /// <summary>Parses the data.</summary>

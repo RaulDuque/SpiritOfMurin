@@ -11,8 +11,8 @@ public static class ValeItems
     public static (string Name, string Desc) Of(string id) => id switch
     {
         "balsamo" => ("Bálsamo de Ervas", "Recupera 4 de Vida. Use no inventário ou com [heal]."),
-        "pedra" => ("Pedra de Qi", "Uma pedra de jade cheia de qi. Devolve todo o Qi."),
-        "erva" => ("Erva Espiritual", "Uma erva que guarda qi. Fica guardada para a fornalha."),
+        "pedra" => ("Pedra de Ki", "Uma pedra de jade cheia de ki. Devolve todo o Ki."),
+        "erva" => ("Erva Espiritual", "Uma erva que guarda ki. Fica guardada para a fornalha."),
         "prata" => ("Taéis de Prata", "A moeda das seitas. Ainda não há onde gastar."),
         "faixa" => ("Faixa da Seita", "A faixa dos discípulos da Guarda Fechada. Cada uma, um duelo vencido."),
         "pingente" => ("Pingente de Jade", "Do Espadachim Sênior. A prova da sua vitória."),
@@ -38,7 +38,7 @@ public static class ValeItems
     }
 }
 
-/// <summary>A breakable pot (index.html drawPot). A cut or a qi wave breaks it; it drops silver or a herb.</summary>
+/// <summary>A breakable pot (index.html drawPot). A cut or a ki wave breaks it; it drops silver or a herb.</summary>
 public partial class ValePot : StaticBody2D
 {
     /// <summary>Index in <see cref="ValeMap.Pots"/> (saved when broken).</summary>

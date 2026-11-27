@@ -9,7 +9,7 @@ design, valem o código e o documento. Atualizado em 2026-11-27.
 
 ## 1. O projeto em 30 segundos
 
-- **O jogo:** RPG de ação 2D de mundo aberto para PC, tema Murim (artes marciais e cultivo chinês). O protagonista é um espadachim cultivador (espada + Qi) que busca o Dao da Espada. Câmera top-down 3/4, teclado WASD + mouse.
+- **O jogo:** RPG de ação 2D de mundo aberto para PC, tema Murim (artes marciais e cultivo chinês). O protagonista é um espadachim cultivador (espada + Ki) que busca o Dao da Espada. Câmera top-down 3/4, teclado WASD + mouse.
 - **Conceito:** "Mil Caminhos do Dao". Aprender é a recompensa: técnicas são descobertas explorando (manuais, túmulos, marcas na pedra) e mudam o que o jogador consegue fazer, não só o dano.
 - **Estado atual:**
   - O jogo roda no **Godot 4.7.2 .NET (C#)** e abre pela campanha (`src/Campaign/Campaign.tscn`).
@@ -55,8 +55,8 @@ Leia nesta ordem. Os itens marcados com ★ são obrigatórios antes de mexer em
 | `Campaign/` | Cena principal (F5): conduz prólogo → Planície |
 | `Vale/` | Prólogo: combate do Vale, lutadores, Sênior, efeitos |
 | `Plains/` | Planície: gerador por semente (`PlainsGenerator`), blocos, mundo, HUD, ambientação |
-| `Player/` | Personagem, ajustes (`PlayerTuning`), desenho em pixels, palma de Qi |
-| `Combat/` | Arte dos lutadores, onda de Qi, dados das técnicas |
+| `Player/` | Personagem, ajustes (`PlayerTuning`), desenho em pixels, palma de Ki |
+| `Combat/` | Arte dos lutadores, onda de Ki, dados das técnicas |
 | `Creatures/` | Coelho, javali (corpo, "cérebro", ajustes), carcaça, níveis |
 | `Items/` | Inventário, catálogo de itens, carteira (moedas) |
 | `Progression/` | Atributos, proficiências, regras de coleta |

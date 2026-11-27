@@ -45,7 +45,8 @@ public sealed class Prefs
     /// <summary>Reads the preferences (defaults when absent or damaged).</summary>
     public static Prefs Load()
     {
-        try { return FileAccess.FileExists(Path) ? JsonSerializer.Deserialize<Prefs>(FileAccess.GetFileAsString(Path), PlainsGenSettings.Json) ?? new Prefs() : new Prefs(); }
+        // preferences from before Qi → Ki keep the control "qi": read it as "ki"
+        try { return FileAccess.FileExists(Path) ? JsonSerializer.Deserialize<Prefs>(KiMigration.Migrate(FileAccess.GetFileAsString(Path)), PlainsGenSettings.Json) ?? new Prefs() : new Prefs(); }
         catch (JsonException) { return new Prefs(); }
     }
 

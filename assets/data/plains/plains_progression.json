@@ -1,6 +1,6 @@
 {
   "_doc": {
-    "about": "Progressão da Planície: nível e XP do personagem, atributos, vigor e Qi, proficiências, níveis das criaturas e materiais por grau. Lido por src/Progression/ProgressionData.cs. Esquema e fórmulas em design/gdd/plains-progression.md.",
+    "about": "Progressão da Planície: nível e XP do personagem, atributos, vigor e Ki, proficiências, níveis das criaturas e materiais por grau. Lido por src/Progression/ProgressionData.cs. Esquema e fórmulas em design/gdd/plains-progression.md.",
     "xp_base / xp_growth": "XP para ir do nível L ao L+1 = round(xp_base * xp_growth^(L-1))",
     "points_per_level": "pontos de atributo ganhos a cada nível",
     "xp": "XP por ação: caça por nível da criatura, primeira fabricação de cada receita, primeira pista de cada trilha, cada planta nova, cada carne assada, cada prática nova de proficiência",
@@ -30,9 +30,9 @@
     "vigor_regen_delay": 0.6,
     "step_vigor_cost": 12,
     "cut_vigor_cost": 3,
-    "max_qi": 100,
-    "qi_regen": 0.5,
-    "qi_preserve_cost": 15,
+    "max_ki": 100,
+    "ki_regen": 0.5,
+    "ki_preserve_cost": 15,
     "secondary_chance": 0.10,
     "medicine_potency": 1.0
   },
@@ -46,7 +46,7 @@
     "agi_recovery": 0.05,
     "agi_cap": 0.40,
     "sor_secondary_chance": 0.05,
-    "qi_max_qi": 15
+    "ki_max_ki": 15
   },
   "skills": {
     "esfolar":     { "name": "Esfolar",         "thresholds": [1, 4, 9] },

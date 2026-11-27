@@ -15,18 +15,18 @@ namespace SpiritOfMurin.Tests;
 /// <summary>
 /// Pedido 13, through the main scene and real keys and mouse. Phases, each its own run:
 /// <list type="bullet">
-/// <item><c>--phase=aim</c>: walking left with the cursor to the right, the cut, the knife and the Qi shot go
+/// <item><c>--phase=aim</c>: walking left with the cursor to the right, the cut, the knife and the Ki shot go
 /// right and hit there; a remapped cut aims too; a locked target wins over the cursor and unlocking gives the
 /// cursor back on the next attack; the keyboard option aims along the facing; the cursor maps to the world at
 /// other window sizes.</item>
-/// <item><c>--phase=charge</c>: the secret charged Qi shot in the Vale — a tap is the plain shot; a held press
-/// gathers Qi (a partial charge with proportional damage, the full 100 that holds ready and breaks the bridge
-/// disciple's guard); never more than one projectile per press; less Qi than the full cost; pause, inventory
-/// and losing the focus cancel without a shot and give the Qi back; a remapped key; the discovery and the
+/// <item><c>--phase=charge</c>: the secret charged Ki shot in the Vale — a tap is the plain shot; a held press
+/// gathers Ki (a partial charge with proportional damage, the full 100 that holds ready and breaks the bridge
+/// disciple's guard); never more than one projectile per press; less Ki than the full cost; pause, inventory
+/// and losing the focus cancel without a shot and give the Ki back; a remapped key; the discovery and the
 /// book page; the bridge's retreat and flank still there.</item>
-/// <item><c>--phase=charge-plains</c>: in the Planície, the sealed Qi shot refuses the charge; next to a
-/// carcass the button skins with Qi (no charge); at level 3 the weakened charge works.</item>
-/// <item><c>--phase=reinforce</c>: the Reforço de Qi — modifier + cut with 75 Qi activates once (3 charges),
+/// <item><c>--phase=charge-plains</c>: in the Planície, the sealed Ki shot refuses the charge; next to a
+/// carcass the button skins with Ki (no charge); at level 3 the weakened charge works.</item>
+/// <item><c>--phase=reinforce</c>: the Reforço de Ki — modifier + cut with 75 Ki activates once (3 charges),
 /// 74 is refused and kept, holding on does not repeat it, a new try keeps the charges left; three reinforced
 /// strikes (+10%, fractional: the knife's 1 → 1.1) and the fourth normal; a miss and each cut of a combo spend
 /// a charge; one break roll per strike and guard, with fixed rolls for the success and the failure; Shift
@@ -127,7 +127,7 @@ public partial class NovidadesCheck : Node
         if (_c.Vale == null) { Check("Novo jogo starts the Vale", false); Finish(); return; }
         Check("aiming by the mouse is the default", Aim.ByMouse);
         int cuts = 0; P.ActionStarted += (k, _) => { if (k == Player.ActionKind.Cut) cuts++; };
-        Vector2? shotDir = null; P.QiFired += s => shotDir = s.Dir;
+        Vector2? shotDir = null; P.KiFired += s => shotDir = s.Dir;
 
         // walking left, cursor to the right, J: the cut goes right and breaks the pot on the right
         Vector2 pot = ValeMap.Pots[3];
@@ -144,9 +144,9 @@ public partial class NovidadesCheck : Node
         Check("walking left with the cursor to the right, J cuts to the right", walkedLeft && cuts == 1 && AngleBetween(P.LastCutAngle, 0) < 0.6f, $"andou para a esquerda {walkedLeft}, cortes {cuts}, ângulo do corte {Mathf.RadToDeg(P.LastCutAngle):0}°");
         Check("the cut's hit area agrees: the pot on the right breaks", V.Story.PotsBroken.Contains(3), $"potes quebrados [{string.Join(",", V.Story.PotsBroken)}]");
 
-        // the Qi shot: walking left, cursor to the right, K
+        // the Ki shot: walking left, cursor to the right, K
         await Teleport(ValeMap.Start + new Vector2(0, -60), Vector2.Left);
-        P.Qi = P.MaxQi;
+        P.Ki = P.MaxKi;
         await PointAt(P.GlobalPosition + new Vector2(120, -14));
         Press(Key.A, true); await Flush(); await Frames(8);
         await PointAt(P.GlobalPosition + new Vector2(120, -14));
@@ -220,10 +220,10 @@ public partial class NovidadesCheck : Node
         Finish();
     }
 
-    // ------------------------------------------------------------------ 8. the charged Qi shot
-    private readonly List<Player.QiShot> _shots2 = new();
+    // ------------------------------------------------------------------ 8. the charged Ki shot
+    private readonly List<Player.KiShot> _shots2 = new();
 
-    private async Task HoldQi(Key key, int frames, System.Func<Task>? whileHeld = null)
+    private async Task HoldKi(Key key, int frames, System.Func<Task>? whileHeld = null)
     {
         Press(key, true); await Flush();
         await Frames(frames);
@@ -235,39 +235,39 @@ public partial class NovidadesCheck : Node
     {
         await Frames(30);
         if (_c.Vale == null) { Check("Novo jogo starts the Vale", false); Finish(); return; }
-        P.QiFired += s => _shots2.Add(s);
+        P.KiFired += s => _shots2.Add(s);
         var bookBefore = V.BookRows().Select(b => b.Name).ToList();
         Check("before the discovery the book and the commands keep the secret (no charged shot)", !bookBefore.Any(n => n.Contains("Concentrado")) && !GamePanels.Controls.Any(l => l.Contains("segurar")));
         await Teleport(ValeMap.Start + new Vector2(0, -60), Vector2.Up);
         await PointAt(P.GlobalPosition + new Vector2(0, -120));
-        P.QiRegen = 0; // controlled: no regeneration while measuring the Qi
+        P.KiRegen = 0; // controlled: no regeneration while measuring the Ki
 
-        // a tap: the plain shot (30 Qi, damage 2)
-        P.Qi = 100; _shots2.Clear();
-        await HoldQi(Key.K, 2); await Frames(10);
-        Check("a quick tap is the plain shot (one projectile, 30 Qi, damage 2)", _shots2.Count == 1 && _shots2[0].Charge == 0 && _shots2[0].Damage == 2 && Mathf.IsEqualApprox(P.Qi, 70, 0.6f), $"{_shots2.Count} disparo(s), Qi {P.Qi:0}");
+        // a tap: the plain shot (30 Ki, damage 2)
+        P.Ki = 100; _shots2.Clear();
+        await HoldKi(Key.K, 2); await Frames(10);
+        Check("a quick tap is the plain shot (one projectile, 30 Ki, damage 2)", _shots2.Count == 1 && _shots2[0].Charge == 0 && _shots2[0].Damage == 2 && Mathf.IsEqualApprox(P.Ki, 70, 0.6f), $"{_shots2.Count} disparo(s), Ki {P.Ki:0}");
         await Frames(30);
 
-        // a partial charge: 60 Qi available, held long → everything into the palm, damage proportional, no break
-        P.Qi = 60; _shots2.Clear();
-        bool wasCharging = false; float palm = 0; string qiLine = "";
-        await HoldQi(Key.K, 70, async () => { wasCharging = P.Charging; palm = P.ChargeInvested; qiLine = V.Hud.QiText; await Shot("03-carga-parcial-palma"); });
+        // a partial charge: 60 Ki available, held long → everything into the palm, damage proportional, no break
+        P.Ki = 60; _shots2.Clear();
+        bool wasCharging = false; float palm = 0; string kiLine = "";
+        await HoldKi(Key.K, 70, async () => { wasCharging = P.Charging; palm = P.ChargeInvested; kiLine = V.Hud.KiText; await Shot("03-carga-parcial-palma"); });
         await Frames(10);
         var part = _shots2.FirstOrDefault();
-        Check("held: the palm gathers Qi and the bar shows it (palma 60/100)", wasCharging && Mathf.IsEqualApprox(palm, 60, 0.6f) && qiLine.Contains("palma 60/100"), $"{qiLine}");
-        Check("a partial charge (60): one projectile, damage proportional (round(6 × 0.6) = 4), no break, no extra cost", _shots2.Count == 1 && part.Damage == 4 && !part.Breaks && P.Qi < 0.6f, $"{_shots2.Count} disparo(s), dano {part.Damage}, rompe {part.Breaks}, Qi {P.Qi:0.0}");
-        bool discovered = V.Story.Book.Any(b => b.Tech == "qi_charge");
+        Check("held: the palm gathers Ki and the bar shows it (palma 60/100)", wasCharging && Mathf.IsEqualApprox(palm, 60, 0.6f) && kiLine.Contains("palma 60/100"), $"{kiLine}");
+        Check("a partial charge (60): one projectile, damage proportional (round(6 × 0.6) = 4), no break, no extra cost", _shots2.Count == 1 && part.Damage == 4 && !part.Breaks && P.Ki < 0.6f, $"{_shots2.Count} disparo(s), dano {part.Damage}, rompe {part.Breaks}, Ki {P.Ki:0.0}");
+        bool discovered = V.Story.Book.Any(b => b.Tech == "ki_charge");
         Check("the first charged shot reveals the secret technique (banner, book page with the command)", discovered && V.Hud.BannerText.Contains("Concentrado") && V.BookRows().First(b => b.Name.Contains("Concentrado")).Command.Contains("segurar K"), V.Hud.BannerText);
         await Frames(30);
 
         // the full charge: 100 → ready, it holds while the button stays down, one shot that breaks the guard
-        P.Qi = 100; _shots2.Clear();
+        P.Ki = 100; _shots2.Clear();
         bool readyHeld = false; int shotsWhileReady = -1;
-        await HoldQi(Key.K, 110, async () => { await Frames(40); readyHeld = P.ChargeComplete && V.Hud.QiText.Contains("PRONTO"); shotsWhileReady = _shots2.Count; await Shot("04-carga-completa-pronta"); });
+        await HoldKi(Key.K, 110, async () => { await Frames(40); readyHeld = P.ChargeComplete && V.Hud.KiText.Contains("PRONTO"); shotsWhileReady = _shots2.Count; await Shot("04-carga-completa-pronta"); });
         await Frames(10);
         var full = _shots2.FirstOrDefault();
         Check("the full charge (exactly 100) holds ready while the button stays down", readyHeld && shotsWhileReady == 0);
-        Check("letting go: one projectile, damage 6, breaks guards; the 100 already include the shot (Qi 0)", _shots2.Count == 1 && full.Damage == 6 && full.Breaks && P.Qi < 0.6f, $"{_shots2.Count} disparo(s), dano {full.Damage}, Qi {P.Qi:0.0}");
+        Check("letting go: one projectile, damage 6, breaks guards; the 100 already include the shot (Ki 0)", _shots2.Count == 1 && full.Damage == 6 && full.Breaks && P.Ki < 0.6f, $"{_shots2.Count} disparo(s), dano {full.Damage}, Ki {P.Ki:0.0}");
         await Frames(40);
 
         // the bridge disciple: a partial charge is parried; the full one breaks the guard and opens a window
@@ -278,14 +278,14 @@ public partial class NovidadesCheck : Node
         dis.ResetToHome(); await Frames(3);
         await Teleport(dis.GlobalPosition + new Vector2(0, 45), Vector2.Up);
         dis.Face = Mathf.Pi / 2; dis.State = ValeFighter.St.Guard; // controlled: standing in guard, facing the swordsman
-        P.Qi = 50; int words = V.Fx.WordsShown.Count; float hp = dis.Hp;
-        await HoldQi(Key.K, 60); await Frames(25);
+        P.Ki = 50; int words = V.Fx.WordsShown.Count; float hp = dis.Hp;
+        await HoldKi(Key.K, 60); await Frames(25);
         Check("a partial charge against the Closed Guard is parried (no break)", dis.Hp == hp && dis.Stagger <= 0 && V.Fx.WordsShown.Skip(words).Contains("aparado"), $"vida {hp}→{dis.Hp}");
         await Frames(40);
         dis.ResetToHome(); await Frames(3);
         await Teleport(dis.GlobalPosition + new Vector2(0, 45), Vector2.Up); dis.Face = Mathf.Pi / 2; dis.State = ValeFighter.St.Guard;
-        P.Qi = 100; P.Revive(); words = V.Fx.WordsShown.Count; hp = dis.Hp;
-        await HoldQi(Key.K, 120); await Frames(18);
+        P.Ki = 100; P.Revive(); words = V.Fx.WordsShown.Count; hp = dis.Hp;
+        await HoldKi(Key.K, 120); await Frames(18);
         Check("the full charge breaks the Closed Guard: damage and an open window (stagger)", dis.Hp < hp && dis.Stagger > 0.5f && V.Fx.WordsShown.Skip(words).Contains("guarda rompida"), $"vida {hp}→{dis.Hp}, aberta {dis.Stagger:0.0} s");
         await Shot("05-guarda-rompida");
         float hp2 = dis.Hp;
@@ -294,38 +294,38 @@ public partial class NovidadesCheck : Node
         await Tap(Key.Space);
         dis.ResetToHome(); await Frames(10);
 
-        // less Qi than any charge: holding with 0 Qi does nothing but a refusal-free empty palm, no shot
+        // less Ki than any charge: holding with 0 Ki does nothing but a refusal-free empty palm, no shot
         await Teleport(ValeMap.Start + new Vector2(0, -60), Vector2.Up);
-        P.Qi = 0; _shots2.Clear();
-        await HoldQi(Key.K, 60); await Frames(10);
-        Check("with no Qi the palm stays empty: the shot that follows does 1 damage at most and costs nothing more", _shots2.Count <= 1 && (_shots2.Count == 0 || _shots2[0].Damage == 1) && P.Qi < 0.6f, $"{_shots2.Count} disparo(s)");
+        P.Ki = 0; _shots2.Clear();
+        await HoldKi(Key.K, 60); await Frames(10);
+        Check("with no Ki the palm stays empty: the shot that follows does 1 damage at most and costs nothing more", _shots2.Count <= 1 && (_shots2.Count == 0 || _shots2[0].Damage == 1) && P.Ki < 0.6f, $"{_shots2.Count} disparo(s)");
 
-        // pause during the charge: cancelled, the Qi comes back, no shot when the game resumes
-        P.Qi = 100; _shots2.Clear();
+        // pause during the charge: cancelled, the Ki comes back, no shot when the game resumes
+        P.Ki = 100; _shots2.Clear();
         Press(Key.K, true); await Flush(); await Frames(50);
         float invested = P.ChargeInvested;
         await Tap(Key.Escape);
         Press(Key.K, false); await Flush(); await Frames(5);
         await Tap(Key.Escape); await Frames(20);
-        Check("pausing during the charge cancels it: the invested Qi goes back, no projectile on return", invested > 10 && _shots2.Count == 0 && P.Qi > 99 && !P.Charging, $"investido {invested:0}, Qi {P.Qi:0}, disparos {_shots2.Count}");
+        Check("pausing during the charge cancels it: the invested Ki goes back, no projectile on return", invested > 10 && _shots2.Count == 0 && P.Ki > 99 && !P.Charging, $"investido {invested:0}, Ki {P.Ki:0}, disparos {_shots2.Count}");
         // the inventory, the same
-        P.Qi = 100; _shots2.Clear();
+        P.Ki = 100; _shots2.Clear();
         Press(Key.K, true); await Flush(); await Frames(50);
         await Tap(Key.I);
         Press(Key.K, false); await Flush(); await Frames(5);
         await Tap(Key.I); await Frames(20);
-        Check("opening the inventory during the charge cancels it the same way", _shots2.Count == 0 && P.Qi > 99 && !P.Charging, $"Qi {P.Qi:0}, disparos {_shots2.Count}");
+        Check("opening the inventory during the charge cancels it the same way", _shots2.Count == 0 && P.Ki > 99 && !P.Charging, $"Ki {P.Ki:0}, disparos {_shots2.Count}");
         // losing the window's focus
-        P.Qi = 100; _shots2.Clear();
+        P.Ki = 100; _shots2.Clear();
         Press(Key.K, true); await Flush(); await Frames(50);
         P.PropagateNotification((int)Node.NotificationApplicationFocusOut);
         Press(Key.K, false); await Flush(); await Frames(20);
-        Check("losing the window's focus cancels the charge (no shot, Qi back)", _shots2.Count == 0 && P.Qi > 99, $"Qi {P.Qi:0}, disparos {_shots2.Count}");
+        Check("losing the window's focus cancels the charge (no shot, Ki back)", _shots2.Count == 0 && P.Ki > 99, $"Ki {P.Ki:0}, disparos {_shots2.Count}");
 
         // a remapped key (O)
-        Bindings.Assign("qi", 0, $"k:{(long)Key.O}");
-        P.Qi = 100; _shots2.Clear();
-        await HoldQi(Key.O, 110); await Frames(10);
+        Bindings.Assign("ki", 0, $"k:{(long)Key.O}");
+        P.Ki = 100; _shots2.Clear();
+        await HoldKi(Key.O, 110); await Frames(10);
         Check("the remapped key (O) charges the same way", _shots2.Count == 1 && _shots2[0].Breaks, $"{_shots2.Count} disparo(s)");
         Check("the book shows the remapped command (segurar O)", V.BookRows().First(b => b.Name.Contains("Concentrado")).Command.Contains("segurar O"));
         Bindings.Restore();
@@ -334,14 +334,14 @@ public partial class NovidadesCheck : Node
         for (int i = 0; i < 10 && !V.Hud.BookRows[V.Hud.BookSelected].Name.Contains("Concentrado"); i++) V.Hud.MoveBook(1);
         await Frames(3); await Shot("06-livro-disparo-concentrado");
         string page = V.Hud.BookDetail;
-        Check("the book page has the costs and the difference between a partial charge and the break", page.Contains("100 Qi no total") && page.Contains("rompe a guarda") && page.Contains("carga parcial"), page.Replace("\n", " | "));
+        Check("the book page has the costs and the difference between a partial charge and the break", page.Contains("100 Ki no total") && page.Contains("rompe a guarda") && page.Contains("carga parcial"), page.Replace("\n", " | "));
         V.Hud.ShowBook(null);
 
         // the meditation keeps the discovery
         await Teleport(ValeMap.Meditate + new Vector2(0, 8), Vector2.Up);
         await Tap(Key.E); await Frames(3);
         var d = SaveGame.Read(SavePath).Data;
-        Check("meditating keeps the discovered technique", d?.Vale?.Book.Any(b => b.Tech == "qi_charge") == true);
+        Check("meditating keeps the discovered technique", d?.Vale?.Book.Any(b => b.Tech == "ki_charge") == true);
         Finish();
     }
 
@@ -351,22 +351,22 @@ public partial class NovidadesCheck : Node
     {
         // a Planície journey after the awakening: the prologue's book sealed, the charged shot found in the Vale
         var book = ValeState.StartingBook();
-        book.Add(new BookEntry { Name = "Disparo de Qi Concentrado", Kind = "técnica", Tech = "qi_charge", Where = "Vale." });
+        book.Add(new BookEntry { Name = "Disparo de Ki Concentrado", Kind = "técnica", Tech = "ki_charge", Where = "Vale." });
         foreach (var b in book.Where(b => b.Tech.Length > 0)) b.State = "Selada";
         SaveGame.Write(SavePath, new SaveData { Region = "planicie", Phase = "planicie", Seed = 20261126, Spot = new[] { 16f, 16f }, Book = book, LossApplied = true,
-            Inventory = { new SavedItem { Id = "faca_pedra", Count = 1 } }, Equipped = "knife", Health = 10, Vigor = 50, Qi = 100, Level = 2, Xp = 20 });
+            Inventory = { new SavedItem { Id = "faca_pedra", Count = 1 } }, Equipped = "knife", Health = 10, Vigor = 50, Ki = 100, Level = 2, Xp = 20 });
         _pg = GD.Load<PackedScene>("res://src/Plains/Plains.tscn").Instantiate<PlainsGame>();
         _pg.SavePath = SavePath; _pg.ShowIntro = false; _pg.Start = PlainsGame.StartMode.Continue;
         AddChild(_pg);
         await Frames(30);
-        var p = _pg.Player; var shots = new List<Player.QiShot>(); p.QiFired += s => shots.Add(s);
-        p.QiRegen = 0; p.Qi = 100;
+        var p = _pg.Player; var shots = new List<Player.KiShot>(); p.KiFired += s => shots.Add(s);
+        p.KiRegen = 0; p.Ki = 100;
         int msgs = _pg.Hud.Messages.Count;
         Press(Key.K, true); await Flush(); await Frames(60); Press(Key.K, false); await Flush(); await Frames(10);
-        Check("sealed (Planície before level 3): holding the Qi button gathers nothing and shoots nothing", shots.Count == 0 && !p.Charging && p.Qi > 99 && _pg.Hud.Messages.Skip(msgs).Any(m => m.Contains("selad")), string.Join(" / ", _pg.Hud.Messages.Skip(msgs)));
+        Check("sealed (Planície before level 3): holding the Ki button gathers nothing and shoots nothing", shots.Count == 0 && !p.Charging && p.Ki > 99 && _pg.Hud.Messages.Skip(msgs).Any(m => m.Contains("selad")), string.Join(" / ", _pg.Hud.Messages.Skip(msgs)));
         _pg.GainXp(_pg.Stats.XpMissing, "teste"); await Frames(5); // controlled: level 3
-        Check("level 3: the charged shot comes back weakened with the others", _pg.Tech.State("qi_charge") == Combat.TechniqueState.Weakened);
-        p.Qi = 100; p.Vigor = p.MaxVigor; shots.Clear();
+        Check("level 3: the charged shot comes back weakened with the others", _pg.Tech.State("ki_charge") == Combat.TechniqueState.Weakened);
+        p.Ki = 100; p.Vigor = p.MaxVigor; shots.Clear();
         Press(Key.K, true); await Flush(); await Frames(110); Press(Key.K, false); await Flush(); await Frames(10);
         Check("the weakened full charge: one projectile, weakened damage (3), breaks", shots.Count == 1 && shots[0].Damage == 3 && shots[0].Breaks, shots.Count > 0 ? $"dano {shots[0].Damage}" : "nenhum");
         // next to a carcass the button skins (no charge): a dead rabbit's carcass
@@ -379,15 +379,15 @@ public partial class NovidadesCheck : Node
         if (carcass != null)
         {
             p.GlobalPosition = carcass.GlobalPosition + new Vector2(-6, 2); await Frames(5);
-            shots.Clear(); p.Qi = 100;
+            shots.Clear(); p.Ki = 100;
             Press(Key.K, true); await Flush(); await Frames(60); Press(Key.K, false); await Flush(); await Frames(10);
-            Check("next to a carcass the Qi button skins with Qi (no charge, no shot)", shots.Count == 0 && !p.Charging && _pg.Hud.Messages.TakeLast(4).Any(m => m.Contains("Esfolar") || m.Contains("Pele")), $"Qi {p.Qi:0}, ação {_pg.QiKeyAction}, partes [{string.Join(",", carcass.Parts)}], msgs {string.Join(" / ", _pg.Hud.Messages.TakeLast(3))}");
+            Check("next to a carcass the Ki button skins with Ki (no charge, no shot)", shots.Count == 0 && !p.Charging && _pg.Hud.Messages.TakeLast(4).Any(m => m.Contains("Esfolar") || m.Contains("Pele")), $"Ki {p.Ki:0}, ação {_pg.KiKeyAction}, partes [{string.Join(",", carcass.Parts)}], msgs {string.Join(" / ", _pg.Hud.Messages.TakeLast(3))}");
         }
         else Check("a carcass to test the skinning", false, "nenhum coelho por perto");
         Finish();
     }
 
-    // ------------------------------------------------------------------ 9. the Reforço de Qi
+    // ------------------------------------------------------------------ 9. the Reforço de Ki
     private async Task Gesture(Key mod, Key cut, int frames)
     {
         Press(mod, true); await Flush(); await Frames(1);
@@ -400,31 +400,31 @@ public partial class NovidadesCheck : Node
     {
         await Frames(30);
         if (_c.Vale == null) { Check("Novo jogo starts the Vale", false); Finish(); return; }
-        P.QiRegen = 0; // controlled: no regeneration while counting Qi
+        P.KiRegen = 0; // controlled: no regeneration while counting Ki
         int cuts = 0; P.ActionStarted += (k, _) => { if (k is Player.ActionKind.Cut or Player.ActionKind.Thrust) cuts++; };
         await Teleport(ValeMap.Start + new Vector2(0, -60), Vector2.Up);
         await PointAt(P.GlobalPosition + new Vector2(0, -100));
 
-        // 75 Qi: the gesture (Shift + J held) activates once, spends 75, gives 3 charges, no cut during it
-        P.Qi = 75; int msgs = V.Hud.Messages.Count;
+        // 75 Ki: the gesture (Shift + J held) activates once, spends 75, gives 3 charges, no cut during it
+        P.Ki = 75; int msgs = V.Hud.Messages.Count;
         bool midGesture = false;
         Press(Key.Shift, true); await Flush(); await Frames(1);
         Press(Key.J, true); await Flush(); await Frames(10); midGesture = P.Reinforcing; await Shot("07-reforco-gesto");
         await Frames(50); // held well past the gesture: still one activation
         Press(Key.J, false); await Flush(); Press(Key.Shift, false); await Flush(); await Frames(5);
-        Check("Shift + J with 75 Qi: the Qi runs up the blade and the Reforço activates (3 charges, 75 spent once)", midGesture && P.ReinforceCharges == 3 && P.Qi < 0.6f && cuts == 0, $"cargas {P.ReinforceCharges}, Qi {P.Qi:0.0}, cortes {cuts}");
+        Check("Shift + J with 75 Ki: the Ki runs up the blade and the Reforço activates (3 charges, 75 spent once)", midGesture && P.ReinforceCharges == 3 && P.Ki < 0.6f && cuts == 0, $"cargas {P.ReinforceCharges}, Ki {P.Ki:0.0}, cortes {cuts}");
         Check("holding the combination on did not activate it twice", V.Hud.Messages.Skip(msgs).Count(m => m.Contains("estão reforçados")) == 1);
-        Check("the discovery: banner and a book page (command, cost, charges, bonus, chance)", V.Story.Book.Any(b => b.Tech == "qi_reinforce") && V.BookRows().First(b => b.Name == "Reforço de Qi").Detail.Contains("75 Qi") && V.BookRows().First(b => b.Name == "Reforço de Qi").Command.StartsWith("Shift + segurar J"), V.BookRows().First(b => b.Name == "Reforço de Qi").Command);
-        Check("the HUD shows the charges (reforço 3) and the pips", V.Hud.QiText.Contains("reforço 3"), V.Hud.QiText);
+        Check("the discovery: banner and a book page (command, cost, charges, bonus, chance)", V.Story.Book.Any(b => b.Tech == "ki_reinforce") && V.BookRows().First(b => b.Name == "Reforço de Ki").Detail.Contains("75 Ki") && V.BookRows().First(b => b.Name == "Reforço de Ki").Command.StartsWith("Shift + segurar J"), V.BookRows().First(b => b.Name == "Reforço de Ki").Command);
+        Check("the HUD shows the charges (reforço 3) and the pips", V.Hud.KiText.Contains("reforço 3"), V.Hud.KiText);
         await Shot("08-reforco-cargas");
         // another try while charges remain: kept, nothing spent
-        P.Qi = 100;
+        P.Ki = 100;
         await Gesture(Key.Shift, Key.J, 40);
-        Check("another try with charges left keeps them and spends nothing", P.ReinforceCharges == 3 && P.Qi > 99.4f, $"cargas {P.ReinforceCharges}, Qi {P.Qi:0}");
+        Check("another try with charges left keeps them and spends nothing", P.ReinforceCharges == 3 && P.Ki > 99.4f, $"cargas {P.ReinforceCharges}, Ki {P.Ki:0}");
         // 74: refused, the balance kept
-        P.ReinforceCharges = 0; P.Qi = 74; msgs = V.Hud.Messages.Count;
+        P.ReinforceCharges = 0; P.Ki = 74; msgs = V.Hud.Messages.Count;
         await Gesture(Key.Shift, Key.J, 40);
-        Check("with 74 Qi: a clear refusal (falta Qi 74/75), the Qi stays 74, no charges", P.ReinforceCharges == 0 && Mathf.IsEqualApprox(P.Qi, 74, 0.01f) && V.Hud.Messages.Skip(msgs).Any(m => m.Contains("falta Qi (74/75)")), string.Join(" / ", V.Hud.Messages.Skip(msgs)));
+        Check("with 74 Ki: a clear refusal (falta Ki 74/75), the Ki stays 74, no charges", P.ReinforceCharges == 0 && Mathf.IsEqualApprox(P.Ki, 74, 0.01f) && V.Hud.Messages.Skip(msgs).Any(m => m.Contains("falta Ki (74/75)")), string.Join(" / ", V.Hud.Messages.Skip(msgs)));
 
         // three reinforced strikes (+10%) and the fourth normal, on the disciple's open flank (controlled: kept fooled)
         var dis = V.Fighters["dis_herbs"];
@@ -438,14 +438,14 @@ public partial class NovidadesCheck : Node
             await Tap(Key.J); await Frames(30);
             return before - dis.Hp;
         }
-        P.Qi = 75; await Gesture(Key.Shift, Key.J, 40);
+        P.Ki = 75; await Gesture(Key.Shift, Key.J, 40);
         var hits = new List<float>();
         for (int i = 0; i < 4; i++) { hits.Add(await FlankCut()); dis.Hp = dis.Max; }
         Check("three reinforced strikes do 2.2 (sword 2 + 10%) and the fourth is normal (2)", hits.Count == 4 && Mathf.IsEqualApprox(hits[0], 2.2f, 0.01f) && Mathf.IsEqualApprox(hits[1], 2.2f, 0.01f) && Mathf.IsEqualApprox(hits[2], 2.2f, 0.01f) && Mathf.IsEqualApprox(hits[3], 2f, 0.01f) && P.ReinforceCharges == 0,
             $"danos {string.Join(" · ", hits.Select(h => h.ToString("0.##")))}");
         // the knife: 1 → 1.1 in the real damage (no rounding lost)
         P.Equipped = Player.Weapon.Knife;
-        P.Qi = 75; await Gesture(Key.Shift, Key.J, 40);
+        P.Ki = 75; await Gesture(Key.Shift, Key.J, 40);
         float knife = await FlankCut(); dis.Hp = dis.Max;
         Check("with the knife the bonus survives the arithmetic: 1 → 1.1 taken from the health (not rounded back to 1)", Mathf.IsEqualApprox(knife, 1.1f, 0.01f), $"dano {knife:0.###}");
         P.Equipped = Player.Weapon.Sword;
@@ -455,7 +455,7 @@ public partial class NovidadesCheck : Node
         int left = P.ReinforceCharges;
         await Tap(Key.J); await Frames(30);
         Check("a strike that hits nothing still spends a charge", P.ReinforceCharges == left - 1, $"{left} → {P.ReinforceCharges}");
-        P.ReinforceCharges = 0; P.Qi = 75; await Gesture(Key.Shift, Key.J, 40);
+        P.ReinforceCharges = 0; P.Ki = 75; await Gesture(Key.Shift, Key.J, 40);
         for (int i = 0; i < 3; i++) { await Tap(Key.J); await Frames(7); }
         await Frames(30);
         Check("each cut of a three-cut combo spends one charge", P.ReinforceCharges == 0, $"cargas {P.ReinforceCharges}");
@@ -465,7 +465,7 @@ public partial class NovidadesCheck : Node
         int rolls = 0;
         async Task<(bool Broke, float Dmg)> FrontCut(float roll)
         {
-            P.ReinforceCharges = 0; P.Qi = 75; await Gesture(Key.Shift, Key.J, 40);
+            P.ReinforceCharges = 0; P.Ki = 75; await Gesture(Key.Shift, Key.J, 40);
             P.ReinforceRoll = () => { rolls++; return roll; };
             bridge.ResetToHome(); await Frames(5);
             await Teleport(bridge.GlobalPosition + new Vector2(0, 40), Vector2.Up); bridge.Face = Mathf.Pi / 2; bridge.State = ValeFighter.St.Guard;
@@ -498,15 +498,15 @@ public partial class NovidadesCheck : Node
         // a remapped cut (U) and a remapped modifier (Ctrl)
         Bindings.Assign("cut", 0, $"k:{(long)Key.U}");
         Bindings.Assign("reinforce", 0, $"k:{(long)Key.Ctrl}");
-        P.Qi = 75;
+        P.Ki = 75;
         await Gesture(Key.Ctrl, Key.U, 40);
         Check("with the cut on U and the modifier on Ctrl, Ctrl + U activates it", P.ReinforceCharges == 3, $"cargas {P.ReinforceCharges}");
-        Check("the book shows the remapped command (Ctrl + segurar U)", V.BookRows().First(b => b.Name == "Reforço de Qi").Command.StartsWith("Ctrl + segurar U"), V.BookRows().First(b => b.Name == "Reforço de Qi").Command);
+        Check("the book shows the remapped command (Ctrl + segurar U)", V.BookRows().First(b => b.Name == "Reforço de Ki").Command.StartsWith("Ctrl + segurar U"), V.BookRows().First(b => b.Name == "Reforço de Ki").Command);
         Bindings.Restore();
         // meditating keeps the discovery
         await Teleport(ValeMap.Meditate + new Vector2(0, 8), Vector2.Up);
         await Tap(Key.E); await Frames(3);
-        Check("meditating keeps the Reforço in the book", SaveGame.Read(SavePath).Data?.Vale?.Book.Any(b => b.Tech == "qi_reinforce") == true);
+        Check("meditating keeps the Reforço in the book", SaveGame.Read(SavePath).Data?.Vale?.Book.Any(b => b.Tech == "ki_reinforce") == true);
         Finish();
     }
 
@@ -641,7 +641,7 @@ public partial class NovidadesCheck : Node
     {
         // a journey written before this delivery: the same JSON without "coins"
         var old = new SaveData { Region = "planicie", Phase = "planicie", Seed = 20261126, Spot = new[] { 16f, 16f }, LossApplied = true,
-            Inventory = { new SavedItem { Id = "faca_pedra", Count = 1 }, new SavedItem { Id = "grama_sangue_q1", Count = 3 } }, Equipped = "knife", Health = 8, Vigor = 50, Qi = 100, Level = 2, Xp = 5 };
+            Inventory = { new SavedItem { Id = "faca_pedra", Count = 1 }, new SavedItem { Id = "grama_sangue_q1", Count = 3 } }, Equipped = "knife", Health = 8, Vigor = 50, Ki = 100, Level = 2, Xp = 5 };
         SaveGame.Write(SavePath, old);
         string text = Godot.FileAccess.GetFileAsString(SavePath);
         var json = System.Text.Json.Nodes.JsonNode.Parse(text)!.AsObject();
@@ -656,7 +656,7 @@ public partial class NovidadesCheck : Node
         g.QueueFree(); await Frames(5);
         // the awakening: the swordsman wakes without money (the prologue's silver is lost with everything else)
         var vale = new SaveData { Region = "vale", Phase = "senior_won", Seed = 0, Spot = new[] { 100f, 100f }, Vale = new ValeState { Book = ValeState.StartingBook() },
-            ValeInventory = { new SavedItem { Id = "prata", Count = 13 } }, Equipped = "sword", Health = 10, Qi = 100 };
+            ValeInventory = { new SavedItem { Id = "prata", Count = 13 } }, Equipped = "sword", Health = 10, Ki = 100 };
         _pg = GD.Load<PackedScene>("res://src/Plains/Plains.tscn").Instantiate<PlainsGame>();
         _pg.Seed = 20261126; _pg.SavePath = SavePath; _pg.ShowIntro = false; _pg.Start = PlainsGame.StartMode.Awaken; _pg.AwakenFrom = vale;
         AddChild(_pg);

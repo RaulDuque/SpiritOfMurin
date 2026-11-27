@@ -74,7 +74,7 @@ public partial class Sfx : Node
             case "stone": Tone(220, 0.1f, 2, 0.2f, 0, 160); Noise(0.06f, 0.2f, 900); break;
             case "hurt": Tone(220, 0.16f, 0, 0.3f, 0, 90); Noise(0.12f, 0.25f, 900); break;
             case "warn": Tone(330, 0.06f, 0, 0.12f); Tone(330, 0.06f, 0, 0.12f, 0.09f); break;
-            case "qi": Tone(440, 0.18f, 1, 0.2f, 0, 880); Noise(0.12f, 0.1f, 5000, 2); break;
+            case "ki": Tone(440, 0.18f, 1, 0.2f, 0, 880); Noise(0.12f, 0.1f, 5000, 2); break;
             case "side": Noise(0.09f, 0.16f, 6000, 2); Tone(660, 0.08f, 1, 0.1f, 0, 990); break;
             case "step": Noise(0.05f, 0.1f, 1500, 1); break;
             case "evade": Tone(990, 0.08f, 1, 0.14f, 0, 1480); break;

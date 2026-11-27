@@ -10,10 +10,10 @@ public sealed class ValeCombat
     public const string DefaultPath = "res://assets/data/vale_combat.json";
     /// <summary>The swordsman's Vida.</summary>
     public int PlayerHealth { get; set; } = 10;
-    /// <summary>The swordsman's Qi.</summary>
-    public float PlayerQiMax { get; set; } = 100;
-    /// <summary>Qi per second.</summary>
-    public float PlayerQiRegen { get; set; } = 22;
+    /// <summary>The swordsman's Ki.</summary>
+    public float PlayerKiMax { get; set; } = 100;
+    /// <summary>Ki per second.</summary>
+    public float PlayerKiRegen { get; set; } = 22;
     /// <summary>Degrees each side of a guard's facing that parry.</summary>
     public float GuardHalf { get; set; } = 65;
     /// <summary>Pixels a parry throws the player back.</summary>

@@ -18,7 +18,7 @@ public sealed class SavedItem
 /// <summary>
 /// The Planície journey as written when meditating (format 1 of the Godot game; snake_case JSON in
 /// <c>user://</c>). It holds what the creator asked to keep: seed, meditation spot, what was collected
-/// and hunted, inventory, equipment, Vida, Qi, vigor, level, points, attributes and proficiencies.
+/// and hunted, inventory, equipment, Vida, Ki, vigor, level, points, attributes and proficiencies.
 /// </summary>
 public sealed class SaveData
 {
@@ -53,8 +53,8 @@ public sealed class SaveData
     public float Health { get; set; }
     /// <summary>Vigor.</summary>
     public float Vigor { get; set; }
-    /// <summary>Qi.</summary>
-    public float Qi { get; set; }
+    /// <summary>Ki.</summary>
+    public float Ki { get; set; }
     /// <summary>Level.</summary>
     public int Level { get; set; } = 1;
     /// <summary>XP toward the next level.</summary>
@@ -120,7 +120,7 @@ public static class SaveGame
     {
         try
         {
-            var d = JsonSerializer.Deserialize<SaveData>(text, Json);
+            var d = JsonSerializer.Deserialize<SaveData>(KiMigration.Migrate(text), Json); // journeys from before Qi → Ki
             if (d is not { Game: "spiritofmurin" } || d.Spot.Length != 2 || d.Format is < 1 or > SaveData.CurrentFormat) return null;
             if (d.Format == 1) { d.Region = "planicie"; d.Phase = "planicie"; d.Format = SaveData.CurrentFormat; } // migration: the journey stays in the Planície
             return d;

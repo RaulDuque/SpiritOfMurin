@@ -4,7 +4,7 @@ namespace SpiritOfMurin.Game;
 
 /// <summary>
 /// How attacks are aimed without a locked target (pedido 13, item 7): by the mouse — the swordsman turns to
-/// the cursor when a cut, a knife cut or a Qi shot starts — or by the direction the character faces, for
+/// the cursor when a cut, a knife cut or a Ki shot starts — or by the direction the character faces, for
 /// whoever plays with the keyboard only (Esc → Controles). With a target locked, the target always wins.
 /// Saved in the preferences (<c>aim_mouse</c>).
 /// </summary>

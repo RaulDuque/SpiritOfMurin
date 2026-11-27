@@ -97,7 +97,7 @@ public partial class ValeFighter : CharacterBody2D
     public IValeHost Host { get; set; } = null!;
     /// <summary>A pose set by a cutscene (the AI stops while it is set).</summary>
     public FighterArt.Pose? Scripted { get; set; }
-    /// <summary>Strength of the qi aura around the body (0-1; the ending).</summary>
+    /// <summary>Strength of the ki aura around the body (0-1; the ending).</summary>
     public float AuraPower { get; set; }
     /// <summary>Hidden by a cutscene (gone in the explosion).</summary>
     public bool Gone { get; set; }
@@ -275,7 +275,7 @@ public partial class ValeFighter : CharacterBody2D
     }
 
     /// <summary>
-    /// A blade or a qi shot reached it. Returns "parried", "flank", "hit", "killed" or "statue" (a flank
+    /// A blade or a ki shot reached it. Returns "parried", "flank", "hit", "killed" or "statue" (a flank
     /// strike on the statue, which only answers).
     /// </summary>
     public string Strike(Vector2 from, float dmg, bool lamina, float stagger, bool heavy)
@@ -340,7 +340,7 @@ public partial class ValeFighter : CharacterBody2D
         if (!Alive) { FighterArt.DrawDead(this, _paint, look, Type == Kind.Senior, false, _time); return; }
         if (Scripted is { } sp)
         {
-            // the aura: rings of red-ochre qi that grow with the power
+            // the aura: rings of red-ochre ki that grow with the power
             if (AuraPower > 0)
                 for (int ring = 0; ring < 3; ring++)
                 {

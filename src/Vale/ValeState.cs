@@ -15,7 +15,7 @@ public sealed class BookEntry
     public string Key { get; set; } = "";
     /// <summary>Where it came from / what it says.</summary>
     public string Where { get; set; } = "";
-    /// <summary>The technique id it stands for (thrust, qi_wave, side_step, dash, lamina), or empty (base art, fragments).</summary>
+    /// <summary>The technique id it stands for (thrust, ki_wave, side_step, dash, lamina), or empty (base art, fragments).</summary>
     public string Tech { get; set; } = "";
     /// <summary>"Plena", "Selada" or "Enfraquecida" for prologue techniques; empty otherwise.</summary>
     public string State { get; set; } = "";
@@ -86,7 +86,7 @@ public sealed class ValeState
     {
         new() { Name = "Corte", Kind = "técnica", Key = "J / clique esquerdo", Where = "Sua arte de origem. Encadeia até três golpes." },
         new() { Name = "Estocada", Kind = "técnica", Key = "frente + J (com alvo travado)", Where = "Sua arte de origem: com o alvo travado, avança a lâmina.", Tech = "thrust", State = "Plena" },
-        new() { Name = "Disparo de Qi", Kind = "técnica", Key = "K", Where = "Sua arte de origem: uma onda de qi lançada da palma.", Tech = "qi_wave", State = "Plena" },
+        new() { Name = "Disparo de Ki", Kind = "técnica", Key = "K", Where = "Sua arte de origem: uma onda de ki lançada da palma.", Tech = "ki_wave", State = "Plena" },
         new() { Name = "Passo curto", Kind = "técnica", Key = "L / clique direito", Where = "Sua arte de origem: só para frente ou para trás." },
     };
 

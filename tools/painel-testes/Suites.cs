@@ -9,10 +9,10 @@ public static class Suites
     /// <summary>As fases do teste do pedido 13 (mira, técnicas, bolsa, moedas), na ordem.</summary>
     public static readonly (string Phase, string About)[] Novidades =
     {
-        ("aim", "Mira pelo mouse: andar para um lado e acertar para o outro; tecla remapeada; faca; Qi; alvo travado tem prioridade; destravar volta ao cursor; mira por teclado; outras janelas."),
-        ("charge", "Disparo de Qi carregado (secreto): toque, carga parcial, carga completa de 100, guarda rompida, sem Qi, pausa/inventário/foco cancelam, tecla remapeada, descoberta e Livro; no máximo um projétil."),
+        ("aim", "Mira pelo mouse: andar para um lado e acertar para o outro; tecla remapeada; faca; Ki; alvo travado tem prioridade; destravar volta ao cursor; mira por teclado; outras janelas."),
+        ("charge", "Disparo de Ki carregado (secreto): toque, carga parcial, carga completa de 100, guarda rompida, sem Ki, pausa/inventário/foco cancelam, tecla remapeada, descoberta e Livro; no máximo um projétil."),
         ("charge-plains", "Disparo carregado na Planície: selado antes do nível 3, enfraquecido depois; junto à carcaça o botão esfola."),
-        ("reinforce", "Reforço de Qi: ativar com 75, recusar com 74, três golpes +10% e o quarto normal, faca 1 → 1,1, rolagem de ruptura fixa (sucesso e falha), Shift sozinho anda quieto, teclas remapeadas."),
+        ("reinforce", "Reforço de Ki: ativar com 75, recusar com 74, três golpes +10% e o quarto normal, faca 1 → 1,1, rolagem de ruptura fixa (sucesso e falha), Shift sozinho anda quieto, teclas remapeadas."),
         ("bag", "Bolsa com figuras: ícones e pilhas; fabricar a faca pelo teclado (materiais diminuem, faca aparece); equipar com clique; usar a erva pelo teclado e pelo botão; tela cheia."),
         ("money", "Moedas: começa sem dinheiro; bolsinha junto à esteira dá +25; voltar ao bloco mantém recolhida; receber e gastar, recusa por saldo; meditar salva."),
         ("money2", "Continuar: saldo e bolsinha recolhida voltam."),

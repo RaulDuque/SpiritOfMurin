@@ -10,30 +10,30 @@ namespace SpiritOfMurin.Progression;
 /// </summary>
 public static class HarvestRules
 {
-    /// <summary>Result of skinning: item obtained, Qi spent and the grade the material came out at.</summary>
-    public readonly record struct Hide(string Item, float QiSpent, int EffectiveGrade);
+    /// <summary>Result of skinning: item obtained, Ki spent and the grade the material came out at.</summary>
+    public readonly record struct Hide(string Item, float KiSpent, int EffectiveGrade);
 
     /// <summary>
-    /// Skins a carcass of <paramref name="kind"/> ("rabbit", "boar"). With <paramref name="useQi"/>, from
-    /// Esfolar grade 1 and with enough Qi, the material comes out one grade higher (capped at 3).
+    /// Skins a carcass of <paramref name="kind"/> ("rabbit", "boar"). With <paramref name="useKi"/>, from
+    /// Esfolar grade 1 and with enough Ki, the material comes out one grade higher (capped at 3).
     /// </summary>
-    public static Hide Skin(ProgressionData d, string kind, int esfolar, bool useQi, float qi)
+    public static Hide Skin(ProgressionData d, string kind, int esfolar, bool useKi, float ki)
     {
         int g = Mathf.Clamp(esfolar, 0, 3);
         float spent = 0;
-        if (useQi && g >= 1 && qi >= d.Base.QiPreserveCost) { g = Mathf.Min(3, g + 1); spent = d.Base.QiPreserveCost; }
+        if (useKi && g >= 1 && ki >= d.Base.KiPreserveCost) { g = Mathf.Min(3, g + 1); spent = d.Base.KiPreserveCost; }
         string[] table = d.Hides.TryGetValue(kind, out var t) ? t : new[] { "pele_rasgada" };
         return new Hide(table[Mathf.Min(g, table.Length - 1)], spent, g);
     }
 
     /// <summary>
-    /// Takes a spiritual-compatible part (the boar's tusks). At Esfolar grade 3 with Qi it becomes the
-    /// spiritual item; otherwise the plain one. Returns the item and the Qi spent.
+    /// Takes a spiritual-compatible part (the boar's tusks). At Esfolar grade 3 with Ki it becomes the
+    /// spiritual item; otherwise the plain one. Returns the item and the Ki spent.
     /// </summary>
-    public static (string Item, float QiSpent) SpiritualPart(ProgressionData d, string kind, string plainItem, int esfolar, bool useQi, float qi)
+    public static (string Item, float KiSpent) SpiritualPart(ProgressionData d, string kind, string plainItem, int esfolar, bool useKi, float ki)
     {
-        if (useQi && esfolar >= 3 && qi >= d.Base.QiPreserveCost && d.Spiritual.TryGetValue(kind, out var sp))
-            return (sp.Item, d.Base.QiPreserveCost);
+        if (useKi && esfolar >= 3 && ki >= d.Base.KiPreserveCost && d.Spiritual.TryGetValue(kind, out var sp))
+            return (sp.Item, d.Base.KiPreserveCost);
         return (plainItem, 0);
     }
 

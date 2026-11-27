@@ -68,9 +68,9 @@ public sealed class BookPage
             pages.Add(new BookPage
             {
                 Id = "Página rasgada", Name = "Página rasgada", Kind = "combinação", Text = "???", Enabled = false,
-                Seq = new() { ("unknown", ""), ("then", ""), ("key", "cut"), ("then", ""), ("key", "qi") },
+                Seq = new() { ("unknown", ""), ("then", ""), ("key", "cut"), ("then", ""), ("key", "ki") },
                 Note = "Algo antes do corte. Talvez um passo.",
-                Origin = "A inscrição além da fenda: “O qi caminha atrás da lâmina que segue o passo.” Uma técnica que quebra a guarda. Falta o primeiro movimento.",
+                Origin = "A inscrição além da fenda: “O ki caminha atrás da lâmina que segue o passo.” Uma técnica que quebra a guarda. Falta o primeiro movimento.",
             });
         return pages;
     }
@@ -79,15 +79,15 @@ public sealed class BookPage
     {
         "Corte" => (new() { ("key", "cut"), ("then", ""), ("key", "cut"), ("then", ""), ("key", "cut") }, "Aperte de novo durante o golpe para encadear até três. O terceiro pesa mais."),
         "Estocada" => (new() { ("dir", "frente"), ("plus", ""), ("key", "cut") }, Bindings.F("Com o alvo travado ([lock]): a lâmina avança mais longe.")),
-        "Disparo de Qi" or "Onda de Qi" => (new() { ("key", "qi") }, "Uma onda de qi lançada da palma. A guarda fechada a dissipa."),
+        "Disparo de Ki" or "Onda de Ki" => (new() { ("key", "ki") }, "Uma onda de ki lançada da palma. A guarda fechada a dissipa."),
         "Passo curto" => (new() { ("dir", "trás"), ("plus", ""), ("key", "step") }, "Para frente ou para trás em relação ao alvo. Sozinho, recua."),
         "Passo Lateral" => (new() { ("dir", "lado"), ("plus", ""), ("key", "step") }, Bindings.F("Com o alvo travado ([lock]): contorna a guarda e a cega por um instante. O flanco abre.")),
         "Passo longo" => plains
             ? (new() { ("key", "sneak"), ("plus", ""), ("dir", "direção"), ("plus", ""), ("key", "step") }, "Na Planície: sem trava, segure o andar quieto. Atravessa o que o passo curto não alcança.")
             : (new() { ("dir", "direção"), ("plus", ""), ("key", "step") }, "Sem trava: um passo longo que atravessa a fenda."),
-        "Passo da Lâmina Silenciosa" => (new() { ("dir", "lado"), ("plus", ""), ("key", "step"), ("then", ""), ("key", "cut"), ("then", ""), ("key", "qi") }, "Quebra a guarda. O qi segue o corte sem ruído."),
-        "Reforço de Qi" => (new() { ("key", "reinforce"), ("plus", ""), ("hold", "cut") }, Bindings.F("Segure [reinforce] e aperte [cut]: o Qi percorre a lâmina. Os próximos golpes corpo a corpo saem reforçados; cada golpe gasta uma carga, mesmo errando.")),
-        "Disparo de Qi Concentrado" => (new() { ("hold", "qi"), ("then", ""), ("release", "qi") }, Bindings.F("Segure [qi]: o Qi sai da barra e se junta na palma (dá para mirar). Solte para disparar. Um toque rápido continua sendo o disparo comum.")),
+        "Passo da Lâmina Silenciosa" => (new() { ("dir", "lado"), ("plus", ""), ("key", "step"), ("then", ""), ("key", "cut"), ("then", ""), ("key", "ki") }, "Quebra a guarda. O ki segue o corte sem ruído."),
+        "Reforço de Ki" => (new() { ("key", "reinforce"), ("plus", ""), ("hold", "cut") }, Bindings.F("Segure [reinforce] e aperte [cut]: o Ki percorre a lâmina. Os próximos golpes corpo a corpo saem reforçados; cada golpe gasta uma carga, mesmo errando.")),
+        "Disparo de Ki Concentrado" => (new() { ("hold", "ki"), ("then", ""), ("release", "ki") }, Bindings.F("Segure [ki]: o Ki sai da barra e se junta na palma (dá para mirar). Solte para disparar. Um toque rápido continua sendo o disparo comum.")),
         _ => (new(), ""),
     };
 
@@ -98,13 +98,13 @@ public sealed class BookPage
         var st = tech.State(id);
         string Line(TechniqueParams p) => id switch
         {
-            "qi_wave" => $"custo: {p.QiCost:0} Qi, {p.VigorCost:0} vigor · alcance {p.Range:0} px · dano {p.Damage}",
-            "side_step" => $"custo: {p.QiCost:0} Qi, {p.VigorCost:0} vigor · contorna {p.Angle:0}° · raio até {p.RadiusMax:0} px",
-            "dash" => $"custo: {p.QiCost:0} Qi, {p.VigorCost:0} vigor · {p.Distance:0} px",
-            "thrust" => $"custo: {p.QiCost:0} Qi, {p.VigorCost:0} vigor · alcance {p.Reach:0} px · dano {p.Damage}",
+            "ki_wave" => $"custo: {p.KiCost:0} Ki, {p.VigorCost:0} vigor · alcance {p.Range:0} px · dano {p.Damage}",
+            "side_step" => $"custo: {p.KiCost:0} Ki, {p.VigorCost:0} vigor · contorna {p.Angle:0}° · raio até {p.RadiusMax:0} px",
+            "dash" => $"custo: {p.KiCost:0} Ki, {p.VigorCost:0} vigor · {p.Distance:0} px",
+            "thrust" => $"custo: {p.KiCost:0} Ki, {p.VigorCost:0} vigor · alcance {p.Reach:0} px · dano {p.Damage}",
             "lamina" => $"dano {p.Damage} · alcance {p.Range:0} px · guarda quebrada {p.Stagger:0.#} s",
-            "qi_reinforce" => $"custo: {p.QiCost:0} Qi, uma vez por ativação · {p.Charges} golpes reforçados · +{p.Bonus * 100:0}% de dano · {p.Chance * 100:0}% de chance de romper a guarda atingida ({p.Stagger:0.#} s aberta)",
-            "qi_charge" => $"carga completa: {p.QiCost:0} Qi no total (já inclui o disparo){(p.VigorCost > 0 ? $" + {p.VigorCost:0} vigor" : "")} · dano {p.Damage} · alcance {p.Range:0} px · rompe a guarda ({p.Stagger:0.#} s aberta) | carga parcial: dano proporcional ao Qi investido, sem ruptura",
+            "ki_reinforce" => $"custo: {p.KiCost:0} Ki, uma vez por ativação · {p.Charges} golpes reforçados · +{p.Bonus * 100:0}% de dano · {p.Chance * 100:0}% de chance de romper a guarda atingida ({p.Stagger:0.#} s aberta)",
+            "ki_charge" => $"carga completa: {p.KiCost:0} Ki no total (já inclui o disparo){(p.VigorCost > 0 ? $" + {p.VigorCost:0} vigor" : "")} · dano {p.Damage} · alcance {p.Range:0} px · rompe a guarda ({p.Stagger:0.#} s aberta) | carga parcial: dano proporcional ao Ki investido, sem ruptura",
             _ => "",
         };
         return st switch

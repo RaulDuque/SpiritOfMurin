@@ -49,7 +49,7 @@ public partial class Vitrine : Node2D
         var kneel = Figure(scene, new Vector2(184, 160)); kneel.Lying = 0.5f;
         var lying = Figure(scene, new Vector2(270, 160)); lying.Lying = 1f;
 
-        Label(new Vector2(330, 100), "Você controla este: andar, corte, passo, Qi (R volta)", 9);
+        Label(new Vector2(330, 100), "Você controla este: andar, corte, passo, Ki (R volta)", 9);
         _live = scene.Instantiate<Player>();
         _live.GetNode<Camera2D>("Camera").Enabled = false;
         _live.Position = _liveHome; _live.CollisionMask = 0;

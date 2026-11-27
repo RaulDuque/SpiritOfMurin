@@ -17,10 +17,10 @@ func mouse(button: MouseButton) -> InputEventMouseButton:
 
 func _init() -> void:
 	# The HTML prototype's defaults: WASD (and arrows) to walk, J or left click to cut,
-	# L or right click to step, K for the qi wave, Space to lock, E to examine / pick up,
+	# L or right click to step, K for the ki wave, Space to lock, E to examine / pick up,
 	# I or Tab for the inventory, Shift to sneak (walk quietly), C for the character sheet,
-	# H to use a herb from the bag. K (qi) skins with Qi, Space (lock) focuses an animal.
-	# Shift + cut is the Reforço de Qi ("reinforce", configurable apart from sneak).
+	# H to use a herb from the bag. K (ki) skins with Ki, Space (lock) focuses an animal.
+	# Shift + cut is the Reforço de Ki ("reinforce", configurable apart from sneak).
 	var actions := {
 		"move_up": [key(KEY_W), key(KEY_UP)],
 		"move_down": [key(KEY_S), key(KEY_DOWN)],
@@ -28,12 +28,12 @@ func _init() -> void:
 		"move_right": [key(KEY_D), key(KEY_RIGHT)],
 		"cut": [key(KEY_J), mouse(MOUSE_BUTTON_LEFT)],
 		"step": [key(KEY_L), mouse(MOUSE_BUTTON_RIGHT)],
-		"qi": [key(KEY_K)],
+		"ki": [key(KEY_K)],
 		"lock": [key(KEY_SPACE)],
 		"use": [key(KEY_E)],
 		"inventory": [key(KEY_I), key(KEY_TAB)],
 		"sneak": [key(KEY_SHIFT)],
-		"reinforce": [key(KEY_SHIFT)], # held with the cut: the Reforço de Qi (Shift by default, shared with sneak on purpose)
+		"reinforce": [key(KEY_SHIFT)], # held with the cut: the Reforço de Ki (Shift by default, shared with sneak on purpose)
 		"sheet": [key(KEY_C)],
 		"heal": [key(KEY_H)],
 		"book": [key(KEY_B)],
@@ -41,6 +41,10 @@ func _init() -> void:
 		"fullscreen": [key(KEY_F11)],
 		"menu": [key(KEY_ESCAPE), key(KEY_P)],
 	}
+	# actions that were renamed: "qi" became "ki" on 2026-11-27 (pedido 14)
+	for retired in ["qi"]:
+		if ProjectSettings.has_setting("input/" + retired):
+			ProjectSettings.set_setting("input/" + retired, null)
 	for name in actions:
 		ProjectSettings.set_setting("input/" + name, {"deadzone": 0.2, "events": actions[name]})
 	var err := ProjectSettings.save()

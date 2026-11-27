@@ -8,7 +8,7 @@ namespace SpiritOfMurin.Vale;
 /// The end of the prologue, after the Senior Swordsman falls for real:
 /// <list type="number">
 /// <item>Victory: the fight ends and the player sees it (banner, chime, the body on the ground).</item>
-/// <item>After a short pause he rises: a new stance, a qi aura that grows until it moves dust, leaves and cloth.</item>
+/// <item>After a short pause he rises: a new stance, a ki aura that grows until it moves dust, leaves and cloth.</item>
 /// <item>He faces the swordsman and speaks; E advances.</item>
 /// <item>He draws the energy into his own body and blows himself up; the shock wave throws the swordsman far.</item>
 /// <item>Darkness and silence, a faint heartbeat; then the campaign wakes the player in the Planície.</item>

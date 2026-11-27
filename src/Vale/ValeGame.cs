@@ -168,7 +168,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     private readonly List<ValePot> _pots = new();
     private readonly List<ValeHerb> _herbs = new();
     private readonly List<ValeDrop> _drops = new();
-    private readonly List<QiWave> _waves = new();
+    private readonly List<KiWave> _waves = new();
     private ValeChest _chest = null!;
     private ValeCorpse _corpse = null!;
     private float _dying, _reveal, _hitstopReal, _shake;
@@ -209,22 +209,22 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         Player.Equipped = Player.Weapon.Sword;
         Player.CollisionMask = 1 | Player.GapLayer;
         Player.SetMaxHealth(Combat.PlayerHealth);
-        Player.MaxQi = Combat.PlayerQiMax; Player.QiRegen = Combat.PlayerQiRegen; Player.Qi = Player.MaxQi;
+        Player.MaxKi = Combat.PlayerKiMax; Player.KiRegen = Combat.PlayerKiRegen; Player.Ki = Player.MaxKi;
         Player.MaxVigor = 0;
         Player.Tech = Tech;
         Player.SecretFound += OnSecret;
         Player.ReinforceResult += (ok, m) => { Hud.Toast(m); Sfx.Play(ok ? "chime" : "fizzle"); };
-        Player.ChargeCancelled += back => { if (back > 0.5f) Hud.Toast($"A concentração se desfaz: {back:0} de Qi voltam à barra."); };
+        Player.ChargeCancelled += back => { if (back > 0.5f) Hud.Toast($"A concentração se desfaz: {back:0} de Ki voltam à barra."); };
         Player.CutSlack = Combat.CutSlack; Player.ThrustSlack = Combat.ThrustSlack; // the prototype's hit test is a little wider than the blade
         Player.LockTarget = () => Lock;
         Player.BladeActive += OnBlade;
-        Player.QiFired += OnQi;
+        Player.KiFired += OnKi;
         Player.SideStepped += t => { if (t is ValeFighter f && f.Type != ValeFighter.Kind.Statue) f.Fooled = f.Type == ValeFighter.Kind.Senior ? Combat.SenFooled : Combat.DisFooled; Sfx.Play("side"); };
         Player.MoveEnded += Settle;
         Player.Evaded += () => { Sfx.Play("evade"); Fx.Say(Player.GlobalPosition + new Vector2(0, -46), "passo", ValeTerrain.Learn); };
         Player.TechniqueRefused += (_, m) => { Hud.Toast(m); Sfx.Play("fizzle"); };
         Player.Fainted += () => { _dying = 1.5f; Sfx.Play("die"); Lock = null; };
-        Player.ActionStarted += (k, n) => { if (k == Player.ActionKind.Cut) Sfx.Play(n == 3 ? "swing3" : "swing"); else if (k is Player.ActionKind.Step) Sfx.Play("step"); else if (k == Player.ActionKind.Qi) Sfx.Play("qi"); else if (k == Player.ActionKind.Thrust) Sfx.Play("swing"); };
+        Player.ActionStarted += (k, n) => { if (k == Player.ActionKind.Cut) Sfx.Play(n == 3 ? "swing3" : "swing"); else if (k is Player.ActionKind.Step) Sfx.Play("step"); else if (k == Player.ActionKind.Ki) Sfx.Play("ki"); else if (k == Player.ActionKind.Thrust) Sfx.Play("swing"); };
         var cam = Player.GetNode<Camera2D>("Camera");
         cam.LimitLeft = 0; cam.LimitTop = 0; cam.LimitRight = ValeMap.MW * ValeMap.TS; cam.LimitBottom = ValeMap.MH * ValeMap.TS;
         Hud.SetValeMode(true);
@@ -266,7 +266,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
             Player.GlobalPosition = new Vector2(d.Spot[0], d.Spot[1]);
             Player.Revive();
             Player.Heal(-(Player.MaxHealth - Mathf.Clamp(d.Health, 1, Player.MaxHealth)));
-            Player.Qi = Mathf.Clamp(d.Qi, 0, Player.MaxQi);
+            Player.Ki = Mathf.Clamp(d.Ki, 0, Player.MaxKi);
             Hud.Toast("Você desperta junto às pedras gêmeas, onde meditou.");
         }
         else
@@ -294,7 +294,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         float dt = (float)delta;
         if (_hitstopReal > 0) { _hitstopReal -= (float)delta / Mathf.Max(0.01f, (float)Engine.TimeScale); if (_hitstopReal <= 0) Engine.TimeScale = 1; }
         Hud.SetHealth(Player.Health, Player.MaxHealth, Player.PendingRegen);
-        Hud.SetEnergy(0, 0, Player.Qi, Player.MaxQi);
+        Hud.SetEnergy(0, 0, Player.Ki, Player.MaxKi);
         Hud.SetCharge(Player.ChargeInvested, Player.ChargeCost);
         Hud.SetReinforce(Player.ReinforceCharges);
         Hud.SetHands(Bindings.F($"espada · {Story.Book.Count} páginas no Livro ([book])"));
@@ -417,7 +417,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         else if (e.IsActionPressed("inventory")) { RefreshInventory(); Hud.ShowInventory(true); Player.InputLocked = true; Sfx.Play("page"); }
         else if (e.IsActionPressed("lock")) ToggleLock();
         else if (e.IsActionPressed("use")) { var s = NearSpot(); if (s != null) Interact(s); else return; }
-        else if (e.IsActionPressed("qi")) Player.BeginQi();
+        else if (e.IsActionPressed("ki")) Player.BeginKi();
         else if (e.IsActionPressed("heal")) UseItem("balsamo");
         else return;
         GetViewport().SetInputAsHandled();
@@ -447,7 +447,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         return new PlainsHud.Row(false, e.Id, $"{name} ×{e.Count}{(use ? Bindings.F("  [[use]: usar]") : "")}", Bindings.F(desc), true, Icon: e.Id, Count: e.Count, Action: use ? "Usar" : "", Name: name);
     }).Prepend(new PlainsHud.Row(false, "espada", "Espada  [na mão]", ValeItems.Of("espada").Desc, false, "Equipamento", Icon: "espada", Count: 1, Equipped: true, Action: "Na mão", Name: "Espada")).ToList());
 
-    /// <summary>Uses a prologue item (the balm heals, the qi stone fills the Qi). Returns true when used.</summary>
+    /// <summary>Uses a prologue item (the balm heals, the ki stone fills the Ki). Returns true when used.</summary>
     public bool UseItem(string id)
     {
         if (Inventory.Count(id) <= 0) { if (id == "balsamo") Hud.Toast("Nenhum bálsamo."); return false; }
@@ -456,7 +456,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
             if (Player.Health >= Player.MaxHealth) { Hud.Toast("Sua vida já está cheia."); return false; }
             Player.Heal(4); Fx.Burst(Player.GlobalPosition + new Vector2(0, -18), 10, new Color("#7fe0a8"), 60, 0.5f, 2);
         }
-        else if (id == "pedra") { Player.Qi = Player.MaxQi; Fx.Burst(Player.GlobalPosition + new Vector2(0, -18), 12, new Color("#a6f2e2"), 70, 0.5f, 2); }
+        else if (id == "pedra") { Player.Ki = Player.MaxKi; Fx.Burst(Player.GlobalPosition + new Vector2(0, -18), 12, new Color("#a6f2e2"), 70, 0.5f, 2); }
         else return false;
         Inventory.Remove(id); Sfx.Play("chime"); Hud.Toast($"Usou {ValeItems.Of(id).Name}.");
         return true;
@@ -477,10 +477,10 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
             if (!f.Alive || _hitThisSwing.Contains(f.Id)) continue;
             if (!Player.InBladeArc(origin, dir, r, Player.BladeArcDegrees, f.GlobalPosition, f.Radius)) continue;
             _hitThisSwing.Add(f.Id);
-            // the Reforço de Qi: +10% damage (fractional, no rounding) and one break roll against the guard met
+            // the Reforço de Ki: +10% damage (fractional, no rounding) and one break roll against the guard met
             float dmg = damage * Player.StrikeScale;
             bool breaks = f.Type != ValeFighter.Kind.Statue && f.WouldParry(origin) && Player.RollReinforceBreak();
-            string res = StrikeFighter(f, origin, dmg, breaks, breaks ? Tech.Data.QiReinforce.Full.Stagger : 0, Player.HeavyCut, melee: true);
+            string res = StrikeFighter(f, origin, dmg, breaks, breaks ? Tech.Data.KiReinforce.Full.Stagger : 0, Player.HeavyCut, melee: true);
             if (breaks && res is "hit" or "killed") Fx.Say(f.GlobalPosition + new Vector2(0, -58), "guarda rompida", ValeTerrain.Learn, 1.2f);
             if (Player.Current == Player.ActionKind.Recoil) return; // parried: the recoil replaced the cut
         }
@@ -582,9 +582,9 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         p.QueueFree();
     }
 
-    private void OnQi(Player.QiShot shot)
+    private void OnKi(Player.KiShot shot)
     {
-        var w = new QiWave { Shot = shot, GlobalPosition = shot.Origin, ZIndex = 10 };
+        var w = new KiWave { Shot = shot, GlobalPosition = shot.Origin, ZIndex = 10 };
         AddChild(w); _waves.Add(w);
         if (shot.Lamina) TriggerLamina();
     }
@@ -608,7 +608,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
                     if (w.Shot.Breaks && guarded && f.Type != ValeFighter.Kind.Statue && r is "hit" or "killed")
                     {
                         Fx.Say(f.GlobalPosition + new Vector2(0, -58), "guarda rompida", ValeTerrain.Learn, 1.2f);
-                        if (Story.Once("chargeBreak")) Hud.Toast("O Qi concentrado rompe a guarda. Ataque agora!");
+                        if (Story.Once("chargeBreak")) Hud.Toast("O Ki concentrado rompe a guarda. Ataque agora!");
                     }
                     if (r == "parried" && !w.Shot.Lamina && !w.Shot.Breaks) w.Stop();
                 }
@@ -622,20 +622,20 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     // the first charged shot reveals the secret technique: the banner and a page in the book
     private void OnSecret(string id)
     {
-        if (id == "qi_reinforce")
+        if (id == "ki_reinforce")
         {
-            if (Story.Book.Any(b => b.Tech == "qi_reinforce")) return;
-            Story.AddBook(new BookEntry { Name = Tech.Data.QiReinforce.Name, Kind = "técnica", Key = "modificador + corte", Where = $"Descoberta por você: {ValeMap.AreaName(Player.GlobalPosition)}. O Qi percorre a lâmina.", Tech = "qi_reinforce", State = "Plena" });
-            Tech.Set("qi_reinforce", TechniqueState.Full);
-            Hud.Banner(Tech.Data.QiReinforce.Name, 2.6f);
+            if (Story.Book.Any(b => b.Tech == "ki_reinforce")) return;
+            Story.AddBook(new BookEntry { Name = Tech.Data.KiReinforce.Name, Kind = "técnica", Key = "modificador + corte", Where = $"Descoberta por você: {ValeMap.AreaName(Player.GlobalPosition)}. O Ki percorre a lâmina.", Tech = "ki_reinforce", State = "Plena" });
+            Tech.Set("ki_reinforce", TechniqueState.Full);
+            Hud.Banner(Tech.Data.KiReinforce.Name, 2.6f);
             Sfx.Play("learn");
             return;
         }
-        if (id != "qi_charge" || Story.Book.Any(b => b.Tech == "qi_charge")) return;
-        Story.AddBook(new BookEntry { Name = Tech.Data.QiCharge.Name, Kind = "técnica", Key = "segurar Qi, soltar", Where = $"Descoberta por você: {ValeMap.AreaName(Player.GlobalPosition)}. O Qi se junta na palma enquanto o botão fica preso.", Tech = "qi_charge", State = "Plena" });
-        Tech.Set("qi_charge", TechniqueState.Full);
-        Hud.Banner(Tech.Data.QiCharge.Name, 2.8f);
-        Hud.Toast(Bindings.F("Técnica secreta descoberta: segurar [qi] concentra o Qi; soltar dispara. Veja o Livro ([book])."));
+        if (id != "ki_charge" || Story.Book.Any(b => b.Tech == "ki_charge")) return;
+        Story.AddBook(new BookEntry { Name = Tech.Data.KiCharge.Name, Kind = "técnica", Key = "segurar Ki, soltar", Where = $"Descoberta por você: {ValeMap.AreaName(Player.GlobalPosition)}. O Ki se junta na palma enquanto o botão fica preso.", Tech = "ki_charge", State = "Plena" });
+        Tech.Set("ki_charge", TechniqueState.Full);
+        Hud.Banner(Tech.Data.KiCharge.Name, 2.8f);
+        Hud.Toast(Bindings.F("Técnica secreta descoberta: segurar [ki] concentra o Ki; soltar dispara. Veja o Livro ([book])."));
         Sfx.Play("learn");
     }
 
@@ -648,7 +648,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         Hud.Banner("Passo da Lâmina Silenciosa", 2.6f);
         if (first)
         {
-            Story.AddBook(new BookEntry { Name = "Passo da Lâmina Silenciosa", Kind = "combinação", Key = "passo lateral → corte → Qi", Where = $"Descoberta por você: {ValeMap.AreaName(Player.GlobalPosition)}. O Qi segue o corte e quebra a guarda.", Tech = "lamina", State = "Plena" });
+            Story.AddBook(new BookEntry { Name = "Passo da Lâmina Silenciosa", Kind = "combinação", Key = "passo lateral → corte → Ki", Where = $"Descoberta por você: {ValeMap.AreaName(Player.GlobalPosition)}. O Ki segue o corte e quebra a guarda.", Tech = "lamina", State = "Plena" });
             Tech.Set("lamina", TechniqueState.Full);
         }
         DoneQuest("lamina");
@@ -697,7 +697,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         ["guarda"] = ("A guarda fechada", "O discípulo da ponte apara tudo o que vem de frente. Deve haver um jeito."),
         ["manual"] = ("O manual dividido", "A anotação na margem fala do túmulo da mestra, entre as pedras gêmeas."),
         ["senior"] = ("O Espadachim Sênior", "Além do portão, o mestre do acampamento espera."),
-        ["lamina"] = ("A lâmina que segue o passo", "“O qi caminha atrás da lâmina que segue o passo.”"),
+        ["lamina"] = ("A lâmina que segue o passo", "“O ki caminha atrás da lâmina que segue o passo.”"),
     };
 
     private void TakeQuest(string id)
@@ -762,9 +762,9 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
                 break;
             case "stele":
                 Story.SteleRead = true;
-                AddClue("inscricao", "\"O qi caminha atrás da lâmina que segue o passo.\" (inscrição além da fenda)", ValeMap.Stele);
-                Panel("Inscrição", "“A lâmina que segue o passo não faz ruído.", "O qi caminha atrás dela.”");
-                Story.AddBook(new BookEntry { Name = "Inscrição da fenda", Kind = "fragmento", Where = "Além da Fenda: “O qi caminha atrás da lâmina que segue o passo.”" });
+                AddClue("inscricao", "\"O ki caminha atrás da lâmina que segue o passo.\" (inscrição além da fenda)", ValeMap.Stele);
+                Panel("Inscrição", "“A lâmina que segue o passo não faz ruído.", "O ki caminha atrás dela.”");
+                Story.AddBook(new BookEntry { Name = "Inscrição da fenda", Kind = "fragmento", Where = "Além da Fenda: “O ki caminha atrás da lâmina que segue o passo.”" });
                 if (!Story.ComboFound) TakeQuest("lamina");
                 break;
             case "chest":
@@ -798,7 +798,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     {
         Story.LearnedSide = true; _reveal = 3.2f; Sfx.Play("learn");
         Player.InputLocked = true;
-        Player.Revive(); Player.Qi = Player.MaxQi; // the breath settles at the master's feet
+        Player.Revive(); Player.Ki = Player.MaxKi; // the breath settles at the master's feet
         Story.AddBook(new BookEntry { Name = "Passo Lateral", Kind = "técnica", Key = "L + lado do alvo (com alvo travado)", Where = "Túmulo da Mestra do Vale Nublado: as pegadas ao lado do corte na pedra.", Tech = "side_step", State = "Plena" });
         Story.AddBook(new BookEntry { Name = "Passo longo", Kind = "técnica", Key = "sem trava: direção + L", Where = "Nasce do passo lateral. Atravessa o que o passo curto não alcança.", Tech = "dash", State = "Plena" });
         var shortStep = Story.Book.FirstOrDefault(b => b.Name == "Passo curto"); if (shortStep != null) shortStep.Where = "Sua arte de origem: para frente ou para trás.";
@@ -826,7 +826,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     private void RespawnPlayer()
     {
         Story.Deaths++;
-        Player.GlobalPosition = Respawn; Player.Revive(); Player.Qi = Player.MaxQi;
+        Player.GlobalPosition = Respawn; Player.Revive(); Player.Ki = Player.MaxKi;
         Lock = null;
         foreach (var w in _waves) w.QueueFree();
         _waves.Clear();
@@ -848,7 +848,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
             Region = "vale", Phase = phase, Seed = 0,
             Spot = new[] { ValeMap.Meditate.X, ValeMap.Meditate.Y + 10 },
             Vale = Story, ValeInventory = Inventory.Entries.Select(e => new SavedItem { Id = e.Id, Count = e.Count }).ToList(),
-            Book = Story.Book, Equipped = "sword", Health = Player.Health, Qi = Player.Qi, Level = 1,
+            Book = Story.Book, Equipped = "sword", Health = Player.Health, Ki = Player.Ki, Level = 1,
         };
     }
 
@@ -856,7 +856,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     {
         if (Fighters.Values.Any(f => f.Alive && f.Type != ValeFighter.Kind.Statue && f.State is ValeFighter.St.Guard or ValeFighter.St.Windup or ValeFighter.St.Strike or ValeFighter.St.Advance && f.GlobalPosition.DistanceTo(Player.GlobalPosition) < 260))
         { Hud.Toast("Não dá para meditar com um inimigo em guarda por perto."); return; }
-        Player.Qi = Player.MaxQi; _decals.Meditated = 1.6f; Sfx.Play("chime");
+        Player.Ki = Player.MaxKi; _decals.Meditated = 1.6f; Sfx.Play("chime");
         bool ok = SaveGame.Write(SavePath, Snapshot());
         if (ok) { Hud.Toast("Meditação gravada."); Hud.Toast("Se cair em duelo, volta à trilha. Se fechar o jogo, volta a esta pedra."); }
         else Hud.Toast("A meditação não foi gravada: não foi possível escrever o arquivo.");

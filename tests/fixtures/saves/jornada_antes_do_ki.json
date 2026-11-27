@@ -1,0 +1,162 @@
+{
+  "game": "spiritofmurin",
+  "format": 2,
+  "region": "planicie",
+  "saved_at": "2026-11-27T00:39:47",
+  "seed": 20261126,
+  "spot": [
+    48,
+    -32
+  ],
+  "collected": [],
+  "dead": {
+    "rabbit@-15,-3": [
+      -437.92844,
+      -96.60752
+    ],
+    "rabbit@-9,-5": [
+      -282.25565,
+      -219.14513
+    ]
+  },
+  "parts_taken": [
+    "rabbit@-15,-3#hide"
+  ],
+  "trails": [],
+  "inventory": [
+    {
+      "id": "faca_pedra",
+      "count": 1
+    },
+    {
+      "id": "pele_fina",
+      "count": 1
+    }
+  ],
+  "equipped": "knife",
+  "health": 8,
+  "vigor": 50,
+  "qi": 100,
+  "level": 4,
+  "xp": 8,
+  "points": 4,
+  "total_xp": 63,
+  "attributes": {
+    "vit": 0,
+    "int": 0,
+    "con": 0,
+    "agi": 0,
+    "sor": 0,
+    "qi": 0
+  },
+  "practice": {
+    "esfolar": 2,
+    "preparo": 0,
+    "erboristeria": 0,
+    "rastreamento": 0
+  },
+  "practice_keys": [
+    "esfolar:fixture",
+    "esfolar:rabbit@-15,-3"
+  ],
+  "crafted": [],
+  "phase": "planicie",
+  "vale": null,
+  "vale_inventory": [],
+  "book": [
+    {
+      "name": "Corte",
+      "kind": "t\u00E9cnica",
+      "key": "J / clique esquerdo",
+      "where": "Sua arte de origem. Encadeia at\u00E9 tr\u00EAs golpes.",
+      "tech": "",
+      "state": ""
+    },
+    {
+      "name": "Estocada",
+      "kind": "t\u00E9cnica",
+      "key": "frente \u002B J (com alvo travado)",
+      "where": "Sua arte de origem: com o alvo travado, avan\u00E7a a l\u00E2mina.",
+      "tech": "thrust",
+      "state": "Enfraquecida"
+    },
+    {
+      "name": "Disparo de Qi",
+      "kind": "t\u00E9cnica",
+      "key": "K",
+      "where": "Sua arte de origem: uma onda de qi lan\u00E7ada da palma.",
+      "tech": "qi_wave",
+      "state": "Enfraquecida"
+    },
+    {
+      "name": "Passo curto",
+      "kind": "t\u00E9cnica",
+      "key": "L / clique direito",
+      "where": "Sua arte de origem: s\u00F3 para frente ou para tr\u00E1s.",
+      "tech": "",
+      "state": ""
+    },
+    {
+      "name": "Passo Lateral",
+      "kind": "t\u00E9cnica",
+      "key": "L \u002B lado do alvo",
+      "where": "",
+      "tech": "side_step",
+      "state": "Enfraquecida"
+    },
+    {
+      "name": "Passo longo",
+      "kind": "t\u00E9cnica",
+      "key": "dire\u00E7\u00E3o \u002B L",
+      "where": "",
+      "tech": "dash",
+      "state": "Enfraquecida"
+    },
+    {
+      "name": "Passo da L\u00E2mina Silenciosa",
+      "kind": "combina\u00E7\u00E3o",
+      "key": "passo lateral \u2192 corte \u2192 Qi",
+      "where": "",
+      "tech": "lamina",
+      "state": "Enfraquecida"
+    }
+  ],
+  "loss_applied": true,
+  "techniques_returned": true,
+  "explored": [
+    [
+      0,
+      0
+    ],
+    [
+      -2,
+      0
+    ],
+    [
+      -1,
+      0
+    ],
+    [
+      -1,
+      -1
+    ],
+    [
+      0,
+      -1
+    ]
+  ],
+  "markers": [],
+  "hour": 8.705984,
+  "coins": 0,
+  "clues": [
+    {
+      "id": "tecnicas",
+      "text": "N\u00EDvel 3: as t\u00E9cnicas do Vale voltaram, enfraquecidas. O Livro mostra o custo e o alcance.",
+      "at": [
+        16,
+        16
+      ],
+      "toward": []
+    }
+  ]
+}

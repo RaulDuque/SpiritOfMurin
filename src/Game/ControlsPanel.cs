@@ -59,7 +59,7 @@ public partial class ControlsPanel : Control
         {
             case "aim":
                 Aim.ByMouse = !Aim.ByMouse;
-                Message = Aim.ByMouse ? "Mira pelo mouse: sem alvo travado, o golpe e o Qi vão para o cursor." : "Mira pela direção do personagem (só teclado): o golpe vai para onde você anda.";
+                Message = Aim.ByMouse ? "Mira pelo mouse: sem alvo travado, o golpe e o Ki vão para o cursor." : "Mira pela direção do personagem (só teclado): o golpe vai para onde você anda.";
                 break;
             case "restore": Bindings.Restore(); Message = "Controles restaurados para os padrões."; break;
             case "list": ListRequested?.Invoke(); break;

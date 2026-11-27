@@ -5,7 +5,7 @@ O `PainelDeTestes.exe`, na raiz do projeto, abre uma janela com botões:
 | Botão | O que faz |
 |---|---|
 | **▶ Jogar** | **Compila o código** e abre o jogo com a sua jornada normal |
-| **Vitrine (personagem e mobs)** | Compila e abre a vitrine: o protagonista nas 8 direções, com faca, mãos vazias, ajoelhado e deitado; um boneco que você controla (andar, corte, passo, Qi); discípulo, Sênior e estátua em todas as poses e caídos; javali e coelho. Comandos: roda dá zoom, botão direito arrasta a vista, R volta o boneco, Esc sai |
+| **Vitrine (personagem e mobs)** | Compila e abre a vitrine: o protagonista nas 8 direções, com faca, mãos vazias, ajoelhado e deitado; um boneco que você controla (andar, corte, passo, Ki); discípulo, Sênior e estátua em todas as poses e caídos; javali e coelho. Comandos: roda dá zoom, botão direito arrasta a vista, R volta o boneco, Esc sai |
 | **Rodar todos os testes (com janela)** | Roda todos os testes automáticos; você assiste o jogo se jogar sozinho no monitor escolhido |
 | **Rodar prólogo + recuperação (com janela)** | Só o Vale, a recuperação do protótipo e a unidade (mais curto) |
 | **Rodar todos sem janela (rápido)** | Os mesmos testes, sem abrir a janela do jogo; pula os poucos que só funcionam com janela |

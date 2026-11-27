@@ -3,47 +3,47 @@
     "about": "Técnicas do prólogo em duas versões: plena (Vale) e enfraquecida (volta na Planície no nível unlock_level depois de seladas). Lido por src/Combat/TechniqueData.cs. Esquema em design/gdd/campaign-prologue.md.",
     "unlock_level": "nível da Planície em que as técnicas seladas voltam enfraquecidas",
     "<técnica>.full / .weak": "valores da versão plena e da enfraquecida",
-    "qi_cost / vigor_cost": "custo de Qi e de vigor de cada uso (o vigor só existe na Planície: no Vale o custo de vigor é ignorado)",
+    "ki_cost / vigor_cost": "custo de Ki e de vigor de cada uso (o vigor só existe na Planície: no Vale o custo de vigor é ignorado)",
     "damage": "dano em pontos (corte da espada = 2, faca = 1; discípulo 12 pontos de vida, Sênior 20, javali 5)",
-    "range / speed": "disparo de Qi: alcance em px e velocidade em px/s",
+    "range / speed": "disparo de Ki: alcance em px e velocidade em px/s",
     "distance": "passo longo: px percorridos",
     "angle / time / iframes / radius_min / radius_max": "passo lateral: graus que contorna o alvo travado, duração, invulnerabilidade, raio mínimo e máximo da volta (px)",
     "reach / lunge": "estocada: alcance (px) e avanço do corpo (px)",
-    "combo_window": "Passo da Lâmina Silenciosa: segundos entre passo lateral → corte → Qi",
+    "combo_window": "Passo da Lâmina Silenciosa: segundos entre passo lateral → corte → Ki",
     "stagger": "Passo da Lâmina Silenciosa e Disparo Concentrado: segundos de guarda quebrada",
-    "qi_reinforce": "Reforço de Qi: segure o modificador (Shift) e aperte o corte. hold: segundos do gesto; qi_cost: gasto único ao completar; charges: golpes corpo a corpo reforçados (cada golpe executado gasta uma, mesmo errando; cada corte do combo conta); bonus: dano extra por golpe reforçado (fração, sem arredondar: a vida dos alvos aceita frações); chance: probabilidade de romper a guarda atingida, uma rolagem por golpe e guarda; stagger: segundos de guarda aberta na ruptura",
-    "qi_charge": "técnica secreta: segure o botão de Qi. qi_cost é o custo TOTAL da carga completa (já inclui o disparo); hold: segundos segurando antes de a carga começar (um toque mais curto é o disparo comum); drain: Qi por segundo puxado para a palma; damage: dano da carga completa (a parcial dá dano proporcional ao Qi investido, mínimo 1); só a carga completa rompe a guarda (stagger)"
+    "ki_reinforce": "Reforço de Ki: segure o modificador (Shift) e aperte o corte. hold: segundos do gesto; ki_cost: gasto único ao completar; charges: golpes corpo a corpo reforçados (cada golpe executado gasta uma, mesmo errando; cada corte do combo conta); bonus: dano extra por golpe reforçado (fração, sem arredondar: a vida dos alvos aceita frações); chance: probabilidade de romper a guarda atingida, uma rolagem por golpe e guarda; stagger: segundos de guarda aberta na ruptura",
+    "ki_charge": "técnica secreta: segure o botão de Ki. ki_cost é o custo TOTAL da carga completa (já inclui o disparo); hold: segundos segurando antes de a carga começar (um toque mais curto é o disparo comum); drain: Ki por segundo puxado para a palma; damage: dano da carga completa (a parcial dá dano proporcional ao Ki investido, mínimo 1); só a carga completa rompe a guarda (stagger)"
   },
   "unlock_level": 3,
-  "qi_wave": {
-    "name": "Disparo de Qi",
-    "full": { "qi_cost": 30, "vigor_cost": 0, "range": 210, "speed": 380, "damage": 2 },
-    "weak": { "qi_cost": 45, "vigor_cost": 10, "range": 105, "speed": 300, "damage": 1 }
+  "ki_wave": {
+    "name": "Disparo de Ki",
+    "full": { "ki_cost": 30, "vigor_cost": 0, "range": 210, "speed": 380, "damage": 2 },
+    "weak": { "ki_cost": 45, "vigor_cost": 10, "range": 105, "speed": 300, "damage": 1 }
   },
   "side_step": {
     "name": "Passo Lateral",
-    "full": { "qi_cost": 0, "vigor_cost": 0, "angle": 95, "time": 0.16, "iframes": 0.14, "radius_min": 46, "radius_max": 92 },
-    "weak": { "qi_cost": 15, "vigor_cost": 12, "angle": 55, "time": 0.18, "iframes": 0.08, "radius_min": 40, "radius_max": 70 }
+    "full": { "ki_cost": 0, "vigor_cost": 0, "angle": 95, "time": 0.16, "iframes": 0.14, "radius_min": 46, "radius_max": 92 },
+    "weak": { "ki_cost": 15, "vigor_cost": 12, "angle": 55, "time": 0.18, "iframes": 0.08, "radius_min": 40, "radius_max": 70 }
   },
   "dash": {
     "name": "Passo longo",
-    "full": { "qi_cost": 0, "vigor_cost": 0, "distance": 112, "time": 0.18 },
-    "weak": { "qi_cost": 10, "vigor_cost": 14, "distance": 60, "time": 0.16 }
+    "full": { "ki_cost": 0, "vigor_cost": 0, "distance": 112, "time": 0.18 },
+    "weak": { "ki_cost": 10, "vigor_cost": 14, "distance": 60, "time": 0.16 }
   },
   "thrust": {
     "name": "Estocada",
-    "full": { "qi_cost": 0, "vigor_cost": 0, "reach": 64, "lunge": 22, "damage": 2 },
-    "weak": { "qi_cost": 0, "vigor_cost": 8, "reach": 40, "lunge": 12, "damage": 1 }
+    "full": { "ki_cost": 0, "vigor_cost": 0, "reach": 64, "lunge": 22, "damage": 2 },
+    "weak": { "ki_cost": 0, "vigor_cost": 8, "reach": 40, "lunge": 12, "damage": 1 }
   },
-  "qi_reinforce": {
-    "name": "Reforço de Qi",
-    "full": { "qi_cost": 75, "vigor_cost": 0, "hold": 0.35, "charges": 3, "bonus": 0.10, "chance": 0.05, "stagger": 1.0 },
-    "weak": { "qi_cost": 75, "vigor_cost": 0, "hold": 0.35, "charges": 3, "bonus": 0.10, "chance": 0.05, "stagger": 1.0 }
+  "ki_reinforce": {
+    "name": "Reforço de Ki",
+    "full": { "ki_cost": 75, "vigor_cost": 0, "hold": 0.35, "charges": 3, "bonus": 0.10, "chance": 0.05, "stagger": 1.0 },
+    "weak": { "ki_cost": 75, "vigor_cost": 0, "hold": 0.35, "charges": 3, "bonus": 0.10, "chance": 0.05, "stagger": 1.0 }
   },
-  "qi_charge": {
-    "name": "Disparo de Qi Concentrado",
-    "full": { "qi_cost": 100, "vigor_cost": 0, "damage": 6, "range": 260, "speed": 420, "stagger": 1.4, "hold": 0.22, "drain": 90 },
-    "weak": { "qi_cost": 100, "vigor_cost": 15, "damage": 3, "range": 150, "speed": 340, "stagger": 0.8, "hold": 0.22, "drain": 70 }
+  "ki_charge": {
+    "name": "Disparo de Ki Concentrado",
+    "full": { "ki_cost": 100, "vigor_cost": 0, "damage": 6, "range": 260, "speed": 420, "stagger": 1.4, "hold": 0.22, "drain": 90 },
+    "weak": { "ki_cost": 100, "vigor_cost": 15, "damage": 3, "range": 150, "speed": 340, "stagger": 0.8, "hold": 0.22, "drain": 70 }
   },
   "lamina": {
     "name": "Passo da Lâmina Silenciosa",

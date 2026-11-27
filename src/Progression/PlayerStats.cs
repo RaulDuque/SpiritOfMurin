@@ -5,19 +5,19 @@ using Godot;
 namespace SpiritOfMurin.Progression;
 
 /// <summary>
-/// The character's level, XP, unspent points and the six attributes (VIT, INT, CON, AGI, SOR, QI),
+/// The character's level, XP, unspent points and the six attributes (VIT, INT, CON, AGI, SOR, KI),
 /// with every derived number. Pure logic (no nodes), fed by <see cref="ProgressionData"/>.
 /// </summary>
 public sealed class PlayerStats
 {
     /// <summary>Attribute ids in sheet order.</summary>
-    public static readonly string[] AttributeIds = { "vit", "int", "con", "agi", "sor", "qi" };
+    public static readonly string[] AttributeIds = { "vit", "int", "con", "agi", "sor", "ki" };
 
     /// <summary>Short and long names of each attribute.</summary>
     public static readonly Dictionary<string, (string Short, string Long)> Names = new()
     {
         ["vit"] = ("VIT", "Vitalidade"), ["int"] = ("INT", "Inteligência"), ["con"] = ("CON", "Constituição"),
-        ["agi"] = ("AGI", "Agilidade"), ["sor"] = ("SOR", "Sorte"), ["qi"] = ("QI", "Energia espiritual"),
+        ["agi"] = ("AGI", "Agilidade"), ["sor"] = ("SOR", "Sorte"), ["ki"] = ("KI", "Energia espiritual"),
     };
 
     private readonly ProgressionData _d;
@@ -97,8 +97,8 @@ public sealed class PlayerStats
     public float RecoveryMultiplier => 1 - Agi(_d.PerPoint.AgiRecovery);
     /// <summary>Chance of a secondary material.</summary>
     public float SecondaryChance => Mathf.Min(0.9f, _d.Base.SecondaryChance + Get("sor") * _d.PerPoint.SorSecondaryChance);
-    /// <summary>Maximum Qi.</summary>
-    public float MaxQi => _d.Base.MaxQi + Get("qi") * _d.PerPoint.QiMaxQi;
+    /// <summary>Maximum Ki.</summary>
+    public float MaxKi => _d.Base.MaxKi + Get("ki") * _d.PerPoint.KiMaxKi;
 
     /// <summary>
     /// What one more point in <paramref name="attr"/> changes, as lines "label: now → after", computed by
@@ -115,7 +115,7 @@ public sealed class PlayerStats
             "con" => new() { $"Vigor máximo: {MaxVigor:0} → {after.MaxVigor:0}", $"Recuperação do vigor: {VigorRegen:0.0}/s → {after.VigorRegen:0.0}/s" },
             "agi" => new() { $"Velocidade ao andar: {P(MoveSpeedMultiplier)} → {P(after.MoveSpeedMultiplier)}", $"Distância do passo: {P(StepDistanceMultiplier)} → {P(after.StepDistanceMultiplier)}", $"Tempo de recuperação do corte e do passo: {P(RecoveryMultiplier)} → {P(after.RecoveryMultiplier)}" },
             "sor" => new() { $"Chance de material secundário (tendão na caça, uma planta ou lasca a mais na coleta): {P(SecondaryChance)} → {P(after.SecondaryChance)}" },
-            "qi" => new() { $"Qi máximo: {MaxQi:0} → {after.MaxQi:0}", $"Esfolas com Qi seguidas (custo {_d.Base.QiPreserveCost:0}): {Mathf.FloorToInt(MaxQi / _d.Base.QiPreserveCost)} → {Mathf.FloorToInt(after.MaxQi / _d.Base.QiPreserveCost)}" },
+            "ki" => new() { $"Ki máximo: {MaxKi:0} → {after.MaxKi:0}", $"Esfolas com Ki seguidas (custo {_d.Base.KiPreserveCost:0}): {Mathf.FloorToInt(MaxKi / _d.Base.KiPreserveCost)} → {Mathf.FloorToInt(after.MaxKi / _d.Base.KiPreserveCost)}" },
             _ => new(),
         };
     }

@@ -25,13 +25,13 @@ public sealed class GamePanels
     {
         "[walk] (ou setas): andar · [sneak]: andar quieto (na Planície)",
         "[cut+]: corte (aperte de novo para encadear) · [step+]: passo",
-        "[lock]: travar no alvo / focar animal · [qi]: Qi (esfolar com Qi junto à carcaça)",
+        "[lock]: travar no alvo / focar animal · [ki]: Ki (esfolar com Ki junto à carcaça)",
         "[use]: pegar, examinar, interagir · [heal]: bálsamo ou erva da bolsa",
         "[inventory+]: inventário · [sheet]: ficha · [book]: Livro de Técnicas · [map]: mapa",
         "[menu+]: pausa · [fullscreen]: tela cheia",
         "Técnicas do Vale: frente + [cut] com trava (estocada) · lado + [step] com trava (passo lateral)",
         "direção + [step] sem trava no Vale, [sneak] + direção + [step] na Planície (passo longo)",
-        "Passo da Lâmina Silenciosa: passo lateral → [cut] → [qi]",
+        "Passo da Lâmina Silenciosa: passo lateral → [cut] → [ki]",
         "No mapa: [walk] mover · roda ou +/− zoom · C centralizar · X ou clique: marcador",
     }.Select(Bindings.F).ToArray();
 

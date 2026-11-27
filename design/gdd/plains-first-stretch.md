@@ -64,7 +64,7 @@ O primeiro combate é uma lição de leitura. O javali avisa antes de investir, 
   - Um bloco montado de novo consulta essa memória: o que foi recolhido não volta, e o animal morto volta como carcaça.
 
 ### 3.2 Começo e ferramenta
-- O personagem acorda com Vida cheia (10 pontos) e as mãos vazias. O HUD mostra a Vida numa barra com porcentagem, no estilo da barra de Qi do protótipo. O trecho que a erva ainda vai devolver aparece em verde na barra. Com as mãos vazias, J ou o clique esquerdo não cortam: aparece um aviso.
+- O personagem acorda com Vida cheia (10 pontos) e as mãos vazias. O HUD mostra a Vida numa barra com porcentagem, no estilo da barra de Ki do protótipo. O trecho que a erva ainda vai devolver aparece em verde na barra. Com as mãos vazias, J ou o clique esquerdo não cortam: aparece um aviso.
 - E recolhe o objeto mais próximo a até 26 px. A mensagem mostra o nome e a quantidade: "+1 Sílex (tem 1)". Cada objeto é recolhido uma única vez.
 - **Inventário (I ou Tab):**
   - Lista os itens com a quantidade e, em seguida, as receitas.
@@ -160,7 +160,7 @@ O primeiro combate é uma lição de leitura. O javali avisa antes de investir, 
   - `RabbitTuning.tres`;
   - `BoarTuning.tres`.
 - **Mapa de entradas:** `tools/godot/setup_input.gd` acrescenta `inventory` (I, Tab) e `sneak` (Shift).
-- **Ampliado por** `design/gdd/plains-progression.md` (2026-11-26): nível, atributos, proficiências, trilhas, partes da carcaça por grau de Esfolar, fogueira, bolsa, Meditar e Continuar. O que ele mudou aqui: a erva passa a ter qualidade pela Erboristeria, a pele depende do Esfolar e o HUD ganha vigor, Qi e nível.
+- **Ampliado por** `design/gdd/plains-progression.md` (2026-11-26): nível, atributos, proficiências, trilhas, partes da carcaça por grau de Esfolar, fogueira, bolsa, Meditar e Continuar. O que ele mudou aqui: a erva passa a ter qualidade pela Erboristeria, a pele depende do Esfolar e o HUD ganha vigor, Ki e nível.
 - **Próximas dependências:** salvamento (Meditar e Continuar), espada simples no posto de vigia, ligação com o Vale de Bambus, carimbos de lugares feitos à mão.
 
 ## 7. Tuning Knobs

@@ -34,20 +34,20 @@ O corte gravado no túmulo da mestra e o rastro da lâmina do jogador têm o mes
 ### Princípio 2: O corpo diz antes da cor
 *Serve ao Pilar 4 (Maestria nas mãos) e à falha legível do Pilar 5 (Todo caminho é um Dao).*
 
-Os estados que o jogador precisa reconhecer para agir (repouso, guarda, início de corte) se leem por **três linhas do corpo**, nesta ordem: (1) a **silhueta** total (massa do tronco, abertura dos braços); (2) os **pés** (largura da base, peso adiantado ou recuado); (3) a **espada** (ângulo e altura da lâmina em relação ao corpo). Cor, brilho e qi só **confirmam**. O qi do jogador é desenhado atrás do contorno do inimigo em guarda, ou translúcido sobre ele; esse contorno fica sempre por cima. Na alquimia, a falha se lê primeiro pela **forma** da chama, depois pela cor.
+Os estados que o jogador precisa reconhecer para agir (repouso, guarda, início de corte) se leem por **três linhas do corpo**, nesta ordem: (1) a **silhueta** total (massa do tronco, abertura dos braços); (2) os **pés** (largura da base, peso adiantado ou recuado); (3) a **espada** (ângulo e altura da lâmina em relação ao corpo). Cor, brilho e ki só **confirmam**. O ki do jogador é desenhado atrás do contorno do inimigo em guarda, ou translúcido sobre ele; esse contorno fica sempre por cima. Na alquimia, a falha se lê primeiro pela **forma** da chama, depois pela cor.
 
 - O espadachim-cultivador e o Discípulo da Guarda Fechada se distinguem pela silhueta **em escala de cinza**. Se só a paleta os separa, o desenho não está pronto.
 - Repouso, guarda e início de corte diferem em **pelo menos duas das três linhas** (ex.: repouso com pé à frente, peso atrás e lâmina baixa a ~27°, fora da silhueta da perna; guarda com base aberta, joelhos flexionados e lâmina erguida diante do tronco; início de corte com o peso passando ao pé da frente e a lâmina saindo do eixo do corpo). Pés juntos não são repouso de combatente: ficam reservados ao NPC neutro (Seção 5.2). Medidas por estado na Seção 5.4.
 
-*Teste de design:* quando dois estados ou dois personagens estiverem ambíguos, **mudar a pose (pés, tronco, lâmina), nunca só a cor**. Aprovação: reconhecer o estado em escala de cinza, em 1–2 quadros, com o qi do jogador ativo na tela.
-*Alternativa descartada:* estados de combate indicados por cor ou brilho. Mais rápido de produzir, mas falha para daltônicos, some sob o qi e troca reconhecimento de postura por reflexo de cor.
+*Teste de design:* quando dois estados ou dois personagens estiverem ambíguos, **mudar a pose (pés, tronco, lâmina), nunca só a cor**. Aprovação: reconhecer o estado em escala de cinza, em 1–2 quadros, com o ki do jogador ativo na tela.
+*Alternativa descartada:* estados de combate indicados por cor ou brilho. Mais rápido de produzir, mas falha para daltônicos, some sob o ki e troca reconhecimento de postura por reflexo de cor.
 
 ### Princípio 3: Ciano-branco é só para o que se aprende
 *Serve ao Pilar 1 (Aprender é a recompensa), com o limite do Pilar 2 (O estilo é seu).*
 
 O **ciano-branco** é exclusivo do conhecimento que se pode aprender: cortes gravados, pegadas, inscrições, e o instante em que o rastro do jogador coincide com uma marca. Nada decorativo, de interface comum ou de recompensa comum usa esse tom: ver ciano-branco significa sempre "aqui há algo para aprender". Limite do Pilar 2: a pista mostra **um fragmento** (um trecho do corte, uma pegada, uma postura), nunca a sequência completa.
 
-**Cor do rastro decidida:** o rastro da lâmina usa a **cor do qi do jogador** (que muda com o caminho dele) e mantém a **forma** da pedra. Ele só acende em **ciano-branco no instante em que coincide com uma marca conhecida** (no reconhecimento ou na primeira execução de uma técnica aprendida). A forma liga o rastro à pedra; a cor liga o rastro ao estilo do jogador; o ciano-branco fica guardado para o momento de aprender.
+**Cor do rastro decidida:** o rastro da lâmina usa a **cor do ki do jogador** (que muda com o caminho dele) e mantém a **forma** da pedra. Ele só acende em **ciano-branco no instante em que coincide com uma marca conhecida** (no reconhecimento ou na primeira execução de uma técnica aprendida). A forma liga o rastro à pedra; a cor liga o rastro ao estilo do jogador; o ciano-branco fica guardado para o momento de aprender.
 
 *Teste de design:* um elemento só pode usar ciano-branco se o jogador puder aprender algo com ele; se for decoração, sai. Se a pista mostrar a combinação inteira, reduzir a um fragmento.
 *Alternativa descartada:* um realce genérico de interação igual para baús, portas e pistas. Dilui o significado: o jogador passaria a caçar brilho em vez de ler o mundo.
@@ -61,7 +61,7 @@ O **ciano-branco** é exclusivo do conhecimento que se pode aprender: cortes gra
 - **Luz-chave fixa no alto à esquerda** para o sombreamento de todos os sprites, em todas as áreas. A hora do dia muda o comprimento e a cor das sombras projetadas, nunca o lado da luz. *Por que:* sprites desenhados uma vez servem a todas as áreas, e a leitura de pés e lâmina (Princípio 2) não muda. *Descartado:* reiluminar por área ou luz dinâmica (multiplica o custo de arte e muda o volume aparente das poses).
 - **Hora do dia fixa por área, sem ciclo dia/noite.** A hora identifica a região ("a ponte é a da tarde"): serve ao Pilar 3 e impede que um pôr do sol invada o âmbar e o vermelho-ocre. *Descartado:* ciclo dinâmico (caro para um projeto solo; faz a paleta semântica colidir com a luz várias vezes por sessão).
 - **Ambiente sempre em contraste de valor baixo a médio** (L\* ~20–60). Contraste alto pertence a atores, pistas e efeitos.
-- **Partículas ambientes** (névoa, poeira, folhas, faíscas) nunca usam ciano-branco, vermelho-ocre, âmbar nem a cor do qi, e nunca passam por cima da camada de pistas nem do contorno de um inimigo em guarda.
+- **Partículas ambientes** (névoa, poeira, folhas, faíscas) nunca usam ciano-branco, vermelho-ocre, âmbar nem a cor do ki, e nunca passam por cima da camada de pistas nem do contorno de um inimigo em guarda.
 - **Escala de energia** de 1 (parado) a 5 (máximo): mede movimento e ritmo na tela, não intensidade emocional (a revelação tem energia 1 e intensidade máxima).
 
 ### Quadro-resumo
@@ -101,7 +101,7 @@ Princípio comum: **o mundo espera ser lido**. Nada pisca nem chama atenção; a
 
 ### Duelos
 
-Regras comuns: no duelo, **o mundo prende a respiração**. Vento e partículas param ou ficam bem mais lentos; o fundo cai um passo de valor e saturação; uma vinheta leve fecha as bordas; os atores ficam inalterados, então a separação figura-fundo cresce sem mudar os sprites. O vermelho-ocre aparece **só** como telegrafia, em lampejos curtos ligados à pose. O qi do jogador fica atrás do contorno do inimigo.
+Regras comuns: no duelo, **o mundo prende a respiração**. Vento e partículas param ou ficam bem mais lentos; o fundo cai um passo de valor e saturação; uma vinheta leve fecha as bordas; os atores ficam inalterados, então a separação figura-fundo cresce sem mudar os sprites. O vermelho-ocre aparece **só** como telegrafia, em lampejos curtos ligados à pose. O ki do jogador fica atrás do contorno do inimigo.
 
 **Discípulo da Guarda Fechada.** *Alvo:* pressão e frustração **justa**, que vira curiosidade ("como se passa por essa guarda?"). *Luz:* a da área, fundo um passo mais apagado, contraste médio. *Descritores:* tenso, fechado, repetitivo, próximo, abafado. *Energia:* 4. *Elemento:* o vento que para quando o duelo começa e o lampejo ocre que corre a borda da lâmina só quando ele prepara o contra-ataque (a lâmina deixa a diagonal da guarda e fica parada ≥ 2 quadros); fechar a guarda nunca acende ocre.
 
@@ -114,7 +114,7 @@ Regras comuns: no duelo, **o mundo prende a respiração**. Vento e partículas 
 
 ### Vitória
 
-*Alvo:* alívio contido e dignidade marcial. *Luz:* o fundo volta ao valor normal e esquenta um passo por um instante; vento e partículas voltam. *Descritores:* sereno, morno, aberto, respeitoso, breve. *Energia:* sobe a 3 no golpe final (hitstop) e assenta em 2. *Elemento:* **o inimigo baixa a guarda** (a linha da lâmina cai); quando o jogo reconhece uma combinação nomeada, o nome aparece em pincel sobre pergaminho e o selo vermelho o carimba (Pilar 3). *Opcional:* uma arte nomeada deixa um arco-cicatriz temporário no chão, na forma da Seção 1 e na cor do qi. *Descartado:* chuva de partículas douradas e números de dano grandes.
+*Alvo:* alívio contido e dignidade marcial. *Luz:* o fundo volta ao valor normal e esquenta um passo por um instante; vento e partículas voltam. *Descritores:* sereno, morno, aberto, respeitoso, breve. *Energia:* sobe a 3 no golpe final (hitstop) e assenta em 2. *Elemento:* **o inimigo baixa a guarda** (a linha da lâmina cai); quando o jogo reconhece uma combinação nomeada, o nome aparece em pincel sobre pergaminho e o selo vermelho o carimba (Pilar 3). *Opcional:* uma arte nomeada deixa um arco-cicatriz temporário no chão, na forma da Seção 1 e na cor do ki. *Descartado:* chuva de partículas douradas e números de dano grandes.
 
 ### Fornalha de alquimia (futuro)
 
@@ -126,7 +126,7 @@ Regras comuns: no duelo, **o mundo prende a respiração**. Vento e partículas 
 
 ### Título
 
-*Alvo:* contemplação e convite, promessa de caminho longo. *Luz:* alvorada fria, névoa baixa, luz pálida do alto à esquerda; contraste baixo; a peça mais clara é a pedra da estátua. *Descritores:* imóvel, enevoado, antigo, silencioso, aberto. *Energia:* 1. *Elemento:* **a estátua de pedra da mestra** com **um arco gravado** na base; o logotipo usa um traço de pincel que termina no mesmo arco, retraçado na cor base do qi ao começar o jogo. *Descartado:* protagonista em pose heroica com efeitos de qi.
+*Alvo:* contemplação e convite, promessa de caminho longo. *Luz:* alvorada fria, névoa baixa, luz pálida do alto à esquerda; contraste baixo; a peça mais clara é a pedra da estátua. *Descritores:* imóvel, enevoado, antigo, silencioso, aberto. *Energia:* 1. *Elemento:* **a estátua de pedra da mestra** com **um arco gravado** na base; o logotipo usa um traço de pincel que termina no mesmo arco, retraçado na cor base do ki ao começar o jogo. *Descartado:* protagonista em pose heroica com efeitos de ki.
 
 ## 3. Shape Language
 
@@ -184,7 +184,7 @@ Quase todo o ganho vai para as pernas, e é isso que permite a barra dividida, o
 - **Direção legível:** as duas pontas da lâmina são diferentes. Ponta: pixel mais claro e afinamento de 1 px. Cabo: guarda transversal de 4 px e empunhadura escura.
 - O traço do arquétipo sobrevive ao espelhamento e à vista de costas.
 
-*Teste (todos os atores):* a 1×, em escala de cinza, com qi ativo na tela, reconhecer arquétipo e estado em 1–2 quadros. Repetir com **preenchimento chapado** (todo o ator em preto): o arquétipo continua reconhecível. Reduzido a 50%, os arquétipos ainda se separam.
+*Teste (todos os atores):* a 1×, em escala de cinza, com ki ativo na tela, reconhecer arquétipo e estado em 1–2 quadros. Repetir com **preenchimento chapado** (todo o ator em preto): o arquétipo continua reconhecível. Reduzido a 50%, os arquétipos ainda se separam.
 
 ### Princípio 4: aberto contra fechado — o espaço negativo diz quem é quem
 
@@ -322,7 +322,7 @@ A cor vem **depois** da linha (Seção 1): ela confirma o que a forma já disse,
 
 ### Colisões encontradas no protótipo (motivo desta seção)
 
-1. O qi jade-ciano `#3fae9e` / `#a6f2e2` está na mesma faixa de matiz (171–177°) do ciano-branco do conhecimento, então o rastro que acende ao coincidir com uma marca não se destaca.
+1. O ki jade-ciano `#3fae9e` / `#a6f2e2` está na mesma faixa de matiz (171–177°) do ciano-branco do conhecimento, então o rastro que acende ao coincidir com uma marca não se destaca.
 2. A água `#2c5a5e` (~185°) é da família do ciano.
 3. A veste do jogador `#dce5d4` (L\* ~90) é vizinha do ciano-branco.
 4. A veste do sênior `#6e3027` é da família do vermelho-ocre da intenção hostil.
@@ -338,7 +338,7 @@ Todas são corrigidas abaixo.
 | **Ciano-branco** | `#d4fbf6` / `#6fd8d2` | conhecimento | marcas, pegadas e inscrições, e o instante do rastro coincidente |
 | **Vermelho-ocre** | `#c8502a` / `#e8834c` | intenção hostil | só lampejos de inimigo ligados à pose de ataque |
 | **Âmbar** | `#e2a640` / `#ffd27a` | alquimia e tesouro | objetos parados |
-| **Jade do qi** | `#24603f` / `#3f9e6a` / `#9be3b0` | o que o jogador emite | rastros, auras e técnicas do jogador |
+| **Jade do ki** | `#24603f` / `#3f9e6a` / `#9be3b0` | o que o jogador emite | rastros, auras e técnicas do jogador |
 | **Tinta** | `#16140f` (contorno de ator), `#2a2118` (texto e traço da UI) | — | contorno e escrita |
 | **Pergaminho e selo** | `#d8c7a0`, selo `#a8382a` | reconhecimento (selo) | só na UI |
 
@@ -347,7 +347,7 @@ Todas são corrigidas abaixo.
 ### 4.2 Faixas de valor e saturação
 
 - **Mundo:** L\* ~20–60, saturação ≤ 45%.
-- **Sinal** (ocre, âmbar, qi): L\* ~50–88, saturação ≥ 60%.
+- **Sinal** (ocre, âmbar, ki): L\* ~50–88, saturação ≥ 60%.
 - **Conhecimento:** L\* ≥ 90, frio — só o ciano-branco.
 - Nenhuma cor além do ciano-branco passa de L\* ~88.
 
@@ -358,22 +358,22 @@ Todas são corrigidas abaixo.
 - **Ciano-branco:** só em marcas, pegadas e inscrições, e no instante do rastro coincidente. Proibido em água, gelo, luar, brilhos, partículas e em **qualquer menu** (decidido; ver 4.6).
 - **Vermelho-ocre:** só no inimigo durante a intenção. Nunca em cenário, veste ou barra de vida.
 - **Âmbar:** em objetos parados. Só tinge o ambiente na fornalha.
-- **Jade do qi:** só no que o jogador emite. Vestes e cenário usam o **jade gasto** (4.4), nunca a rampa viva.
+- **Jade do ki:** só no que o jogador emite. Vestes e cenário usam o **jade gasto** (4.4), nunca a rampa viva.
 - **Selo:** só na UI, em formas grandes (contraste ~3,8:1 com o pergaminho).
 
-### 4.4 Qi e personagens
+### 4.4 Ki e personagens
 
-**Qi (decidido: jade verde ~145°).** Rampa de 3 passos: `#24603f` (L\* 36), `#3f9e6a` (L\* 58), `#9be3b0` (L\* 85).
+**Ki (decidido: jade verde ~145°).** Rampa de 3 passos: `#24603f` (L\* 36), `#3f9e6a` (L\* 58), `#9be3b0` (L\* 85).
 
 - **Zonas proibidas:** ciano (160–200°), qualquer L\* > 88, ocre (0–30° e 345–360°), âmbar (30–60°).
 - **Matizes permitidos por caminho:** jade (100–150°), azul-tempestade (210–240°, com o tom claro abaixo de L\* 75), violeta/ameixa (260–320°).
 - Mudar de caminho troca **só o matiz**. Os valores ficam fixos e a forma do rastro nunca muda. Elementos (fogo etc.) se expressam pela **forma**, nunca em ocre.
 - A rampa ocupa **3 índices fixos** da paleta: trocar de caminho é trocar a paleta, não redesenhar sprites.
-- **Inimigos não têm qi de cor própria.** O qi deles usa a cor de intenção (ocre, no ataque) ou um neutro escuro.
+- **Inimigos não têm ki de cor própria.** O ki deles usa a cor de intenção (ocre, no ataque) ou um neutro escuro.
 
 **Protagonista:**
 - **Túnica clara:** brilho `#d6d2bf` (L\* ~84), tom `#b3ad97` (~71), sombra `#8a846f` (~55). A túnica fica abaixo do ciano-branco (L\* ≥ 90) e não colide com ele.
-- **Faixa em jade gasto (decidido):** sombra `#3a5a4b`, tom `#4f7a64` (matiz ~150°, saturação ~21%, L\* 40–50). Ela se separa do qi pela saturação e pelo valor, e do musgo do chão pelo matiz. Futuro opcional: cada caminho ganha sua versão gasta (2 índices trocados junto com o qi), sem redesenhar sprites.
+- **Faixa em jade gasto (decidido):** sombra `#3a5a4b`, tom `#4f7a64` (matiz ~150°, saturação ~21%, L\* 40–50). Ela se separa do ki pela saturação e pelo valor, e do musgo do chão pelo matiz. Futuro opcional: cada caminho ganha sua versão gasta (2 índices trocados junto com o ki), sem redesenhar sprites.
 - **Calça escura:** L\* ~24–28, pelo menos 10 abaixo do chão (`#4c5a3e`, L\* ~36), para as pernas da barra dividida não sumirem.
 - **Lâmina contra a túnica:** o aço (L\* ~80) tem o valor da túnica. Quando a lâmina passa na frente do corpo (guarda, início de corte), ela leva contorno `#16140f` dos dois lados. Em repouso não há conflito, porque a lâmina fica fora do corpo.
 
@@ -410,16 +410,16 @@ A UI é **morna e clara**; o mundo é **verde-terroso médio-escuro**. A diverg�
 | Selo | `#a8382a` | ~3,8:1 (só formas grandes) |
 
 - **Sem ciano e sem ocre em menus** (decidido). O ciano continua exclusivo do mundo.
-- **HUD:** a barra de qi usa a rampa do qi. A barra de vida do **alvo** é neutra (tinta e pergaminho), nunca ocre nem vermelha.
+- **HUD:** a barra de ki usa a rampa do ki. A barra de vida do **alvo** é neutra (tinta e pergaminho), nunca ocre nem vermelha.
 - **Vida do jogador (decidido 2026-11-25):** losangos em **vermelho escuro gasto `#7a3a32`** quando cheios e tinta quando vazios, com contorno de tinta. Saturação baixa e valor baixo (L\* ~32), fora da faixa de sinal do ocre (L\* 50–88, saturação ≥ 60%). Só no HUD, nunca no mundo; a forma de losango carrega a informação sem depender da cor. Escolhido na prancha `user-docs/relatorios/2026-11-25-escolhas-visuais.html`.
 
 ### 4.7 Daltonismo: reforço para cada par de risco
 
 | Par que pode falhar | Quem é afetado | Reforço sem cor |
 |---|---|---|
-| Ocre × qi | protanopia, deuteranopia | o aviso é a mudança de pose; o qi fica atrás do contorno; o lampejo percorre a borda da lâmina; som de "aço que se prepara" |
+| Ocre × ki | protanopia, deuteranopia | o aviso é a mudança de pose; o ki fica atrás do contorno; o lampejo percorre a borda da lâmina; som de "aço que se prepara" |
 | Âmbar × ocre | protanopia, deuteranopia | âmbar só em objetos parados, com brilho em losango; ocre só em atores, como traço de borda; sons distintos |
-| Ciano × qi | tritanopia | o rastro sobrepõe a marca; salto de valor (85 → 96) e espessura (1 → 2 px); som de reconhecimento |
+| Ciano × ki | tritanopia | o rastro sobrepõe a marca; salto de valor (85 → 96) e espessura (1 → 2 px); som de reconhecimento |
 | Ciano × água | todos | água sem linha limpa, brilho dessaturado abaixo de L\* 70 |
 | Ciano × túnica do jogador | todos | túnica em L\* ≤ 84 |
 | Ocre × veste do sênior | todos | veste índigo-ardósia; o aviso é pose + lampejo 2 passos acima + som |
@@ -433,14 +433,14 @@ A UI é **morna e clara**; o mundo é **verde-terroso médio-escuro**. A diverg�
 
 **Paleta-mestra indexada de 64 cores (decidido).** **61 em uso e 3 de reserva** (aprovada em 2026-11-25; arquivo `assets/palettes/pal_master_64.gpl`, amostras em `assets/palettes/pal_master_64_swatches.png`, prancha `user-docs/relatorios/2026-11-25-paleta-mestra.html`).
 
-Distribuição: linha e neutros 4, musgo 5, terra 4, pedra 4, água 3, túmulo 3, pele 3, protagonista 7 (túnica 3, faixa 2, calça 2), discípulo 5 (corpo 2, palha 3), sênior 2, armas 4 (aço 3, bronze 1), ciano 2, ocre 2, âmbar 3, qi 3, interface 7 (pergaminho 3, tinta, aguada, selo, vida do jogador).
+Distribuição: linha e neutros 4, musgo 5, terra 4, pedra 4, água 3, túmulo 3, pele 3, protagonista 7 (túnica 3, faixa 2, calça 2), discípulo 5 (corpo 2, palha 3), sênior 2, armas 4 (aço 3, bronze 1), ciano 2, ocre 2, âmbar 3, ki 3, interface 7 (pergaminho 3, tinta, aguada, selo, vida do jogador).
 
-A saturação das faixas da Seção 4.2 é medida em HSV. Os brilhos das rampas de sinal (âmbar claro, qi claro) ficam abaixo de 60%, como é próprio do topo de uma rampa.
+A saturação das faixas da Seção 4.2 é medida em HSV. Os brilhos das rampas de sinal (âmbar claro, ki claro) ficam abaixo de 60%, como é próprio do topo de uma rampa.
 
-- **Rampas:** 3–5 passos, ~10–12 de L\* entre passos. O matiz se desloca (sombras 10–20° para o frio, brilhos 10–15° para o morno) e a saturação tem pico no tom médio. Rampas semânticas têm 2 passos (o qi tem 3).
+- **Rampas:** 3–5 passos, ~10–12 de L\* entre passos. O matiz se desloca (sombras 10–20° para o frio, brilhos 10–15° para o morno) e a saturação tem pico no tom médio. Rampas semânticas têm 2 passos (o ki tem 3).
 - **Pontilhado:** proibido em personagens; o ordenado é permitido só em grandes gradientes de ambiente.
 - **Translucidez:** só na camada de efeitos, em tempo de execução.
-- **Arquivos:** `.gpl` (lido pelo LibreSprite, pelo Pixelorama e pelo Krita) mais uma tira PNG de amostras. As trocas de qi ficam em `.gpl` de 3 índices. Exemplos: `pal_master_64.gpl`, `pal_qi_jade_3.gpl`.
+- **Arquivos:** `.gpl` (lido pelo LibreSprite, pelo Pixelorama e pelo Krita) mais uma tira PNG de amostras. As trocas de ki ficam em `.gpl` de 3 índices. Exemplos: `pal_master_64.gpl`, `pal_ki_jade_3.gpl`.
 
 ### 4.9 Valores de ajuste
 
@@ -456,7 +456,7 @@ Medidas e silhuetas estão na Seção 3 (Princípios 3 e 4). Esta seção define
 *Serve ao Pilar 2.*
 
 - É o único ator **aberto**: lâmina fora do eixo, base estreita em repouso, roupa clara e simples, sem insígnia de seita.
-- É o único com **túnica clara e faixa em jade gasto**, e o único que emite qi.
+- É o único com **túnica clara e faixa em jade gasto**, e o único que emite ki.
 - A identidade cresce pela **lâmina e pelo rastro, nunca pela roupa**. Sem troca de visual por equipamento no MVP: ela mudaria a silhueta que o jogador aprendeu a ler.
 
 *Teste:* uma mudança no visual do jogador altera a silhueta em preto chapado? Se altera, não entra.
@@ -468,7 +468,7 @@ Medidas e silhuetas estão na Seção 3 (Princípios 3 e 4). Esta seção define
 | Categoria | Lâmina | Base dos pés | Cor |
 |---|---|---|---|
 | **Inimigo** | desembainhada e visível em todos os quadros | aberta, de guarda | ocre só no instante da intenção |
-| **NPC neutro** | nenhuma linha de lâmina (embainhada, ausente ou só ferramenta) | pés juntos (base ≤ 6 px) | mãos visíveis; sem ocre e sem qi |
+| **NPC neutro** | nenhuma linha de lâmina (embainhada, ausente ou só ferramenta) | pés juntos (base ≤ 6 px) | mãos visíveis; sem ocre e sem ki |
 | **Estátua e figuras de mestres** | lâmina de pedra preenchida | pés esculpidos | regras de ambiente (Seção 3, 4.4) |
 
 - **Cada novo arquétipo de inimigo nasce de uma guarda:** uma silhueta de guarda nova, conferida em preto chapado contra a tabela da Seção 3. A guarda é o portão de conhecimento do Pilar 3; se duas guardas se confundem, o jogador não aprende a ler nenhuma.
@@ -596,7 +596,7 @@ Esta seção tem duas visões, escritas separadamente: a de **arte** e a de **UX
 
 - **Durante o jogo, o HUD é tinta sobre o mundo:** na tela (screen-space), nos cantos, com traços de pincel em tinta `#2a2118` translúcida e texto cor de pergaminho. Sem painel claro — seria a coisa mais clara da tela e brigaria com o ciano-branco.
 - **Menus** (livro de técnicas, inventário, mapa, teclas): rolo de pergaminho claro que ocupa a tela (Seções 2 e 4.6).
-- **Sem HUD diegético no MVP:** vida e qi no corpo do personagem cobririam a silhueta (Seção 1, Princípio 2).
+- **Sem HUD diegético no MVP:** vida e ki no corpo do personagem cobririam a silhueta (Seção 1, Princípio 2).
 
 *Teste:* um elemento de HUD durante o jogo é mais claro que o ciano-branco ou cobre um ator? Se sim, sai.
 
@@ -647,14 +647,14 @@ O combate exige leitura rápida de pose. **Nada de interface persistente nos 60%
 
 #### 7.8 Acessibilidade
 
-- **Cor nunca sozinha.** A barra de qi do protótipo muda só de cor quando há qi para uma técnica; ela precisa de uma **marca no limiar de custo**. A vida em losangos (forma) já está certa.
+- **Cor nunca sozinha.** A barra de ki do protótipo muda só de cor quando há ki para uma técnica; ela precisa de uma **marca no limiar de custo**. A vida em losangos (forma) já está certa.
 - **Lampejos** (ocre, revelação) não piscam mais de 3 vezes por segundo.
 - **Tremor de tela e congelamento no impacto** reduzíveis nas opções.
 - **Controle:** só teclado, com teclas remapeáveis (já no protótipo).
 
 #### 7.9 Retorno
 
-O jogador sempre sabe o que aconteceu e por quê: golpe que acertou, guarda que bloqueou, técnica reconhecida (selo), falta de qi (marca de limiar + som).
+O jogador sempre sabe o que aconteceu e por quê: golpe que acertou, guarda que bloqueou, técnica reconhecida (selo), falta de ki (marca de limiar + som).
 
 #### 7.10 Posição da UX sobre o rótulo de estado
 
@@ -694,7 +694,7 @@ Esta seção tem duas visões, escritas separadamente: a de **arte** e a **técn
 
 - Categorias: `char_`, `tile_`, `prop_`, `fx_`, `ui_`, `icon_`, `pal_`.
 - Direção: `s`, `n`, `e` (o `w` é espelhado em tempo de execução, Seção 5.5).
-- Exemplos: `char_swordsman_idle_s.png` (tira de quadros), `char_disciple_guard_e.png`, `fx_swordsman_cut_overflow_s.png`, `prop_statue_master.png`, `tile_grove_floor_02.png`, `pal_qi_jade_3.gpl`.
+- Exemplos: `char_swordsman_idle_s.png` (tira de quadros), `char_disciple_guard_e.png`, `fx_swordsman_cut_overflow_s.png`, `prop_statue_master.png`, `tile_grove_floor_02.png`, `pal_ki_jade_3.gpl`.
 
 #### 8.4 Tamanhos por categoria
 
@@ -744,7 +744,7 @@ Um quadro de 64×64 RGBA ocupa ~16 KB. Um personagem com 3 direções e ~40 quad
 
 - Tamanho máximo de atlas — padrão conservador provisório: folhas ≤ 2048×2048.
 - Importação de `.gpl` e de paleta indexada.
-- Troca de paleta do qi por shader ou por índice (Seção 4.4).
+- Troca de paleta do ki por shader ou por índice (Seção 4.4).
 - Técnica da silhueta através do cenário (8.11).
 
 Rever tudo no `/setup-engine`.
@@ -791,7 +791,7 @@ Nenhuma é pixel art de cima em 3/4 com 640×360, tiles 32×32 e quadros 64×64.
 
 **Evitar / divergir:**
 - **Rostos, trajes, penteados, acessórios, armas, insígnias de seita:** nada entra. Os personagens são originais (Seção 3, Princípio 3).
-- **Auras coloridas e brilho de qi por cima da figura:** violam "o qi nunca cobre a leitura" (Seção 1, Princípio 2) e a exclusividade de cor (4.3).
+- **Auras coloridas e brilho de ki por cima da figura:** violam "o ki nunca cobre a leitura" (Seção 1, Princípio 2) e a exclusividade de cor (4.3).
 - **Linhas de velocidade, desfoque de movimento, manchas de impacto:** em pixel art viram ruído e competem com o arco-linha.
 - **Pose heroica frontal e simétrica:** descartada para o título (Seção 2) e contrária ao "aberto e assimétrico" do jogador (Seção 3, 4.1).
 - **Prompts de imagem (Seção 8.2)** descrevem a postura em palavras (peso no pé de trás, ombros girados, lâmina a ~27°); nunca levam o nome da obra, de personagens ou "no estilo de".
@@ -831,7 +831,7 @@ Nenhuma é pixel art de cima em 3/4 com 640×360, tiles 32×32 e quadros 64×64.
 - **Rastros de imagem fantasma do personagem:** efeito sem a forma da pedra; polui a camada do arco-linha (Seção 1, Princípio 1).
 - **Capa ou manto que esconde os pés:** a base é a segunda linha de leitura (Seção 3, 4.3).
 - **Densidade gótica e ornamental, roxos e azuis saturados:** nosso ambiente é esparso, terroso e sem contorno (Seções 6.2 e 6.3).
-- **Arcos de arma diferentes por arma, em cores livres:** nosso rastro tem **uma só gramática** (arco de raio constante, 1–2 px) na cor do qi (Seção 1, Princípio 3).
+- **Arcos de arma diferentes por arma, em cores livres:** nosso rastro tem **uma só gramática** (arco de raio constante, 1–2 px) na cor do ki (Seção 1, Princípio 3).
 
 *Teste:* passar a animação quadro a quadro. Cada pose-chave, congelada, passa no teste dos 3 segundos (Seção 3, 4.5); os elementos secundários nunca chegam antes do corpo; o pé de apoio não se mexe nem 1 px.
 
@@ -856,7 +856,7 @@ Nenhuma é pixel art de cima em 3/4 com 640×360, tiles 32×32 e quadros 64×64.
 
 *Apoia: Seção 3, Princípio 6; Seções 7.4, 7.6 e 7.9.*
 
-**O que tomar:** a **fila de entrada visível**. Cada comando digitado aparece na hora como ícone numa fila curta, e o jogador vê a combinação se formar antes de soltá-la. É a referência mais próxima do nosso gancho (forma + qi + passo); a lição é de **leitura da interface**, não de estética.
+**O que tomar:** a **fila de entrada visível**. Cada comando digitado aparece na hora como ícone numa fila curta, e o jogador vê a combinação se formar antes de soltá-la. É a referência mais próxima do nosso gancho (forma + ki + passo); a lição é de **leitura da interface**, não de estética.
 
 **Tradução de meio:** *Magicka* é 3D visto de cima, com elementos como ícones coloridos. Aqui a fila usa **teclas desenhadas** em tinta sobre o mundo (Seção 7.1), sem painel claro, num canto da tela. A fila não usa cor para dizer o que é cada passo: cada passo tem **forma própria** (tecla, sentido do arco, pegada), como exige a Seção 4.7. Quando a combinação é reconhecida, respondem o selo vermelho e o ciano do rastro coincidente; a fila não muda de cor.
 

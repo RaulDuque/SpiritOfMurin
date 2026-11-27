@@ -98,13 +98,13 @@ public partial class Campfire : StaticBody2D
     }
 }
 
-/// <summary>The meditation mat by the clearing: E meditates (writes the journey, fills Qi, sets where Continuar wakes you).</summary>
+/// <summary>The meditation mat by the clearing: E meditates (writes the journey, fills Ki, sets where Continuar wakes you).</summary>
 public partial class MeditationMat : Node2D
 {
     private float _time;
     /// <summary>Seconds of the shine after a meditation.</summary>
     public float Shine { get; set; }
-    private static readonly Color Straw = new("#a3925f"), StrawDark = new("#7a6b44"), Qi = new("#6fd8d2"), Outline = new("#16140f");
+    private static readonly Color Straw = new("#a3925f"), StrawDark = new("#7a6b44"), Ki = new("#6fd8d2"), Outline = new("#16140f");
 
     /// <inheritdoc />
     public override void _Process(double delta) { _time += (float)delta; Shine = Mathf.Max(0, Shine - (float)delta); QueueRedraw(); }
@@ -116,8 +116,8 @@ public partial class MeditationMat : Node2D
     {
         R(-11, -7, 22, 9, Outline); R(-10, -6, 20, 7, Straw);
         for (int i = -8; i < 10; i += 3) R(i, -6, 1, 7, StrawDark);
-        // a thread of qi rising beside the mat
+        // a thread of ki rising beside the mat
         float a = 0.25f + Shine / 1.6f * 0.7f;
-        for (int i = 0; i < 6; i++) R(9 + Mathf.Round(Mathf.Sin(_time * 2 + i) * 1.5f), -10 - i * 3, 1, 2, new Color(Qi, a * (1 - i / 7f)));
+        for (int i = 0; i < 6; i++) R(9 + Mathf.Round(Mathf.Sin(_time * 2 + i) * 1.5f), -10 - i * 3, 1, 2, new Color(Ki, a * (1 - i / 7f)));
     }
 }

@@ -65,20 +65,20 @@ public static class ProgressionTests
             ["con"] = new[] { "Vigor máximo: 50 → 60", "Recuperação do vigor: 14,0/s → 15,4/s" },
             ["agi"] = new[] { "Velocidade ao andar: 100% → 104%", "Distância do passo: 100% → 105%", "Tempo de recuperação do corte e do passo: 100% → 95%" },
             ["sor"] = new[] { "Chance de material secundário (tendão na caça, uma planta ou lasca a mais na coleta): 10% → 15%" },
-            ["qi"] = new[] { "Qi máximo: 100 → 115", "Esfolas com Qi seguidas (custo 15): 6 → 7" },
+            ["ki"] = new[] { "Ki máximo: 100 → 115", "Esfolas com Ki seguidas (custo 15): 6 → 7" },
         };
         foreach (var attr in PlayerStats.AttributeIds)
         {
             // Arrange
             var s = new PlayerStats(Data(), 10); s.AddXp(20);
-            var before = (s.MaxHealth, s.MedicinePotency, s.MaxVigor, s.MoveSpeedMultiplier, s.SecondaryChance, s.MaxQi);
+            var before = (s.MaxHealth, s.MedicinePotency, s.MaxVigor, s.MoveSpeedMultiplier, s.SecondaryChance, s.MaxKi);
             // Act
             var preview = s.Preview(attr, 4).Select(l => l.Replace('.', ',')).ToList();
             bool spent = s.Spend(attr);
             // Assert
             Assert.True(spent, $"{attr}: spent");
             for (int i = 0; i < expect[attr].Length; i++) Assert.Equal(expect[attr][i], preview[i], $"{attr} preview {i}");
-            var after = (s.MaxHealth, s.MedicinePotency, s.MaxVigor, s.MoveSpeedMultiplier, s.SecondaryChance, s.MaxQi);
+            var after = (s.MaxHealth, s.MedicinePotency, s.MaxVigor, s.MoveSpeedMultiplier, s.SecondaryChance, s.MaxKi);
             Assert.True(!before.Equals(after), $"{attr}: something changed");
             Assert.Equal(1, s.Points, $"{attr}: one point left");
         }
@@ -117,9 +117,9 @@ public static class ProgressionTests
         Assert.Equal(-1, p.AddPractice("rastreamento", "trail@1,1"), "rastreamento: the same trail again gives nothing");
     }
 
-    /// <summary>The hide by Esfolar grade: torn, common, intact; Qi raises it one grade from Iniciante, never from Bruto.</summary>
+    /// <summary>The hide by Esfolar grade: torn, common, intact; Ki raises it one grade from Iniciante, never from Bruto.</summary>
     [UnitTest]
-    public static void Skin_GradesAndQi_GiveTheDocumentMaterials()
+    public static void Skin_GradesAndKi_GiveTheDocumentMaterials()
     {
         // Arrange
         var d = Data();
@@ -130,13 +130,13 @@ public static class ProgressionTests
         Assert.Equal("couro_rasgado", HarvestRules.Skin(d, "boar", 0, false, 100).Item, "boar grade 0");
         Assert.Equal("couro_comum", HarvestRules.Skin(d, "boar", 1, false, 100).Item, "boar grade 1");
         Assert.Equal("couro_grosso", HarvestRules.Skin(d, "boar", 2, false, 100).Item, "boar grade 2");
-        var bruteQi = HarvestRules.Skin(d, "rabbit", 0, true, 100);
-        Assert.True(bruteQi.Item == "pele_rasgada" && bruteQi.QiSpent == 0, "Bruto cannot guide Qi");
-        var qi = HarvestRules.Skin(d, "boar", 1, true, 100);
-        Assert.True(qi.Item == "couro_grosso" && qi.QiSpent == 15, $"Iniciante + Qi: {qi}");
-        var noQi = HarvestRules.Skin(d, "boar", 1, true, 10);
-        Assert.True(noQi.Item == "couro_comum" && noQi.QiSpent == 0, "not enough Qi");
-        Assert.Equal("presa_espiritual", HarvestRules.SpiritualPart(d, "boar", "presa_javali", 3, true, 100).Item, "Mestre + Qi: spiritual tusk");
+        var bruteKi = HarvestRules.Skin(d, "rabbit", 0, true, 100);
+        Assert.True(bruteKi.Item == "pele_rasgada" && bruteKi.KiSpent == 0, "Bruto cannot guide Ki");
+        var ki = HarvestRules.Skin(d, "boar", 1, true, 100);
+        Assert.True(ki.Item == "couro_grosso" && ki.KiSpent == 15, $"Iniciante + Ki: {ki}");
+        var noKi = HarvestRules.Skin(d, "boar", 1, true, 10);
+        Assert.True(noKi.Item == "couro_comum" && noKi.KiSpent == 0, "not enough Ki");
+        Assert.Equal("presa_espiritual", HarvestRules.SpiritualPart(d, "boar", "presa_javali", 3, true, 100).Item, "Mestre + Ki: spiritual tusk");
         Assert.Equal("presa_javali", HarvestRules.SpiritualPart(d, "boar", "presa_javali", 2, true, 100).Item, "Adepto: plain tusks");
     }
 

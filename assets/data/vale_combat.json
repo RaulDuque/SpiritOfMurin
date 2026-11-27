@@ -1,7 +1,7 @@
 {
   "_doc": {
     "about": "Combate do prólogo (Vale de Bambus), com os valores do protótipo HTML (prototypes/spiritofmurin/config.js). Os pontos de vida e o dano estão em pontos (corte da espada = 2), o dobro dos números do protótipo, para caber no mesmo sistema da Planície. Lido por src/Vale/ValeCombat.cs.",
-    "player_*": "Vida e Qi do espadachim no prólogo (Vida 10 = os 5 corações do protótipo)",
+    "player_*": "Vida e Ki do espadachim no prólogo (Vida 10 = os 5 corações do protótipo)",
     "guard_half": "graus de cada lado da frente de uma guarda que aparam o golpe",
     "parry_push": "px que o aparo empurra o jogador",
     "dis_*": "Discípulo da Guarda Fechada: vida, giro (graus/s), tempo enganado após um passo lateral, aviso, alcance, intervalo e recuperação",
@@ -12,8 +12,8 @@
     "hitstop / shake": "congelamento do mundo num golpe que entra (s) e tremor da tela (px)"
   },
   "player_health": 10,
-  "player_qi_max": 100,
-  "player_qi_regen": 22,
+  "player_ki_max": 100,
+  "player_ki_regen": 22,
   "guard_half": 65,
   "parry_push": 34,
   "dis_hp": 12,

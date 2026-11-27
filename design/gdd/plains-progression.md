@@ -7,8 +7,8 @@
 ## 1. Overview
 
 A primeira progressão põe, por cima do trecho jogável da Planície:
-- **nível e XP do personagem**, com pontos de atributo para seis atributos: VIT, INT, CON, AGI, SOR e QI;
-- **vigor e Qi** como recursos visíveis no HUD;
+- **nível e XP do personagem**, com pontos de atributo para seis atributos: VIT, INT, CON, AGI, SOR e KI;
+- **vigor e Ki** como recursos visíveis no HUD;
 - **quatro proficiências que sobem pelo uso:** Esfolar, Preparo de Caça, Erboristeria e Rastreamento;
 - **níveis das criaturas**, revelados ao focar o animal;
 - **trilhas de pegadas** que levam a animais reais;
@@ -17,7 +17,7 @@ A primeira progressão põe, por cima do trecho jogável da Planície:
 
 ## 2. Player Fantasy
 
-"Cada coisa que faço me ensina." Na primeira caça, a pele sai rasgada. Na segunda, a mão já sabe o caminho e a pele sai inteira. Com Qi, a lâmina guia a pele um grau acima.
+"Cada coisa que faço me ensina." Na primeira caça, a pele sai rasgada. Na segunda, a mão já sabe o caminho e a pele sai inteira. Com Ki, a lâmina guia a pele um grau acima.
 
 O jogador lê uma pegada, segue a direção e encontra a toca. Volta à fogueira, assa a carne e recupera o fôlego. Sobe de nível e decide, vendo o número mudar antes de confirmar, se quer mais Vida, mais fôlego ou mais sorte. Medita, fecha o jogo e, ao voltar, a Planície é a mesma, com o que ele conquistou.
 
@@ -45,17 +45,17 @@ Os valores de base são os do personagem de nível 1 atual: Vida 10, velocidade 
 | CON | +10 de vigor máximo e +10% na recuperação do vigor |
 | AGI | +4% de velocidade ao andar, +5% de distância do passo e −5% no tempo de recuperação do corte e do passo. Cada bônus tem teto de 40% |
 | SOR | +5 pontos percentuais na chance de material secundário. Base 10%: tendão na caça, uma planta ou uma lasca a mais na coleta |
-| QI | +15 de Qi máximo (base 100) |
+| KI | +15 de Ki máximo (base 100) |
 
 - **Ficha (C):** W/S escolhe o atributo. Antes de gastar, a ficha mostra a mudança concreta, por exemplo "Vida máxima: 10 → 12". E gasta 1 ponto.
 - A prévia é calculada aplicando o ponto a uma cópia da ficha. Por isso nunca diverge do efeito real.
 
-### 3.3 Vigor e Qi
+### 3.3 Vigor e Ki
 - **Vigor** (barra ocre): o passo gasta 12, o corte gasta 3. Sem vigor, a ação não sai e aparece "Sem fôlego".
   - Volta sozinho, a 14/s, depois de 0,6 s sem gastar.
   - Carne assada devolve vigor na hora.
-- **Qi** (barra verde-água, no estilo do protótipo): volta a 0,5/s, e meditar enche.
-  - **Uso nesta entrega:** K numa carcaça esfola com Qi. Com Esfolar Iniciante ou acima e 15 de Qi, o material sai um grau acima.
+- **Ki** (barra verde-água, no estilo do protótipo): volta a 0,5/s, e meditar enche.
+  - **Uso nesta entrega:** K numa carcaça esfola com Ki. Com Esfolar Iniciante ou acima e 15 de Ki, o material sai um grau acima.
   - Com Esfolar Mestre, K nas presas do javali faz a **extração espiritual** (Presa Espiritual).
 
 ### 3.4 Proficiências
@@ -66,9 +66,9 @@ Os valores de base são os do personagem de nível 1 atual: Vida 10, velocidade 
 | Grau | Esfolar | Preparo de Caça | Erboristeria | Rastreamento |
 |---|---|---|---|---|
 | 0 Bruto | Pele Rasgada / Couro Rasgado (só para tiras) | 1 carne; a carne assada recupera o vigor base | erva amassada (cura 3) | animal e direção |
-| 1 Iniciante | Pele Comum / Couro Comum; com Qi, um grau acima | +25% de vigor ao assar | cortada no talo (cura 4) | distância; as 3 próximas pegadas brilham |
+| 1 Iniciante | Pele Comum / Couro Comum; com Ki, um grau acima | +25% de vigor ao assar | cortada no talo (cura 4) | distância; as 3 próximas pegadas brilham |
 | 2 Adepto | Pele Fina / Couro Grosso (intactos) | 2 carnes; +50% | bem colhida (cura 5) | revela o nível do animal |
-| 3 Mestre | extração espiritual com Qi (Presa Espiritual) | 2 carnes; +75% | seiva viva (cura 6, mais rápido) | a trilha inteira à frente fica brilhando |
+| 3 Mestre | extração espiritual com Ki (Presa Espiritual) | 2 carnes; +75% | seiva viva (cura 6, mais rápido) | a trilha inteira à frente fica brilhando |
 
 - **Carcaças:** cada parte é controlada separadamente. Coelho: pele e carne. Javali: couro, Carne Rija e presas (o que o brief prevê). Uma carcaça usada pela metade volta só com o que falta.
 
@@ -102,7 +102,7 @@ Os valores de base são os do personagem de nível 1 atual: Vida 10, velocidade 
 
 ### 3.8 Meditar e Continuar
 - **Esteira de palha** (nordeste da clareira): E medita.
-  - Enche o Qi e o vigor.
+  - Enche o Ki e o vigor.
   - Marca o ponto onde se desperta depois de desmaiar ou de usar Continuar.
   - Grava a jornada em `user://jornada_planicie.json` (formato 1) e a lê de volta. Só confirma se a leitura bater.
   - Não medita com um javali avisando ou investindo por perto.
@@ -112,7 +112,7 @@ Os valores de base são os do personagem de nível 1 atual: Vida 10, velocidade 
   - animais mortos, com a posição da carcaça, e partes tiradas;
   - trilhas examinadas;
   - inventário em ordem e equipamento;
-  - Vida, vigor e Qi;
+  - Vida, vigor e Ki;
   - nível, XP, pontos e atributos;
   - prática e chaves de prática;
   - receitas já feitas.
@@ -132,7 +132,7 @@ Os valores de base são os do personagem de nível 1 atual: Vida 10, velocidade 
 | Vigor máximo / recuperação | `50 + 10·CON` / `14·(1 + 0,1·CON)` por s | CON 1 → 60 e 15,4/s |
 | AGI | `1 + min(0,4, 0,04·AGI)` velocidade; `1 + min(0,4, 0,05·AGI)` passo; `1 − min(0,4, 0,05·AGI)` recuperação | AGI 1 → 109,2 px/s |
 | Chance secundária | `min(0,9, 0,10 + 0,05·SOR)`; o sorteio é fixo por (semente, id) | SOR 1 → 15%. Mais SOR só acrescenta objetos que dão o secundário |
-| Qi máximo | `100 + 15·QI` | QI 1 → 115 |
+| Ki máximo | `100 + 15·KI` | KI 1 → 115 |
 | Grau de proficiência | número de limiares atingidos pela prática | Esfolar com 1 prática: Iniciante |
 | Vigor da carne assada | `vigor_do_item · (1 + 0,25·Preparo)` | Carne Macia com Preparo 1: 31 |
 | Nível da criatura | `min + floor(sorteio(semente, "lvl:"+id) · (max − min + 1))` | javalis da semente 20261126: Nv 3–5 |
@@ -140,7 +140,7 @@ Os valores de base são os do personagem de nível 1 atual: Vida 10, velocidade 
 ## 5. Edge Cases
 
 - **Reabrir uma carcaça vazia ou reexaminar uma trilha:** nada acontece (sem item, prática ou XP), só o texto da pegada.
-- **K com Esfolar Bruto:** a pele sai rasgada e aparece o aviso de que ainda não sabe guiar o Qi. K sem Qi suficiente: material normal, sem gasto.
+- **K com Esfolar Bruto:** a pele sai rasgada e aparece o aviso de que ainda não sabe guiar o Ki. K sem Ki suficiente: material normal, sem gasto.
 - **K nas presas abaixo de Mestre:** presas comuns e aviso.
 - **Carcaça usada pela metade e gravada:** ao continuar, volta só com a parte que falta.
 - **Animal morto depois da gravação:** fechar sem meditar perde esse progresso. O jogo retoma a última meditação.
@@ -158,7 +158,7 @@ Os valores de base são os do personagem de nível 1 atual: Vida 10, velocidade 
 - **Depende de:**
   - `plains-first-stretch.md` (mundo por semente, faca, coelho, javali, ervas);
   - `src/Player` (vigor, multiplicadores, Vida máxima ajustável);
-  - mapa de entradas (`sheet` C, `heal` H; `qi` K e `lock` Espaço já existiam).
+  - mapa de entradas (`sheet` C, `heal` H; `ki` K e `lock` Espaço já existiam).
 - **Usado por (próximas entregas):** saída para o Vale, espada no posto de vigia, outras espécies, Coelho Lunar (extração espiritual compatível), fogueira e meditação no Vale.
 - **Retrocompatibilidade:** o `plains-first-stretch.md` passa a depender deste documento para coleta, carcaças e HUD.
 
@@ -172,17 +172,17 @@ Tudo está em `assets/data/plains/plains_progression.json`, com o esquema no blo
 | `xp_growth` | 1,3–1,7 | Ritmo dos níveis seguintes |
 | `per_point.*` | metade a dobro dos valores atuais | Força de cada atributo. AGI tem teto em `agi_cap` |
 | `base.step_vigor_cost` | 8–18 | Com 50 de vigor, cerca de 4 passos seguidos |
-| `base.qi_preserve_cost` | 10–30 | Quantas esfolas com Qi por meditação |
+| `base.ki_preserve_cost` | 10–30 | Quantas esfolas com Ki por meditação |
 | `skills.*.thresholds` | crescentes | Quantas práticas por grau |
 | `creatures.*` | — | Faixas de nível e força por nível. Não mexem nos tempos de aviso |
 
 ## 8. Acceptance Criteria
 
-1. Jornada nova: nível 1, mãos vazias, Vida, vigor e Qi cheios, e o HUD mostra quanto falta para o próximo nível.
+1. Jornada nova: nível 1, mãos vazias, Vida, vigor e Ki cheios, e o HUD mostra quanto falta para o próximo nível.
 2. A primeira pegada da clareira diz o animal e a direção, e dá Rastreamento e XP uma vez. Seguindo as pegadas a pé, chega-se à toca.
 3. Espaço mostra o nome, o nível e o temperamento do animal.
-4. Esfolar 0 dá Pele Rasgada e sobe para 1. A caça seguinte dá Pele Comum. K com Qi dá Pele Fina e gasta 15 de Qi.
+4. Esfolar 0 dá Pele Rasgada e sobe para 1. A caça seguinte dá Pele Comum. K com Ki dá Pele Fina e gasta 15 de Ki.
 5. O javali dá couro (pelo grau de Esfolar), Carne Rija e presas, cada um uma vez.
 6. A carne assada na fogueira recupera o vigor gasto nos passos. As tiras e a bolsa consomem os materiais uma vez. H usa a erva da bolsa.
 7. O primeiro nível dá 2 pontos. A ficha mostra a mudança antes de gastar, e cada atributo muda o número prometido; AGI é medida na velocidade real.
-8. Meditar grava. Depois de fechar e abrir: Continuar no título restaura a semente, o lugar, o inventário, o nível, os pontos, os atributos, as proficiências, a Vida, o Qi e o vigor. Carcaças usadas não voltam, coletas não voltam e gravar de novo não multiplica nada.
+8. Meditar grava. Depois de fechar e abrir: Continuar no título restaura a semente, o lugar, o inventário, o nível, os pontos, os atributos, as proficiências, a Vida, o Ki e o vigor. Carcaças usadas não voltam, coletas não voltam e gravar de novo não multiplica nada.

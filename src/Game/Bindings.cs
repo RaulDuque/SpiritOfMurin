@@ -24,8 +24,8 @@ public static class Bindings
     public static readonly ActionInfo[] Actions =
     {
         new("move_up", "Andar: cima"), new("move_down", "Andar: baixo"), new("move_left", "Andar: esquerda"), new("move_right", "Andar: direita"),
-        new("cut", "Corte"), new("step", "Passo"), new("qi", "Qi (onda; esfolar com Qi)"), new("lock", "Travar no alvo / focar"),
-        new("use", "Examinar / pegar"), new("heal", "Bálsamo / erva da bolsa"), new("sneak", "Andar quieto (Planície)"), new("reinforce", "Modificador do Reforço de Qi (com o corte)"),
+        new("cut", "Corte"), new("step", "Passo"), new("ki", "Ki (onda; esfolar com Ki)"), new("lock", "Travar no alvo / focar"),
+        new("use", "Examinar / pegar"), new("heal", "Bálsamo / erva da bolsa"), new("sneak", "Andar quieto (Planície)"), new("reinforce", "Modificador do Reforço de Ki (com o corte)"),
         new("inventory", "Inventário"), new("sheet", "Ficha"), new("book", "Livro de Técnicas"), new("map", "Mapa"),
         new("menu", "Pausa"), new("fullscreen", "Tela cheia"),
     };

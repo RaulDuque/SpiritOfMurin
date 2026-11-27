@@ -3,11 +3,11 @@ using Godot;
 namespace SpiritOfMurin.Characters;
 
 /// <summary>
-/// The Qi gathering in the palm while the charged shot is held (pedido 13, item 8): a jade orb at the front
-/// hand that grows with the Qi invested, with sparks drawn inward; at the full charge it rings and pulses.
+/// The Ki gathering in the palm while the charged shot is held (pedido 13, item 8): a jade orb at the front
+/// hand that grows with the Ki invested, with sparks drawn inward; at the full charge it rings and pulses.
 /// A child of the player drawn over the body, so the protagonist's own drawing stays untouched.
 /// </summary>
-public partial class QiPalm : Node2D
+public partial class KiPalm : Node2D
 {
     private float _t;
     private static readonly Color Core = new("#e6fff0"), Glow = new("#6fd8d2"), Ring = new("#a6f2e2");
@@ -22,7 +22,7 @@ public partial class QiPalm : Node2D
         QueueRedraw();
     }
 
-    // the Reforço de Qi: Qi running up the blade during the gesture, a jade shimmer on it while charges remain,
+    // the Reforço de Ki: Ki running up the blade during the gesture, a jade shimmer on it while charges remain,
     // and the charges as pips over the head (3, 2, 1)
     private void DrawReinforce(Player p)
     {

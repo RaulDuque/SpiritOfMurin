@@ -112,7 +112,7 @@ public partial class ValeCheck : Node
         for (int i = 0; i < 3 && V.Lock != f; i++) { await Tap(Key.Space); if (V.Lock != f && V.Lock != null) await Tap(Key.Space); }
     }
 
-    // side step (L + the key that is lateral to the target), then cut (J), then qi (K): the Silent Blade Step
+    // side step (L + the key that is lateral to the target), then cut (J), then ki (K): the Silent Blade Step
     private async Task<bool> Lamina(ValeFighter f)
     {
         Vector2 to = f.GlobalPosition - P.GlobalPosition;
@@ -134,7 +134,7 @@ public partial class ValeCheck : Node
         await Tap(Key.E); // the normal flow: Novo jogo from the title
         await Frames(20);
         Check("Novo jogo opens the prologue in the Vale", _c.Vale != null && _c.Plains == null && P.Equipped == Player.Weapon.Sword && P.GlobalPosition.DistanceTo(ValeMap.Start) < 4, $"{P.GlobalPosition}");
-        Check("the book starts with the swordsman's art (cut, thrust, qi shot, short step)", V.Story.Book.Count == 4 && V.Tech.State("qi_wave") == TechniqueState.Full && V.Tech.State("side_step") == TechniqueState.Unknown, string.Join(", ", V.Story.Book.Select(b => b.Name)));
+        Check("the book starts with the swordsman's art (cut, thrust, ki shot, short step)", V.Story.Book.Count == 4 && V.Tech.State("ki_wave") == TechniqueState.Full && V.Tech.State("side_step") == TechniqueState.Unknown, string.Join(", ", V.Story.Book.Select(b => b.Name)));
         await Shot("01-vale-inicio");
 
         // the bridge guardian parries from the front
@@ -194,18 +194,18 @@ public partial class ValeCheck : Node
         await Chord(Key.D, Key.L); await Frames(20);
 
         // the Silent Blade Step on the guardian, until he falls
-        P.Revive(); P.Qi = P.MaxQi;
+        P.Revive(); P.Ki = P.MaxKi;
         bool found = false;
         for (int round = 0; round < 12 && bridge.Alive; round++)
         {
-            P.Revive(); P.Qi = P.MaxQi; // controlled: the test keeps the swordsman standing
+            P.Revive(); P.Ki = P.MaxKi; // controlled: the test keeps the swordsman standing
             await Teleport(bridge.GlobalPosition + new Vector2(0, 52), Vector2.Up);
             await LockOn(bridge);
             if (await Lamina(bridge)) found = true;
             await Frames(10);
             if (bridge.Alive && bridge.Stagger > 0) { await Tap(Key.J); await Frames(12); }
         }
-        Check("side step → cut → qi: the Silent Blade Step breaks the guard (book, combination)", found && V.Story.ComboFound && V.Story.Book.Any(b => b.Name == "Passo da Lâmina Silenciosa"), $"guardian hp {bridge.Hp}");
+        Check("side step → cut → ki: the Silent Blade Step breaks the guard (book, combination)", found && V.Story.ComboFound && V.Story.Book.Any(b => b.Name == "Passo da Lâmina Silenciosa"), $"guardian hp {bridge.Hp}");
         Check("the guardian falls; the camp gate opens", !bridge.Alive && V.Story.GateOpen && V.Story.Defeated.Contains("dis_bridge"));
         await Shot("05-portao-aberto");
         await Frames(40);
@@ -265,7 +265,7 @@ public partial class ValeCheck : Node
         await Frames(10);
         var pl = _c.Plains;
         Check("the awakening: the Planície, with empty hands, no items", pl != null && pl.Started && pl.Player.Equipped == Player.Weapon.None && pl.Inventory.Entries.Count == 0 && _c.Vale == null, pl == null ? "no plains" : $"{pl.Player.Equipped}, {pl.Inventory.Entries.Count} items");
-        Check("the book carries what was learned, now sealed", pl != null && pl.Book.Where(b => b.Tech.Length > 0).All(b => b.State == "Selada") && pl.Book.Any(b => b.Name == "Passo Lateral") && pl.Tech.State("qi_wave") == TechniqueState.Sealed, pl == null ? "" : string.Join(", ", pl.Book.Select(b => $"{b.Name}:{b.State}")));
+        Check("the book carries what was learned, now sealed", pl != null && pl.Book.Where(b => b.Tech.Length > 0).All(b => b.State == "Selada") && pl.Book.Any(b => b.Name == "Passo Lateral") && pl.Tech.State("ki_wave") == TechniqueState.Sealed, pl == null ? "" : string.Join(", ", pl.Book.Select(b => $"{b.Name}:{b.State}")));
         var after = SaveGame.Read(SavePath).Data;
         Check("the change of region is written once (Continuar is now in the Planície)", after != null && after.Region == "planicie" && after.LossApplied && after.Book.Count > 0, after == null ? "" : $"{after.Region}/{after.Phase}");
         Check("light: a pale glare clearing, the sounds coming back", pl != null && pl.Hud.OverlayAlpha > 0.3f && pl.Sfx != null, pl == null ? "" : $"overlay {pl.Hud.OverlayAlpha:0.00}");
@@ -278,9 +278,9 @@ public partial class ValeCheck : Node
             Check("moving makes him get up (then he walks)", !pl.LyingDown, $"lying {pl.Player.Lying:0.00}");
             await Shot("12-levantou");
             // a sealed technique cannot be used: K away from a carcass, L to the side of a focused animal
-            float qi = pl.Player.Qi;
+            float ki = pl.Player.Ki;
             await Tap(Key.K); await Frames(20);
-            Check("K: the qi shot is sealed (refused, no Qi spent)", pl.Hud.Messages.Any(m => m.Contains("Disparo de Qi está selada")) && pl.Player.Qi >= qi - 0.01f, pl.Hud.Messages.LastOrDefault() ?? "");
+            Check("K: the ki shot is sealed (refused, no Ki spent)", pl.Hud.Messages.Any(m => m.Contains("Disparo de Ki está selada")) && pl.Player.Ki >= ki - 0.01f, pl.Hud.Messages.LastOrDefault() ?? "");
         }
         Finish();
     }
@@ -321,7 +321,7 @@ public partial class ValeCheck : Node
         // a format-1 journey, as the Planície wrote it before the campaign
         string json = "{\"game\":\"spiritofmurin\",\"format\":1,\"region\":\"planicie\",\"saved_at\":\"2026-11-26T15:00:00\",\"seed\":777,\"spot\":[48,-32],"
             + "\"collected\":[],\"dead\":{},\"parts_taken\":[],\"trails\":[],\"inventory\":[{\"id\":\"faca_pedra\",\"count\":1},{\"id\":\"pele_fina\",\"count\":2}],"
-            + "\"equipped\":\"knife\",\"health\":9,\"vigor\":40,\"qi\":80,\"level\":3,\"xp\":5,\"points\":1,\"total_xp\":60,\"attributes\":{\"vit\":2,\"agi\":1},"
+            + "\"equipped\":\"knife\",\"health\":9,\"vigor\":40,\"ki\":80,\"level\":3,\"xp\":5,\"points\":1,\"total_xp\":60,\"attributes\":{\"vit\":2,\"agi\":1},"
             + "\"practice\":{\"esfolar\":4,\"rastreamento\":2},\"practice_keys\":[\"esfolar:rabbit@1,1\"],\"crafted\":[\"faca_pedra\"]}";
         using var f = Godot.FileAccess.Open(SavePath, Godot.FileAccess.ModeFlags.Write); f.StoreString(json);
     }

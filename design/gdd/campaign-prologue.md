@@ -36,27 +36,27 @@ Vencê-lo de verdade abre o fim do prólogo: o Sênior revive, fala, se explode 
   - **Travar (Espaço):** o alvo vivo mais próximo a até 240 px, com colchetes ocre; o corpo fica de frente para ele.
   - **Corte (J ou clique esquerdo):** cadeia de 3; o 3º corte tem o dobro de dano.
   - **Estocada:** frente + J com o alvo travado.
-  - **Disparo de Qi (K):** 30 de Qi; Qi de 100, que volta a 22/s.
+  - **Disparo de Ki (K):** 30 de Ki; Ki de 100, que volta a 22/s.
   - **Passo curto (L):** sempre disponível.
   - **Passo lateral:** L + direção lateral ao alvo travado; contorna 95° e tem 0,14 s de invulnerabilidade ("passo"). Depois da estátua.
   - **Passo longo:** L + direção, sem trava; 112 px, atravessa a fenda. Depois da estátua.
-  - **Passo da Lâmina Silenciosa:** passo lateral → corte → Qi dentro da janela. Quebra a guarda: dano 6 e 1,5 s de guarda quebrada. É descoberta fazendo.
+  - **Passo da Lâmina Silenciosa:** passo lateral → corte → Ki dentro da janela. Quebra a guarda: dano 6 e 1,5 s de guarda quebrada. É descoberta fazendo.
 - **Guarda Fechada:** apara tudo que vem a até ±65° da frente ("aparado", recuo de 34 px). Depois de um passo lateral, o inimigo perde o alvo por 0,38 s (o Sênior, 0,26 s); golpe no flanco = "flanco".
   - **Discípulo:** aviso de 0,5 s (cunha ocre no chão), alcance de 64 px, recuperação de 0,55 s.
   - **Sênior:** guarda fechada por 3,4 s, depois postura de ataque: avança, combo de 3 golpes com hiper-armadura e 0,8 s de abertura.
 - **Lugares:**
   - corpo com o manual (página que brilha);
   - selo do túmulo (o manual o completa);
-  - marca na pedra (acende as 3 pegadas): pisar nelas na ordem ensina o passo lateral, enche a Vida e o Qi e mostra a revelação por 3,2 s;
+  - marca na pedra (acende as 3 pegadas): pisar nelas na ordem ensina o passo lateral, enche a Vida e o Ki e mostra a revelação por 3,2 s;
   - estátua (alvo de treino: apara de frente, "responde" no flanco);
   - inscrição além da fenda;
   - baú além da fenda;
   - esteira junto à pedra gêmea oeste: meditar grava a jornada.
 - **Itens:**
   - bálsamo: +4 de Vida, H ou inventário;
-  - pedra de Qi: enche o Qi;
+  - pedra de Ki: enche o Ki;
   - erva espiritual, prata, faixa e pingente: sem uso.
-  - Os potes quebram com o corte ou o Qi. As ervas e os itens que caem são pegos andando por cima.
+  - Os potes quebram com o corte ou o Ki. As ervas e os itens que caem são pegos andando por cima.
 - **Missões:** "A guarda fechada", "O manual dividido", "O Espadachim Sênior", "A lâmina que segue o passo".
 - **Derrota:** com a Vida em 0, depois de 1,5 s, desperta no início da trilha, ou na entrada do acampamento depois que o portão abre. O que aprendeu fica. Os inimigos vivos voltam ao lugar, com a vida cheia.
 - **Livro de Técnicas (B):** técnicas, combinações e fragmentos, com comando, origem e estado (Plena, Selada, Enfraquecida).
@@ -86,7 +86,7 @@ Vencê-lo de verdade abre o fim do prólogo: o Sênior revive, fala, se explode 
 
 ### 3.4 Selo (o resto da regra está na entrega 2)
 - Na Planície, as técnicas seladas não saem por nenhuma entrada:
-  - K longe de carcaça avisa "Disparo de Qi está selada…" e não gasta Qi;
+  - K longe de carcaça avisa "Disparo de Ki está selada…" e não gasta Ki;
   - L lateral com um animal focado vira o passo comum, com o aviso.
 - Andar, caçar, cortar com a faca equipada e o passo comum continuam.
 
@@ -99,15 +99,15 @@ Vencê-lo de verdade abre o fim do prólogo: o Sênior revive, fala, se explode 
 
 | Técnica | O que muda |
 |---|---|
-| Disparo de Qi | 45 Qi + 10 vigor (a plena: 30 Qi), 105 px (a plena: 210), dano 1 (a plena: 2) |
-| Passo Lateral | 15 Qi + 12 vigor (a plena: grátis), 55° em volta do alvo (a plena: 95°), raio até 70 px, 0,08 s de invulnerabilidade |
-| Passo longo | 10 Qi + 14 vigor, 60 px (a plena: 112). Na Planície pede **Shift + direção + L**, para que L + direção continue sendo o passo comum |
+| Disparo de Ki | 45 Ki + 10 vigor (a plena: 30 Ki), 105 px (a plena: 210), dano 1 (a plena: 2) |
+| Passo Lateral | 15 Ki + 12 vigor (a plena: grátis), 55° em volta do alvo (a plena: 95°), raio até 70 px, 0,08 s de invulnerabilidade |
+| Passo longo | 10 Ki + 14 vigor, 60 px (a plena: 112). Na Planície pede **Shift + direção + L**, para que L + direção continue sendo o passo comum |
 | Estocada | 8 de vigor, alcance de 40 px, dano 1 |
 | Passo da Lâmina Silenciosa | dano 3 (o pleno: 6), 126 px, 0,8 s de abertura |
 
-- **Recusa:** sem Qi ou sem vigor suficiente, a técnica é recusada com a falta dita ("Disparo de Qi: falta Qi (10/45)") e nenhum dos dois recursos é gasto.
+- **Recusa:** sem Ki ou sem vigor suficiente, a técnica é recusada com a falta dita ("Disparo de Ki: falta Ki (10/45)") e nenhum dos dois recursos é gasto.
 - **Selada:** a recusa diz que está selada e não se repete a cada toque (2,5 s).
-- **K conforme o contexto:** perto de uma carcaça, K esfola com Qi; longe, é o disparo. A faixa de atalhos mostra qual ("K esfolar com Qi" ou "K disparo de Qi (selado)"). Um toque faz uma ação só.
+- **K conforme o contexto:** perto de uma carcaça, K esfola com Ki; longe, é o disparo. A faixa de atalhos mostra qual ("K esfolar com Ki" ou "K disparo de Ki (selado)"). Um toque faz uma ação só.
 
 ## 4. Formulas
 
@@ -117,7 +117,7 @@ Vencê-lo de verdade abre o fim do prólogo: o Sênior revive, fala, se explode 
 | Lâmina Silenciosa | `hist[-2] = passo lateral`, `hist[-1] ∈ {corte, estocada}`, `t(corte) − t(passo) ≤ time_passo + combo_window` e `agora − t(corte) ≤ combo_window + 0,1` |
 | Volta do passo lateral | raio `clamp(dist(alvo), 46, 92)`; ângulo final `a0 − lado·95°`; posição `alvo + (cos, sin)(lerp(a0, a1, 1 − (1 − k)²))·raio` |
 | Arremesso | `e = 1 − (1 − f)²`, `pos = início + direção·560·e`, `altura = 260·e²` (sempre subindo), `giro = f·2,5·2π`, com `f = t/1,4 s`; a câmera fica parada no lugar da explosão |
-| Dano no prólogo | corte 2, 3º corte 4, estocada 2, Qi 2, Lâmina 6. Discípulo 12, Sênior 20, golpe inimigo 2 de Vida (Vida 10) |
+| Dano no prólogo | corte 2, 3º corte 4, estocada 2, Ki 2, Lâmina 6. Discípulo 12, Sênior 20, golpe inimigo 2 de Vida (Vida 10) |
 
 ## 5. Edge Cases
 
@@ -132,9 +132,9 @@ Vencê-lo de verdade abre o fim do prólogo: o Sênior revive, fala, se explode 
 
 ## 6. Dependencies
 
-- **Personagem (`src/Player`):** técnicas (`TechniqueSet`), Qi, trava, estocada, passo lateral, passo longo, recuo do aparo, deitado e arremesso.
+- **Personagem (`src/Player`):** técnicas (`TechniqueSet`), Ki, trava, estocada, passo lateral, passo longo, recuo do aparo, deitado e arremesso.
 - **Dados:** `assets/data/vale_combat.json` e `assets/data/combat_techniques.json` (plena e enfraquecida; a enfraquecida é usada na entrega 2).
-- **Planície (`plains-first-stretch.md`, `plains-progression.md`):** recebe o despertar, o Livro selado e a perda. O Qi passa a morar no corpo do personagem. K tem uso conforme o contexto.
+- **Planície (`plains-first-stretch.md`, `plains-progression.md`):** recebe o despertar, o Livro selado e a perda. O Ki passa a morar no corpo do personagem. K tem uso conforme o contexto.
 - **Salvamento:** formato 2 (`Phase`, `Vale`, `ValeInventory`, `Book`, `LossApplied`, `TechniquesReturned`); o formato 1 continua aceito.
 - **Som:** `src/Audio/Sfx.cs` (procedural, sem arquivos).
 
@@ -142,16 +142,16 @@ Vencê-lo de verdade abre o fim do prólogo: o Sênior revive, fala, se explode 
 
 | Onde | O quê |
 |---|---|
-| `vale_combat.json` | Vida e Qi do espadachim, aparo, recuo, todos os números do discípulo e do Sênior, dano inimigo, congelamento no golpe, tremor |
+| `vale_combat.json` | Vida e Ki do espadachim, aparo, recuo, todos os números do discípulo e do Sênior, dano inimigo, congelamento no golpe, tremor |
 | `combat_techniques.json` | custo, alcance, dano, duração e ângulo de cada técnica, plena e enfraquecida; nível de retorno |
 | `SeniorFinale.cs` | durações das etapas (2,0 / 2,6 / 6 / 2,0 / 2,0 / 3,4 s), distância e altura do arremesso. Hoje no código: são tempos de encenação, não de balanceamento |
 
 ## 8. Acceptance Criteria
 
-1. Novo jogo, pelo título, abre o Vale com a espada e o Livro inicial (Corte, Estocada, Disparo de Qi, Passo curto).
+1. Novo jogo, pelo título, abre o Vale com a espada e o Livro inicial (Corte, Estocada, Disparo de Ki, Passo curto).
 2. A Guarda Fechada apara de frente. O manual, o selo, a marca e as pegadas ensinam o passo lateral e o passo longo. A estátua responde ao flanco. O passo longo atravessa a fenda. A inscrição e a Lâmina Silenciosa entram no Livro.
 3. O guardião cai e o portão abre. Meditar grava no Vale, e Continuar volta às pedras gêmeas com tudo.
 4. O Sênior chega a 0 de vida pela luta. Vitória → revive com aura → fala (E avança) → carga → explosão que lança o espadachim girando para fora do quadro (mais de 400 px) → escuridão e silêncio.
 5. Despertar na Planície: deitado, mãos vazias, sem itens, Livro com as técnicas do Vale "Selada". Mover-se o levanta. A jornada é gravada como Planície uma vez.
 6. Fechar no meio do fim e Continuar leva ao despertar. Um save antigo da Planície continua na Planície com o que tinha. Visto uma vez, o fim pode ser pulado com Esc.
-7. K na Planície, longe de carcaça, é recusado como selado, sem gastar Qi.
+7. K na Planície, longe de carcaça, é recusado como selado, sem gastar Ki.

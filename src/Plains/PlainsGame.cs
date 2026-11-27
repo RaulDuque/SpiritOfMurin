@@ -17,7 +17,7 @@ namespace SpiritOfMurin.Plains;
 /// The Planície Verdejante (main scene, F5). A title menu offers Continuar (the last meditation) or
 /// Novo jogo; a new journey wakes with empty hands at the clearing by the creek. The world is generated
 /// by seed in chunks around the character. E picks up, examines tracks, skins and butchers (K skins with
-/// Qi), cooks at the campfire and meditates on the mat (which writes the journey). I opens the inventory
+/// Ki), cooks at the campfire and meditates on the mat (which writes the journey). I opens the inventory
 /// (use, equip, craft), C the character sheet (level, XP, attributes, proficiencies), Space focuses the
 /// nearest animal (name, level, temper), H uses a herb from the Bolsa Simples. In the campaign this
 /// awakening follows the prologue's defeat; here it opens directly.
@@ -243,8 +243,8 @@ public partial class PlainsGame : Node2D, IMapSource
     public Proficiencies Skills { get; private set; } = null!;
     /// <summary>The screen layer.</summary>
     public PlainsHud Hud { get; private set; } = null!;
-    /// <summary>Current Qi.</summary>
-    public float Qi { get => Player.Qi; private set => Player.Qi = value; }
+    /// <summary>Current Ki.</summary>
+    public float Ki { get => Player.Ki; private set => Player.Ki = value; }
     /// <summary>True once a journey (new or continued) is running.</summary>
     public bool Started { get; private set; }
     /// <summary>Where the last meditation was (Continuar and fainting wake here).</summary>
@@ -368,14 +368,14 @@ public partial class PlainsGame : Node2D, IMapSource
         Player.TechniqueRefused += (_, m) => { Hud.Toast(m); Sfx?.Play("fizzle"); };
         Player.SecretFound += OnSecret;
         Player.ReinforceResult += (ok, m) => { Hud.Toast(m); Sfx?.Play(ok ? "chime" : "fizzle"); };
-        Player.ChargeCancelled += back => { if (back > 0.5f) Hud.Toast($"A concentração se desfaz: {back:0} de Qi voltam à barra."); };
-        Player.QiFired += OnQiShot;
+        Player.ChargeCancelled += back => { if (back > 0.5f) Hud.Toast($"A concentração se desfaz: {back:0} de Ki voltam à barra."); };
+        Player.KiFired += OnKiShot;
         Panels = new GamePanels(Hud, Player, this, MapZoomDefault);
         Hud.RowClicked += OnRowClicked;
         Player.DashNeedsShift = true;
         Player.Fainted += () => { _faintTimer = 2.2f; Player.InputLocked = true; Hud.Overlay("Você desmaiou…", 1.4f); };
         Spot = Gen.StartPixel;
-        Qi = Stats.MaxQi;
+        Ki = Stats.MaxKi;
         if (d != null)
         {
             state.Restore(d.Collected, d.Dead.ToDictionary(kv => kv.Key, kv => new Vector2(kv.Value[0], kv.Value[1])), d.PartsTaken, d.Trails);
@@ -407,12 +407,12 @@ public partial class PlainsGame : Node2D, IMapSource
             Player.Revive();
             Player.Heal(-(Player.MaxHealth - Mathf.Clamp(d.Health, 1, Player.MaxHealth)));
             Player.Vigor = Mathf.Clamp(d.Vigor, 0, Player.MaxVigor);
-            Qi = Mathf.Clamp(d.Qi, 0, Stats.MaxQi);
+            Ki = Mathf.Clamp(d.Ki, 0, Stats.MaxKi);
         }
         Player.GlobalPosition = Spot;
         Player.InputLocked = false;
         Player.Visible = true;
-        Player.MaxQi = Stats.MaxQi; Player.QiRegen = Data.Base.QiRegen;
+        Player.MaxKi = Stats.MaxKi; Player.KiRegen = Data.Base.KiRegen;
         Hud.SetSeed(SeedInUse);
         Hud.SetMiniMap(this, 0.06f);
         World.UpdateAround(Player.GlobalPosition);
@@ -454,8 +454,8 @@ public partial class PlainsGame : Node2D, IMapSource
         Player.CutVigorCost = Data.Base.CutVigorCost;
         if (fill) Player.Vigor = Player.MaxVigor;
         else if (Player.MaxVigor > oldMax && oldMax > 0) Player.Vigor += Player.MaxVigor - oldMax;
-        Player.MaxQi = Stats.MaxQi; Player.QiRegen = Data.Base.QiRegen;
-        if (fill) Qi = Stats.MaxQi;
+        Player.MaxKi = Stats.MaxKi; Player.KiRegen = Data.Base.KiRegen;
+        if (fill) Ki = Stats.MaxKi;
     }
 
     // ------------------------------------------------------------------ loop and input
@@ -490,14 +490,14 @@ public partial class PlainsGame : Node2D, IMapSource
             if (_rising) { Player.Lying = Mathf.Max(0, Player.Lying - dt / 0.9f); if (Player.Lying <= 0) { _rising = false; Hud.Toast("Você se levanta. Mãos vazias."); } }
         }
         Hud.SetHealth(Player.Health, Player.MaxHealth, Player.PendingRegen);
-        Hud.SetEnergy(Player.Vigor, Player.MaxVigor, Qi, Stats.MaxQi);
+        Hud.SetEnergy(Player.Vigor, Player.MaxVigor, Ki, Stats.MaxKi);
         Hud.SetCharge(Player.ChargeInvested, Player.ChargeCost);
         Hud.SetReinforce(Player.ReinforceCharges);
         Hud.SetLevel(Stats.Level, Stats.Xp, Stats.XpToNext(Stats.Level), Stats.Points);
         UpdateWaves(dt);
         UpdateFocus();
         UpdatePrompt();
-        Hud.SetQiKeyHint(QiKeyAction == "esfolar" ? "[qi] esfolar com Qi" : $"[qi] disparo de Qi{(Tech.State("qi_wave") == TechniqueState.Sealed ? " (selado)" : "")}");
+        Hud.SetKiKeyHint(KiKeyAction == "esfolar" ? "[ki] esfolar com Ki" : $"[ki] disparo de Ki{(Tech.State("ki_wave") == TechniqueState.Sealed ? " (selado)" : "")}");
     }
 
     /// <inheritdoc />
@@ -544,7 +544,7 @@ public partial class PlainsGame : Node2D, IMapSource
             Handled(); return;
         }
         if (e.IsActionPressed("use")) { TryInteract(false); Handled(); }
-        else if (e.IsActionPressed("qi")) { QiKey(); Handled(); }
+        else if (e.IsActionPressed("ki")) { KiKey(); Handled(); }
         else if (e.IsActionPressed("book")) { ToggleBook(); Handled(); }
         else if (e.IsActionPressed("lock")) { ToggleFocus(); Handled(); }
         else if (e.IsActionPressed("heal")) { QuickHeal(); Handled(); }
@@ -564,14 +564,14 @@ public partial class PlainsGame : Node2D, IMapSource
         }
     }
 
-    /// <summary>What K will do here: "esfolar" next to a carcass (skin with Qi), otherwise "disparo" (the qi shot).</summary>
-    public string QiKeyAction => NearestInteractable() is Carcass ? "esfolar" : "disparo";
+    /// <summary>What K will do here: "esfolar" next to a carcass (skin with Ki), otherwise "disparo" (the ki shot).</summary>
+    public string KiKeyAction => NearestInteractable() is Carcass ? "esfolar" : "disparo";
 
-    /// <summary>K: skins with Qi next to a carcass, otherwise asks for the qi shot. One press, one action.</summary>
-    public void QiKey()
+    /// <summary>K: skins with Ki next to a carcass, otherwise asks for the ki shot. One press, one action.</summary>
+    public void KiKey()
     {
-        if (QiKeyAction == "esfolar") TryInteract(true);
-        else Player.BeginQi();
+        if (KiKeyAction == "esfolar") TryInteract(true);
+        else Player.BeginKi();
     }
 
     /// <summary>
@@ -585,46 +585,46 @@ public partial class PlainsGame : Node2D, IMapSource
         TechniquesReturned = true;
         foreach (var b in Book.Where(b => b.State == "Selada")) { b.State = "Enfraquecida"; Tech.Set(b.Tech, TechniqueState.Weakened); }
         Hud.Banner("As técnicas do Vale voltam", 3.0f);
-        Hud.Toast(Bindings.F($"Nível {Tech.Data.UnlockLevel}: as técnicas do Vale voltam, enfraquecidas. Custam Qi e vigor; veja o Livro ([book])."));
+        Hud.Toast(Bindings.F($"Nível {Tech.Data.UnlockLevel}: as técnicas do Vale voltam, enfraquecidas. Custam Ki e vigor; veja o Livro ([book])."));
         AddClue("tecnicas", $"Nível {Tech.Data.UnlockLevel}: as técnicas do Vale voltaram, enfraquecidas. O Livro mostra o custo e o alcance.", Player.GlobalPosition);
         Sfx?.Play("learn");
         return true;
     }
 
-    private readonly List<QiWave> _waves = new();
+    private readonly List<KiWave> _waves = new();
 
-    /// <summary>Qi shots in flight (for checks).</summary>
-    public IReadOnlyList<QiWave> Waves => _waves;
+    /// <summary>Ki shots in flight (for checks).</summary>
+    public IReadOnlyList<KiWave> Waves => _waves;
 
-    /// <summary>Raised when a qi shot ends: how far it went and whether it hit something.</summary>
-    public event System.Action<QiWave, bool>? QiShotEnded;
+    /// <summary>Raised when a ki shot ends: how far it went and whether it hit something.</summary>
+    public event System.Action<KiWave, bool>? KiShotEnded;
 
     // the first charged shot reveals the secret technique (also when it was not found in the Vale)
     private void OnSecret(string id)
     {
-        if (id == "qi_reinforce")
+        if (id == "ki_reinforce")
         {
-            if (Book.Any(b => b.Tech == "qi_reinforce")) return;
-            Book.Add(new BookEntry { Name = Tech.Data.QiReinforce.Name, Kind = "técnica", Key = "modificador + corte", Where = "Descoberta por você na Planície Verdejante. O Qi percorre a lâmina.", Tech = "qi_reinforce", State = "Plena" });
-            Tech.Set("qi_reinforce", TechniqueState.Full);
-            Hud.Banner(Tech.Data.QiReinforce.Name, 2.6f);
+            if (Book.Any(b => b.Tech == "ki_reinforce")) return;
+            Book.Add(new BookEntry { Name = Tech.Data.KiReinforce.Name, Kind = "técnica", Key = "modificador + corte", Where = "Descoberta por você na Planície Verdejante. O Ki percorre a lâmina.", Tech = "ki_reinforce", State = "Plena" });
+            Tech.Set("ki_reinforce", TechniqueState.Full);
+            Hud.Banner(Tech.Data.KiReinforce.Name, 2.6f);
             Sfx?.Play("learn");
             return;
         }
-        if (id != "qi_charge" || Book.Any(b => b.Tech == "qi_charge")) return;
-        Book.Add(new BookEntry { Name = Tech.Data.QiCharge.Name, Kind = "técnica", Key = "segurar Qi, soltar", Where = "Descoberta por você na Planície Verdejante. O Qi se junta na palma enquanto o botão fica preso.", Tech = "qi_charge",
-            State = Tech.State("qi_wave") == TechniqueState.Weakened ? "Enfraquecida" : "Plena" });
-        Tech.Set("qi_charge", Tech.State("qi_wave") == TechniqueState.Weakened ? TechniqueState.Weakened : TechniqueState.Full);
-        Hud.Banner(Tech.Data.QiCharge.Name, 2.8f);
-        Hud.Toast(Bindings.F("Técnica secreta descoberta: segurar [qi] concentra o Qi; soltar dispara. Veja o Livro ([book])."));
+        if (id != "ki_charge" || Book.Any(b => b.Tech == "ki_charge")) return;
+        Book.Add(new BookEntry { Name = Tech.Data.KiCharge.Name, Kind = "técnica", Key = "segurar Ki, soltar", Where = "Descoberta por você na Planície Verdejante. O Ki se junta na palma enquanto o botão fica preso.", Tech = "ki_charge",
+            State = Tech.State("ki_wave") == TechniqueState.Weakened ? "Enfraquecida" : "Plena" });
+        Tech.Set("ki_charge", Tech.State("ki_wave") == TechniqueState.Weakened ? TechniqueState.Weakened : TechniqueState.Full);
+        Hud.Banner(Tech.Data.KiCharge.Name, 2.8f);
+        Hud.Toast(Bindings.F("Técnica secreta descoberta: segurar [ki] concentra o Ki; soltar dispara. Veja o Livro ([book])."));
         Sfx?.Play("learn");
     }
 
-    private void OnQiShot(Player.QiShot shot)
+    private void OnKiShot(Player.KiShot shot)
     {
-        var w = new QiWave { Shot = shot, GlobalPosition = shot.Origin, ZIndex = 10 };
+        var w = new KiWave { Shot = shot, GlobalPosition = shot.Origin, ZIndex = 10 };
         World.Objects.AddChild(w); _waves.Add(w);
-        Sfx?.Play(shot.Lamina ? "combo" : "qi");
+        Sfx?.Play(shot.Lamina ? "combo" : "ki");
         if (shot.Lamina) Hud.Banner("Passo da Lâmina Silenciosa", 1.6f);
     }
 
@@ -641,7 +641,7 @@ public partial class PlainsGame : Node2D, IMapSource
                 w.HitSet.Add(h.CreatureId);
                 if (w.Shot.Breaks && h is Boar bb && bb.BreakGuard(w.Shot.Stagger))
                 {
-                    Hud.Toast("O Qi concentrado rompe a investida: o javali fica aberto!");
+                    Hud.Toast("O Ki concentrado rompe a investida: o javali fica aberto!");
                     Sfx?.Play("hit");
                 }
                 h.ReceiveHit(w.Shot.Damage);
@@ -650,7 +650,7 @@ public partial class PlainsGame : Node2D, IMapSource
             }
             if (w.Done)
             {
-                QiShotEnded?.Invoke(w, hit || w.HitSet.Count > 0);
+                KiShotEnded?.Invoke(w, hit || w.HitSet.Count > 0);
                 w.QueueFree(); _waves.Remove(w);
             }
         }
@@ -679,10 +679,10 @@ public partial class PlainsGame : Node2D, IMapSource
         var st = Tech.State(id);
         if (st == TechniqueState.Sealed) return $"Selada: volta enfraquecida no nível {Tech.Data.UnlockLevel}.";
         var p = Tech.Params(id); if (p == null) return "";
-        string cost = $"custo: {p.QiCost:0} Qi, {p.VigorCost:0} vigor";
+        string cost = $"custo: {p.KiCost:0} Ki, {p.VigorCost:0} vigor";
         return id switch
         {
-            "qi_wave" => $"{(st == TechniqueState.Weakened ? "Enfraquecida" : "Plena")} · {cost} · alcance {p.Range:0} px · dano {p.Damage}",
+            "ki_wave" => $"{(st == TechniqueState.Weakened ? "Enfraquecida" : "Plena")} · {cost} · alcance {p.Range:0} px · dano {p.Damage}",
             "side_step" => $"{(st == TechniqueState.Weakened ? "Enfraquecida" : "Plena")} · {cost} · contorna {p.Angle:0}° · raio até {p.RadiusMax:0} px",
             "dash" => $"{(st == TechniqueState.Weakened ? "Enfraquecida" : "Plena")} · {cost} · {p.Distance:0} px",
             "thrust" => $"{(st == TechniqueState.Weakened ? "Enfraquecida" : "Plena")} · {cost} · alcance {p.Reach:0} px · dano {p.Damage}",
@@ -739,7 +739,7 @@ public partial class PlainsGame : Node2D, IMapSource
         if (Focused == who) Focused = null;
         int xp = HarvestRules.HuntXp(Data, who.Kind, who.Level, Stats.Level);
         string name = Data.Creatures.TryGetValue(who.Kind, out var c) ? c.Name : who.Kind;
-        Hud.Toast(Bindings.F($"{name} (Nv {who.Level}) abatido. [use] na carcaça: pele e carne ([qi] esfola com Qi)."));
+        Hud.Toast(Bindings.F($"{name} (Nv {who.Level}) abatido. [use] na carcaça: pele e carne ([ki] esfola com Ki)."));
         GainXp(xp, $"caça Nv {who.Level}");
     }
 
@@ -753,8 +753,8 @@ public partial class PlainsGame : Node2D, IMapSource
             if (n is not IHittable h || !h.CanBeHit || _hitThisSwing.Contains(h.CreatureId)) continue;
             if (!Player.InBladeArc(origin, dir, reach, Player.Tuning.HitArcDegrees, h.GlobalPosition, h.BodyRadius)) continue;
             _hitThisSwing.Add(h.CreatureId);
-            // the Reforço de Qi: +10% damage (fractional, no rounding) and one break roll against a boar's defence
-            if (h is Boar bb && !bb.Brain.Vulnerable && Player.RollReinforceBreak() && bb.BreakGuard(Tech.Data.QiReinforce.Full.Stagger))
+            // the Reforço de Ki: +10% damage (fractional, no rounding) and one break roll against a boar's defence
+            if (h is Boar bb && !bb.Brain.Vulnerable && Player.RollReinforceBreak() && bb.BreakGuard(Tech.Data.KiReinforce.Full.Stagger))
                 Hud.Toast("O golpe reforçado rompe a defesa do javali!");
             h.ReceiveHit(damage * Player.StrikeScale);
         }
@@ -813,7 +813,7 @@ public partial class PlainsGame : Node2D, IMapSource
         {
             Pickup { ItemId: "moedas" } => Bindings.F("[use] · pegar a bolsinha de moedas"),
             Pickup p => Bindings.F("[use]") + $" · pegar {Catalog.Get(p.ItemId == "grama_sangue" ? HarvestRules.HerbItem(Data, Skills.Grade("erboristeria")) : p.ItemId).Name}",
-            Carcass c => !Blade ? "precisa de uma lâmina na mão" : Bindings.F($"[use] · tirar {PartName(c.Parts[0])}" + (c.Parts[0] != "meat" ? " · [qi] com Qi" : "")),
+            Carcass c => !Blade ? "precisa de uma lâmina na mão" : Bindings.F($"[use] · tirar {PartName(c.Parts[0])}" + (c.Parts[0] != "meat" ? " · [ki] com Ki" : "")),
             TrackPrint => Bindings.F("[use] · examinar a pegada"),
             Campfire => Bindings.F("[use] · assar carne"),
             MeditationMat => Bindings.F("[use] · meditar (grava a jornada)"),
@@ -830,18 +830,18 @@ public partial class PlainsGame : Node2D, IMapSource
         return total;
     }
 
-    /// <summary>Acts on the nearest thing; <paramref name="withQi"/> is K (skin with Qi). Returns true when something happened.</summary>
-    public bool TryInteract(bool withQi)
+    /// <summary>Acts on the nearest thing; <paramref name="withKi"/> is K (skin with Ki). Returns true when something happened.</summary>
+    public bool TryInteract(bool withKi)
     {
         switch (NearestInteractable())
         {
-            case Pickup p: return withQi ? false : TakePickup(p);
-            case Carcass c: return TakePart(c, withQi);
-            case TrackPrint t when !withQi: return Examine(t);
-            case Campfire when !withQi: return Cook();
-            case MeditationMat m when !withQi: return Meditate(m);
+            case Pickup p: return withKi ? false : TakePickup(p);
+            case Carcass c: return TakePart(c, withKi);
+            case TrackPrint t when !withKi: return Examine(t);
+            case Campfire when !withKi: return Cook();
+            case MeditationMat m when !withKi: return Meditate(m);
         }
-        if (withQi) Hud.Toast(Bindings.F("[qi]: aplique Qi ao esfolar, junto a uma carcaça."));
+        if (withKi) Hud.Toast(Bindings.F("[ki]: aplique Ki ao esfolar, junto a uma carcaça."));
         return false;
     }
 
@@ -864,7 +864,7 @@ public partial class PlainsGame : Node2D, IMapSource
         return true;
     }
 
-    private bool TakePart(Carcass c, bool withQi)
+    private bool TakePart(Carcass c, bool withKi)
     {
         if (!Blade) { Hud.Toast("Sem lâmina não dá para aproveitar a caça."); return false; }
         string part = c.Parts[0], kind = c.IsBoar ? "boar" : "rabbit";
@@ -875,11 +875,11 @@ public partial class PlainsGame : Node2D, IMapSource
             case "hide":
             {
                 int g = Skills.Grade("esfolar");
-                if (withQi && g < 1) Hud.Toast("Esfolar Bruto: ainda não sabe guiar o Qi pela lâmina (precisa de Iniciante).");
-                else if (withQi && Qi < Data.Base.QiPreserveCost) Hud.Toast($"Qi insuficiente ({Data.Base.QiPreserveCost:0} para preservar).");
-                var h = HarvestRules.Skin(Data, kind, g, withQi, Qi);
-                Qi -= h.QiSpent;
-                if (h.QiSpent > 0) Hud.Toast($"Um fio de Qi guia a lâmina (−{h.QiSpent:0} Qi): o material sai um grau acima.");
+                if (withKi && g < 1) Hud.Toast("Esfolar Bruto: ainda não sabe guiar o Ki pela lâmina (precisa de Iniciante).");
+                else if (withKi && Ki < Data.Base.KiPreserveCost) Hud.Toast($"Ki insuficiente ({Data.Base.KiPreserveCost:0} para preservar).");
+                var h = HarvestRules.Skin(Data, kind, g, withKi, Ki);
+                Ki -= h.KiSpent;
+                if (h.KiSpent > 0) Hud.Toast($"Um fio de Ki guia a lâmina (−{h.KiSpent:0} Ki): o material sai um grau acima.");
                 AddItem(h.Item);
                 Practice("esfolar", c.CreatureId);
                 break;
@@ -896,9 +896,9 @@ public partial class PlainsGame : Node2D, IMapSource
             default:
             {
                 int g = Skills.Grade("esfolar");
-                if (withQi && g < 3) Hud.Toast("Extração espiritual pede Esfolar Mestre.");
-                var (item, spent) = HarvestRules.SpiritualPart(Data, kind, "presa_javali", g, withQi, Qi);
-                Qi -= spent;
+                if (withKi && g < 3) Hud.Toast("Extração espiritual pede Esfolar Mestre.");
+                var (item, spent) = HarvestRules.SpiritualPart(Data, kind, "presa_javali", g, withKi, Ki);
+                Ki -= spent;
                 AddItem(item);
                 break;
             }
@@ -955,11 +955,11 @@ public partial class PlainsGame : Node2D, IMapSource
         var near = GetTree().GetNodesInGroup("creatures").OfType<Boar>().FirstOrDefault(b => b.Brain.State is BoarState.Warn or BoarState.Charge && b.GlobalPosition.DistanceTo(Player.GlobalPosition) < 200);
         if (near != null) { Hud.Toast("Não dá para meditar com um javali investindo."); return false; }
         Spot = m.GlobalPosition + new Vector2(0, 12);
-        Qi = Stats.MaxQi;
+        Ki = Stats.MaxKi;
         Player.RestoreVigor(Player.MaxVigor);
         m.Shine = 1.6f;
         bool ok = SaveGame.Write(SavePath, Snapshot());
-        if (ok) { Hud.Toast("Meditação gravada. Qi e vigor cheios."); Hud.Toast("Se cair, volta a esta esteira. Se fechar o jogo, Continuar volta aqui."); }
+        if (ok) { Hud.Toast("Meditação gravada. Ki e vigor cheios."); Hud.Toast("Se cair, volta a esta esteira. Se fechar o jogo, Continuar volta aqui."); }
         else Hud.Toast("A meditação não foi gravada: não foi possível escrever o arquivo. O jogo continua.");
         return ok;
     }
@@ -975,7 +975,7 @@ public partial class PlainsGame : Node2D, IMapSource
             Collected = collected, Dead = dead.ToDictionary(kv => kv.Key, kv => new[] { kv.Value.X, kv.Value.Y }), PartsTaken = parts, Trails = trails,
             Inventory = Inventory.Entries.Select(e => new SavedItem { Id = e.Id, Count = e.Count }).ToList(),
             Equipped = Player.Equipped switch { Player.Weapon.Knife => "knife", Player.Weapon.Sword => "sword", _ => "none" },
-            Health = Player.Health, Vigor = Player.Vigor, Qi = Qi,
+            Health = Player.Health, Vigor = Player.Vigor, Ki = Ki,
             Level = Stats.Level, Xp = Stats.Xp, Points = Stats.Points, TotalXp = Stats.TotalXp, Attributes = Stats.Attributes,
             Practice = practice, PracticeKeys = keys, Crafted = _crafted.ToList(),
             Region = "planicie", Phase = "planicie", Book = Book, LossApplied = LossApplied, TechniquesReturned = TechniquesReturned,
@@ -1143,7 +1143,7 @@ public partial class PlainsGame : Node2D, IMapSource
             string prog = next is { } n ? $"{Skills.Practice(s)}/{n} para {Data.GradeName(g + 1)}" : "grau máximo";
             detail.Add($"  {Data.Skill(s).Name} — {Data.GradeName(g)} ({prog}): {Proficiencies.Benefit(s, g)}");
         }
-        string header = $"Vida {Player.MaxHealth} · Vigor {Stats.MaxVigor:0} · Qi {Stats.MaxQi:0} · XP {Stats.Xp}/{Stats.XpToNext(Stats.Level)} (faltam {Stats.XpMissing}) · Pontos: {Stats.Points}";
+        string header = $"Vida {Player.MaxHealth} · Vigor {Stats.MaxVigor:0} · Ki {Stats.MaxKi:0} · XP {Stats.Xp}/{Stats.XpToNext(Stats.Level)} (faltam {Stats.XpMissing}) · Pontos: {Stats.Points}";
         Hud.SetSheet($"Ficha — Nível {Stats.Level}", header, rows, string.Join("\n", detail));
     }
 

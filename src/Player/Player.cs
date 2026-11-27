@@ -15,10 +15,10 @@ namespace SpiritOfMurin.Characters;
 public partial class Player : CharacterBody2D
 {
     /// <summary>What the body is doing right now.</summary>
-    public enum ActionKind { None, Cut, Step, Thrust, Qi, Side, Dash, Recoil }
+    public enum ActionKind { None, Cut, Step, Thrust, Ki, Side, Dash, Recoil }
 
-    /// <summary>A qi shot leaving the hand: where from, which way, how far and fast, its damage, and whether it is the Silent Blade Step.</summary>
-    public readonly record struct QiShot(Vector2 Origin, Vector2 Dir, float Range, float Speed, int Damage, bool Lamina, float Stagger, bool Breaks = false, float Charge = 0);
+    /// <summary>A ki shot leaving the hand: where from, which way, how far and fast, its damage, and whether it is the Silent Blade Step.</summary>
+    public readonly record struct KiShot(Vector2 Origin, Vector2 Dir, float Range, float Speed, int Damage, bool Lamina, float Stagger, bool Breaks = false, float Charge = 0);
 
     /// <summary>The prologue techniques and their state (full, sealed, weakened); null = none known (the plain body).</summary>
     public TechniqueSet? Tech { get; set; }
@@ -26,19 +26,19 @@ public partial class Player : CharacterBody2D
     /// <summary>The locked target (Space), or null. Provided by the scene (Vale: an enemy; Planície: the focused animal).</summary>
     public Func<Node2D?>? LockTarget { get; set; }
 
-    /// <summary>Current Qi.</summary>
-    public float Qi { get; set; }
+    /// <summary>Current Ki.</summary>
+    public float Ki { get; set; }
 
-    /// <summary>Maximum Qi.</summary>
-    public float MaxQi { get; set; }
+    /// <summary>Maximum Ki.</summary>
+    public float MaxKi { get; set; }
 
-    /// <summary>Qi regained per second.</summary>
-    public float QiRegen { get; set; }
+    /// <summary>Ki regained per second.</summary>
+    public float KiRegen { get; set; }
 
-    /// <summary>Raised when a qi shot (or the Silent Blade Step) leaves the hand.</summary>
-    public event Action<QiShot>? QiFired;
+    /// <summary>Raised when a ki shot (or the Silent Blade Step) leaves the hand.</summary>
+    public event Action<KiShot>? KiFired;
 
-    /// <summary>Raised when a technique is refused: technique id and the message (sealed, not enough Qi or vigor).</summary>
+    /// <summary>Raised when a technique is refused: technique id and the message (sealed, not enough Ki or vigor).</summary>
     public event Action<string, string>? TechniqueRefused;
 
     /// <summary>Raised when a hit passes through the side step's untouchable moment.</summary>
@@ -139,47 +139,47 @@ public partial class Player : CharacterBody2D
     // turns the body to where the attack goes (the pose, the blade, the shot and the hit area all read Facing)
     private void TurnToAim() => Facing = AimDirection;
 
-    // ---- the secret charged Qi shot (pedido 13, item 8) ----
+    // ---- the secret charged Ki shot (pedido 13, item 8) ----
     private enum ChargeState { None, Pending, Charging }
     private ChargeState _charge;
     private float _chargeT;
     private bool _chargeVigorPaid;
 
-    /// <summary>Qi already drawn into the palm by the charge in progress (0 when not charging).</summary>
+    /// <summary>Ki already drawn into the palm by the charge in progress (0 when not charging).</summary>
     public float ChargeInvested { get; private set; }
-    /// <summary>True while the Qi button is held past the tap and the palm gathers Qi.</summary>
+    /// <summary>True while the Ki button is held past the tap and the palm gathers Ki.</summary>
     public bool Charging => _charge == ChargeState.Charging;
     /// <summary>The full charge's total cost (100), from the data.</summary>
-    public float ChargeCost => ChargeParams()?.QiCost ?? 100;
+    public float ChargeCost => ChargeParams()?.KiCost ?? 100;
     /// <summary>True when the charge has reached its full cost: it holds, ready, until the button is let go.</summary>
     public bool ChargeComplete => Charging && ChargeInvested >= ChargeCost - 0.01f;
-    /// <summary>Raised the first time a secret technique is performed ("qi_charge"), so the region can record it.</summary>
+    /// <summary>Raised the first time a secret technique is performed ("ki_charge"), so the region can record it.</summary>
     public event Action<string>? SecretFound;
-    /// <summary>Raised when a charge is cancelled (inventory, pause, focus lost): the Qi invested goes back to the bar.</summary>
+    /// <summary>Raised when a charge is cancelled (inventory, pause, focus lost): the Ki invested goes back to the bar.</summary>
     public event Action<float>? ChargeCancelled;
 
-    // the version in force: the charge follows the Qi shot's state (unknown counts as the shot's version, so it can be discovered)
+    // the version in force: the charge follows the Ki shot's state (unknown counts as the shot's version, so it can be discovered)
     private TechniqueParams? ChargeParams()
     {
         if (Tech == null) return null;
-        var cs = Tech.State("qi_charge");
+        var cs = Tech.State("ki_charge");
         if (cs == TechniqueState.Sealed) return null;
-        return Tech.State("qi_wave") switch
+        return Tech.State("ki_wave") switch
         {
-            TechniqueState.Full => cs == TechniqueState.Weakened ? Tech.Data.QiCharge.Weak : Tech.Data.QiCharge.Full,
-            TechniqueState.Weakened => Tech.Data.QiCharge.Weak,
+            TechniqueState.Full => cs == TechniqueState.Weakened ? Tech.Data.KiCharge.Weak : Tech.Data.KiCharge.Full,
+            TechniqueState.Weakened => Tech.Data.KiCharge.Weak,
             _ => null,
         };
     }
 
     /// <summary>
-    /// The Qi button was pressed (any key bound to "qi"). A short press is the plain shot (fired when let go);
-    /// held past <c>hold</c> seconds, the palm starts drawing Qi; letting go fires one charged shot.
+    /// The Ki button was pressed (any key bound to "ki"). A short press is the plain shot (fired when let go);
+    /// held past <c>hold</c> seconds, the palm starts drawing Ki; letting go fires one charged shot.
     /// </summary>
-    public void BeginQi()
+    public void BeginKi()
     {
         if (InputLocked || Health <= 0 || Lying > 0 || _charge != ChargeState.None) return;
-        if (ChargeParams() == null || Tech?.Params("qi_wave") == null) { RequestQi(); return; } // sealed or unknown: the plain path (and its refusal)
+        if (ChargeParams() == null || Tech?.Params("ki_wave") == null) { RequestKi(); return; } // sealed or unknown: the plain path (and its refusal)
         _charge = ChargeState.Pending; _chargeT = 0; ChargeInvested = 0; _chargeVigorPaid = false;
     }
 
@@ -188,50 +188,50 @@ public partial class Player : CharacterBody2D
         if (locked) { CancelCharge(); return; }
         var cp = ChargeParams();
         if (cp == null) { CancelCharge(); return; }
-        bool held = InputMap.HasAction("qi") && Input.IsActionPressed("qi");
+        bool held = InputMap.HasAction("ki") && Input.IsActionPressed("ki");
         if (_charge == ChargeState.Pending)
         {
             _chargeT += dt;
-            if (!held) { _charge = ChargeState.None; RequestQi(); return; } // a tap: the plain shot
+            if (!held) { _charge = ChargeState.None; RequestKi(); return; } // a tap: the plain shot
             if (_chargeT < cp.Hold || _act != null) return;
             if (MaxVigor > 0 && cp.VigorCost > 0)
             {
-                if (Vigor < cp.VigorCost) { TechniqueRefused?.Invoke("qi_charge", $"{Tech!.Data.QiCharge.Name}: falta vigor ({Mathf.FloorToInt(Vigor)}/{cp.VigorCost:0})."); _charge = ChargeState.None; return; }
+                if (Vigor < cp.VigorCost) { TechniqueRefused?.Invoke("ki_charge", $"{Tech!.Data.KiCharge.Name}: falta vigor ({Mathf.FloorToInt(Vigor)}/{cp.VigorCost:0})."); _charge = ChargeState.None; return; }
                 Vigor -= cp.VigorCost; _vigorWait = VigorRegenDelay; _chargeVigorPaid = true;
             }
             _charge = ChargeState.Charging;
-            ActionStarted?.Invoke(ActionKind.Qi, -1);
+            ActionStarted?.Invoke(ActionKind.Ki, -1);
         }
-        // charging: aim follows the cursor; Qi flows from the bar into the palm up to the full cost, never more
+        // charging: aim follows the cursor; Ki flows from the bar into the palm up to the full cost, never more
         Facing = AimDirection;
-        float take = Mathf.Min(cp.Drain * dt, Mathf.Min(cp.QiCost - ChargeInvested, Qi));
-        if (take > 0) { Qi -= take; ChargeInvested += take; }
+        float take = Mathf.Min(cp.Drain * dt, Mathf.Min(cp.KiCost - ChargeInvested, Ki));
+        if (take > 0) { Ki -= take; ChargeInvested += take; }
         if (!held) ReleaseCharge(cp);
     }
 
     // one shot, paid by what was invested (the shot's own cost is inside the 100: nothing else is charged)
     private void ReleaseCharge(TechniqueParams cp)
     {
-        float k = Mathf.Clamp(ChargeInvested / Mathf.Max(1, cp.QiCost), 0, 1);
-        bool full = ChargeInvested >= cp.QiCost - 0.01f;
+        float k = Mathf.Clamp(ChargeInvested / Mathf.Max(1, cp.KiCost), 0, 1);
+        bool full = ChargeInvested >= cp.KiCost - 0.01f;
         int dmg = Mathf.Max(1, Mathf.RoundToInt(cp.Damage * k));
         _charge = ChargeState.None;
         TurnToAim();
-        _act = new Act { Kind = ActionKind.Qi, Startup = 0.02f, Active = 0.02f, Recovery = 0.3f * RecoveryMultiplier, CancelAt = 0.2f, Fired = true };
+        _act = new Act { Kind = ActionKind.Ki, Startup = 0.02f, Active = 0.02f, Recovery = 0.3f * RecoveryMultiplier, CancelAt = 0.2f, Fired = true };
         Vector2 o = GlobalPosition + new Vector2(Facing.X * 14, -12 + Facing.Y * 10);
-        QiFired?.Invoke(new QiShot(o, Facing, cp.Range, cp.Speed, dmg, false, full ? cp.Stagger : 0, full, ChargeInvested));
-        ActionStarted?.Invoke(ActionKind.Qi, full ? 100 : Mathf.RoundToInt(ChargeInvested));
+        KiFired?.Invoke(new KiShot(o, Facing, cp.Range, cp.Speed, dmg, false, full ? cp.Stagger : 0, full, ChargeInvested));
+        ActionStarted?.Invoke(ActionKind.Ki, full ? 100 : Mathf.RoundToInt(ChargeInvested));
         ChargeInvested = 0;
-        if (Tech != null && Tech.State("qi_charge") == TechniqueState.Unknown) SecretFound?.Invoke("qi_charge");
+        if (Tech != null && Tech.State("ki_charge") == TechniqueState.Unknown) SecretFound?.Invoke("ki_charge");
     }
 
-    // ---- the Reforço de Qi (pedido 13, item 9) ----
+    // ---- the Reforço de Ki (pedido 13, item 9) ----
     private bool _reinforcing;
     private float _reinforceT;
 
     /// <summary>Reinforced melee strikes left (3, 2, 1, 0).</summary>
     public int ReinforceCharges { get; set; }
-    /// <summary>True while the gesture (modifier + cut held) gathers Qi along the blade.</summary>
+    /// <summary>True while the gesture (modifier + cut held) gathers Ki along the blade.</summary>
     public bool Reinforcing => _reinforcing;
     /// <summary>0-1 through the gesture.</summary>
     public float ReinforceProgress => _reinforcing ? Mathf.Clamp(_reinforceT / Mathf.Max(0.01f, ReinforceParams?.Hold ?? 0.35f), 0, 1) : 0;
@@ -241,10 +241,10 @@ public partial class Player : CharacterBody2D
     public bool StrikeReinforced => _act is { Reinforced: true };
     /// <summary>The roll used for the break chance (0-1). Tests inject fixed values; the game uses a random draw.</summary>
     public Func<float> ReinforceRoll { get; set; } = () => (float)Random.Shared.NextDouble();
-    /// <summary>Raised when the Reforço is activated (75 Qi spent, 3 charges) or refused (the message).</summary>
+    /// <summary>Raised when the Reforço is activated (75 Ki spent, 3 charges) or refused (the message).</summary>
     public event Action<bool, string>? ReinforceResult;
 
-    private TechniqueParams? ReinforceParams => Tech?.Data.QiReinforce.Full;
+    private TechniqueParams? ReinforceParams => Tech?.Data.KiReinforce.Full;
 
     /// <summary>
     /// One break roll for a reinforced strike that meets a guard: true with the data's chance. Regions call it
@@ -255,7 +255,7 @@ public partial class Player : CharacterBody2D
     private void BeginReinforce()
     {
         if (ReinforceParams == null) return;
-        if (ReinforceCharges > 0) { ReinforceResult?.Invoke(false, $"O Reforço de Qi ainda está ativo: {ReinforceCharges} golpe(s) reforçado(s)."); _guard = true; return; }
+        if (ReinforceCharges > 0) { ReinforceResult?.Invoke(false, $"O Reforço de Ki ainda está ativo: {ReinforceCharges} golpe(s) reforçado(s)."); _guard = true; return; }
         _reinforcing = true; _reinforceT = 0;
     }
 
@@ -267,11 +267,11 @@ public partial class Player : CharacterBody2D
         _reinforceT += dt;
         if (_reinforceT < rp.Hold) return;
         _reinforcing = false; _guard = true; // holding on never activates it again
-        if (Qi < rp.QiCost) { ReinforceResult?.Invoke(false, $"{Tech!.Data.QiReinforce.Name}: falta Qi ({Mathf.FloorToInt(Qi)}/{rp.QiCost:0})."); return; }
-        Qi -= rp.QiCost;
+        if (Ki < rp.KiCost) { ReinforceResult?.Invoke(false, $"{Tech!.Data.KiReinforce.Name}: falta Ki ({Mathf.FloorToInt(Ki)}/{rp.KiCost:0})."); return; }
+        Ki -= rp.KiCost;
         ReinforceCharges = rp.Charges;
-        ReinforceResult?.Invoke(true, $"{Tech!.Data.QiReinforce.Name}: os próximos {rp.Charges} golpes estão reforçados (+{rp.Bonus * 100:0}% de dano).");
-        if (Tech.State("qi_reinforce") == TechniqueState.Unknown) SecretFound?.Invoke("qi_reinforce");
+        ReinforceResult?.Invoke(true, $"{Tech!.Data.KiReinforce.Name}: os próximos {rp.Charges} golpes estão reforçados (+{rp.Bonus * 100:0}% de dano).");
+        if (Tech.State("ki_reinforce") == TechniqueState.Unknown) SecretFound?.Invoke("ki_reinforce");
     }
 
     // a strike that starts spends one charge, whether it lands or not
@@ -281,12 +281,12 @@ public partial class Player : CharacterBody2D
         ReinforceCharges--; a.Reinforced = true;
     }
 
-    /// <summary>Stops a charge without a shot; the Qi already in the palm goes back to the bar (never charged twice).</summary>
+    /// <summary>Stops a charge without a shot; the Ki already in the palm goes back to the bar (never charged twice).</summary>
     public void CancelCharge()
     {
         if (_charge == ChargeState.None) return;
         float back = ChargeInvested;
-        Qi = Mathf.Min(MaxQi, Qi + back);
+        Ki = Mathf.Min(MaxKi, Ki + back);
         ChargeInvested = 0; _charge = ChargeState.None;
         _guard = true; // the button still held when the game comes back is not a new press
         ChargeCancelled?.Invoke(back);
@@ -298,8 +298,8 @@ public partial class Player : CharacterBody2D
         if (what == NotificationApplicationFocusOut) CancelCharge();
     }
 
-    /// <summary>Asks for a qi shot (K). It waits in the buffer like a cut or a step.</summary>
-    public void RequestQi() { if (!InputLocked && Health > 0 && Lying <= 0) _buffer = (ActionKind.Qi, Tuning.BufferTime); }
+    /// <summary>Asks for a ki shot (K). It waits in the buffer like a cut or a step.</summary>
+    public void RequestKi() { if (!InputLocked && Health > 0 && Lying <= 0) _buffer = (ActionKind.Ki, Tuning.BufferTime); }
 
     private readonly List<(ActionKind Kind, float T0)> _hist = new();
     private float _evade;
@@ -458,8 +458,8 @@ public partial class Player : CharacterBody2D
         Gold = new("#f5cb5c"),         // guarda e fivela dourada
         GoldDeep = new("#d49b27"),     // detalhes amarelo-dourado
         Outline = new("#17130e"),      // contorno marrom-preto quente
-        Learn = new("#e6fff0"),        // centro do risco de Qi jade claro
-        LearnGlow = new("#4eb87d"),    // brilho de Qi verde esmeralda
+        Learn = new("#e6fff0"),        // centro do risco de Ki jade claro
+        LearnGlow = new("#4eb87d"),    // brilho de Ki verde esmeralda
         Flint = new("#8c8a80");        // faca de pedra
 
     /// <inheritdoc />
@@ -467,7 +467,7 @@ public partial class Player : CharacterBody2D
     {
         Equipped = StartWeapon;
         Health = MaxHealth;
-        AddChild(new QiPalm { Name = "QiPalm" });
+        AddChild(new KiPalm { Name = "KiPalm" });
     }
 
     /// <summary>Takes damage from a hit coming from <paramref name="from"/>. Ignored while invulnerable. Returns true when it landed.</summary>
@@ -508,7 +508,7 @@ public partial class Player : CharacterBody2D
         _time += dt;
         _invulnerable = Mathf.Max(0, _invulnerable - dt);
         _evade = Mathf.Max(0, _evade - dt);
-        if (MaxQi > 0 && _charge != ChargeState.Charging) Qi = Mathf.Min(MaxQi, Qi + QiRegen * dt);
+        if (MaxKi > 0 && _charge != ChargeState.Charging) Ki = Mathf.Min(MaxKi, Ki + KiRegen * dt);
         _hurtFlash = Mathf.Max(0, _hurtFlash - dt);
         if (_regenLeft > 0 && Health > 0)
         {
@@ -593,9 +593,9 @@ public partial class Player : CharacterBody2D
         string name = Tech?.Data.Get(id).Name ?? id;
         bool vigorRule = MaxVigor > 0 && p.VigorCost > 0;
         if (vigorRule && Vigor < p.VigorCost) { TechniqueRefused?.Invoke(id, $"{name}: falta vigor ({Mathf.FloorToInt(Vigor)}/{p.VigorCost:0})."); return false; }
-        if (p.QiCost > 0 && Qi < p.QiCost) { TechniqueRefused?.Invoke(id, $"{name}: falta Qi ({Mathf.FloorToInt(Qi)}/{p.QiCost:0})."); return false; }
+        if (p.KiCost > 0 && Ki < p.KiCost) { TechniqueRefused?.Invoke(id, $"{name}: falta Ki ({Mathf.FloorToInt(Ki)}/{p.KiCost:0})."); return false; }
         if (vigorRule) { Vigor -= p.VigorCost; _vigorWait = VigorRegenDelay; }
-        Qi -= p.QiCost;
+        Ki -= p.KiCost;
         return true;
     }
 
@@ -630,16 +630,16 @@ public partial class Player : CharacterBody2D
         var rel = Rel(move);
         var target = LockTarget?.Invoke();
         if (target != null && !IsInstanceValid(target)) target = null;
-        if (kind == ActionKind.Qi)
+        if (kind == ActionKind.Ki)
         {
-            if (Tech?.Params("qi_wave") is not { } qp)
+            if (Tech?.Params("ki_wave") is not { } qp)
             {
-                if (Sealed("qi_wave")) Refuse("qi_wave", "o Qi não responde.");
+                if (Sealed("ki_wave")) Refuse("ki_wave", "o Ki não responde.");
                 return;
             }
-            if (!Pay("qi_wave", qp)) return;
+            if (!Pay("ki_wave", qp)) return;
             TurnToAim();
-            _act = new Act { Kind = ActionKind.Qi, Startup = 0.1f, Active = 0.02f, Recovery = 0.22f * RecoveryMultiplier, CancelAt = 0.16f };
+            _act = new Act { Kind = ActionKind.Ki, Startup = 0.1f, Active = 0.02f, Recovery = 0.22f * RecoveryMultiplier, CancelAt = 0.16f };
             var lp = LaminaParams();
             if (lp != null && _hist.Count >= 2)
             {
@@ -648,7 +648,7 @@ public partial class Player : CharacterBody2D
                 _act.Lamina = p2.Kind == ActionKind.Side && p1.Kind is ActionKind.Cut or ActionKind.Thrust
                     && p1.T0 - p2.T0 <= sideTime + lp.ComboWindow && _time - p1.T0 <= lp.ComboWindow + 0.1f;
             }
-            _hist.Add((ActionKind.Qi, _time)); if (_hist.Count > 6) _hist.RemoveAt(0);
+            _hist.Add((ActionKind.Ki, _time)); if (_hist.Count > 6) _hist.RemoveAt(0);
             ActionStarted?.Invoke(kind, 0);
             return;
         }
@@ -757,14 +757,14 @@ public partial class Player : CharacterBody2D
     {
         var a = _act!;
         a.T += dt;
-        if (a.Kind == ActionKind.Qi && !a.Fired && a.T >= a.Startup)
+        if (a.Kind == ActionKind.Ki && !a.Fired && a.T >= a.Startup)
         {
             a.Fired = true;
-            var qp = Tech?.Params("qi_wave");
+            var qp = Tech?.Params("ki_wave");
             var lp = a.Lamina ? LaminaParams() : null;
             Vector2 o = GlobalPosition + new Vector2(Facing.X * 14, -12 + Facing.Y * 10);
-            if (lp != null) QiFired?.Invoke(new QiShot(o, Facing, lp.Range, lp.Speed, lp.Damage, true, lp.Stagger));
-            else if (qp != null) QiFired?.Invoke(new QiShot(o, Facing, qp.Range, qp.Speed, qp.Damage, false, 0));
+            if (lp != null) KiFired?.Invoke(new KiShot(o, Facing, lp.Range, lp.Speed, lp.Damage, true, lp.Stagger));
+            else if (qp != null) KiFired?.Invoke(new KiShot(o, Facing, qp.Range, qp.Speed, qp.Damage, false, 0));
         }
         if (a.Kind == ActionKind.Side)
         {
@@ -805,7 +805,7 @@ public partial class Player : CharacterBody2D
     /// <inheritdoc />
     public override void _Draw()
     {
-        // Step afterimages (silhouette-shaped trailing glow in Jade Qi)
+        // Step afterimages (silhouette-shaped trailing glow in Jade Ki)
         foreach (var (world, life) in _ghosts)
         {
             Vector2 o = world - GlobalPosition;
@@ -1073,7 +1073,7 @@ public partial class Player : CharacterBody2D
             hand = new Vector2(x + fx * 12, sy + 3 + fy * 8);
             tip = hand + new Vector2(fx * 22, fy * 15) * bladeLen;
         }
-        else if (_act is { Kind: ActionKind.Qi })
+        else if (_act is { Kind: ActionKind.Ki })
         {
             hand = new Vector2(x - nx * 7 * s, sy + 9);
             tip = hand + new Vector2(fx * 6, 12) * bladeLen;

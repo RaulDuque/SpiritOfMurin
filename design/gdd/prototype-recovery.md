@@ -115,4 +115,4 @@ Ela também acrescenta quatro recursos pedidos:
 4. O minimapa aparece ao explorar, some atrás dos painéis e fica sob a semente em 1280×720, 1600×900 e 1920×1080.
 5. Trocar o corte para U por mouse funciona na hora, o rodapé diz U, os cliques que fecham os menus não cortam, U continua valendo ao reabrir o jogo e "Restaurar padrões" devolve J.
 6. A assistência liga e desliga durante a partida e fica salva.
-7. O livro mostra selada (com os números das duas versões) e enfraquecida no nível 3 (custo 45 Qi e 10 vigor, alcance 105 px), lado a lado em tela larga e empilhado em painel estreito.
+7. O livro mostra selada (com os números das duas versões) e enfraquecida no nível 3 (custo 45 Ki e 10 vigor, alcance 105 px), lado a lado em tela larga e empilhado em painel estreito.

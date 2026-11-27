@@ -8,8 +8,8 @@ namespace SpiritOfMurin.Plains;
 /// <summary>
 /// The Planície's screen layer, drawn with the prototype's colours:
 /// <list type="bullet">
-/// <item>the bars in the corner: Vida with its percentage and the pending herb heal in green, vigor and Qi,
-/// in the style of the prototype's qi bar; the level and the XP missing; what the hands hold;</item>
+/// <item>the bars in the corner: Vida with its percentage and the pending herb heal in green, vigor and Ki,
+/// in the style of the prototype's ki bar; the level and the XP missing; what the hands hold;</item>
 /// <item>the focused creature's name, level, temper and health at the top;</item>
 /// <item>the interaction prompt, pickup messages, the seed, the controls line;</item>
 /// <item>three panels that share one look: the inventory (I), the character sheet (C) and the title menu;</item>
@@ -30,7 +30,7 @@ public partial class PlainsHud : CanvasLayer
 
     private static readonly Color Text = new("#ece5d0"), Dim = new("#a39e8c"), OutlineC = new("#16140f"), Life = new("#7a3a32"), LifeHi = new("#b0574a"),
         LifeBack = new("#2b1f1a"), RegenC = new("#4c7c4a"), Panel = new(0.07f, 0.075f, 0.06f, 0.94f), Select = new("#c9a14a"), Disabled = new("#6b675c"),
-        Vig = new("#b8923a"), VigHi = new("#e6c878"), VigBack = new("#2a2418"), QiC = new("#3fae9e"), QiHi = new("#a6f2e2"), QiBack = new("#1f2a28"),
+        Vig = new("#b8923a"), VigHi = new("#e6c878"), VigBack = new("#2a2418"), KiC = new("#3fae9e"), KiHi = new("#a6f2e2"), KiBack = new("#1f2a28"),
         Threat = new("#b0403a");
 
     /// <summary>A panel with a title, a list of rows, a detail block and a help line.</summary>
@@ -45,7 +45,7 @@ public partial class PlainsHud : CanvasLayer
     }
 
     private Control _root = null!, _bars = null!, _focusBar = null!, _footer = null!;
-    private Label _life = null!, _vigor = null!, _qi = null!, _level = null!, _hands = null!, _seed = null!, _controls = null!, _prompt = null!, _overlayText = null!, _focus = null!;
+    private Label _life = null!, _vigor = null!, _ki = null!, _level = null!, _hands = null!, _seed = null!, _controls = null!, _prompt = null!, _overlayText = null!, _focus = null!;
     private VBoxContainer _toasts = null!;
     private Menu _inv = null!, _sheet = null!, _title = null!, _story = null!, _pause = null!;
     private Vector2 _laidOut;
@@ -62,7 +62,7 @@ public partial class PlainsHud : CanvasLayer
     public BookPanel Book { get; private set; } = null!;
     /// <summary>The HUD's root control (panels added by the game hang from it).</summary>
     public Control Root => _root;
-    private string _controlsTemplate = "", _valeTemplate = "", _qiHint = "[qi] Qi";
+    private string _controlsTemplate = "", _valeTemplate = "", _kiHint = "[ki] Ki";
     /// <summary>True while the map is open.</summary>
     public bool MapOpen => Map.Visible;
     /// <summary>True while the pause menu is open.</summary>
@@ -103,7 +103,7 @@ public partial class PlainsHud : CanvasLayer
     private float _bannerT, _speechT;
     private bool _valeMode;
     private ColorRect _overlay = null!;
-    private float _health, _max = 10, _pending, _vig, _maxVig, _qiNow, _maxQi, _focusFrac, _overlayTime, _overlayHold, _palm, _palmCost = 100;
+    private float _health, _max = 10, _pending, _vig, _maxVig, _kiNow, _maxKi, _focusFrac, _overlayTime, _overlayHold, _palm, _palmCost = 100;
     private readonly List<(Label L, float T)> _toastLabels = new();
 
     /// <summary>True while the inventory is open.</summary>
@@ -233,7 +233,7 @@ public partial class PlainsHud : CanvasLayer
         _root.AddChild(_bars);
         _life = Add(MakeLabel(8, Text), new Vector2(97, 0));
         _vigor = Add(MakeLabel(8, Dim), new Vector2(97, 10));
-        _qi = Add(MakeLabel(8, Dim), new Vector2(97, 20));
+        _ki = Add(MakeLabel(8, Dim), new Vector2(97, 20));
         _level = Add(MakeLabel(8, Text), new Vector2(9, 31));
         _hands = Add(MakeLabel(8, Dim), new Vector2(9, 41));
 
@@ -254,8 +254,8 @@ public partial class PlainsHud : CanvasLayer
         _root.AddChild(_footer);
         _controls = Add(MakeLabel(8, Text), new Vector2(6, 346));
         _controls.ClipText = true;
-        _controlsTemplate = "[walk] andar · [sneak] quieto · [use] pegar/examinar · [inventory] inventário · [sheet] ficha · [book] livro · [map] mapa · [lock] focar · {qi} · [heal] erva · [cut+] corte · [step+] passo · [menu] pausa";
-        _valeTemplate = "[walk] andar · [lock] travar · [cut+] corte · [step+] passo · [qi] Qi · [use] examinar · [heal] bálsamo · [inventory] inventário · [book] livro · [map] mapa · [menu] pausa";
+        _controlsTemplate = "[walk] andar · [sneak] quieto · [use] pegar/examinar · [inventory] inventário · [sheet] ficha · [book] livro · [map] mapa · [lock] focar · {ki} · [heal] erva · [cut+] corte · [step+] passo · [menu] pausa";
+        _valeTemplate = "[walk] andar · [lock] travar · [cut+] corte · [step+] passo · [ki] Ki · [use] examinar · [heal] bálsamo · [inventory] inventário · [book] livro · [map] mapa · [menu] pausa";
         _controls.Text = ControlsLine();
         MiniMap = new MapView { Compact = true, Visible = false, MouseFilter = Control.MouseFilterEnum.Ignore, Name = "MiniMap", TextureFilter = CanvasItem.TextureFilterEnum.Nearest };
         _root.AddChild(MiniMap);
@@ -326,21 +326,21 @@ public partial class PlainsHud : CanvasLayer
         _bars.QueueRedraw();
     }
 
-    /// <summary>Updates vigor and Qi.</summary>
-    public void SetEnergy(float vigor, float maxVigor, float qi, float maxQi)
+    /// <summary>Updates vigor and Ki.</summary>
+    public void SetEnergy(float vigor, float maxVigor, float ki, float maxKi)
     {
-        _vig = vigor; _maxVig = maxVigor; _qiNow = qi; _maxQi = maxQi;
+        _vig = vigor; _maxVig = maxVigor; _kiNow = ki; _maxKi = maxKi;
         _vigor.Text = maxVigor > 0 ? $"Vigor {Mathf.FloorToInt(vigor)}/{maxVigor:0}" : "";
-        _qi.Text = QiLine();
+        _ki.Text = KiLine();
         _bars.QueueRedraw();
     }
 
-    /// <summary>Shows the Qi gathered in the palm by a charge (0 hides it): a bright segment after the bar and the amount in words.</summary>
+    /// <summary>Shows the Ki gathered in the palm by a charge (0 hides it): a bright segment after the bar and the amount in words.</summary>
     public void SetCharge(float invested, float cost)
     {
         if (Mathf.IsEqualApprox(invested, _palm)) return;
         _palm = invested; _palmCost = cost;
-        _qi.Text = QiLine();
+        _ki.Text = KiLine();
         _bars.QueueRedraw();
     }
 
@@ -384,33 +384,33 @@ public partial class PlainsHud : CanvasLayer
         if (!day) c.DrawCircle(p + new Vector2(1.5f, -1), 2.2f, new Color(0.07f, 0.075f, 0.06f));
     }
 
-    /// <summary>Shows the Reforço de Qi charges left next to the Qi line (0 hides them).</summary>
+    /// <summary>Shows the Reforço de Ki charges left next to the Ki line (0 hides them).</summary>
     public void SetReinforce(int charges)
     {
         if (charges == _reinforce) return;
         _reinforce = charges;
-        _qi.Text = QiLine();
+        _ki.Text = KiLine();
     }
 
-    // the Qi line: the bar's amount, the Qi gathered in the palm (charged shot) and the Reforço charges left
-    private string QiLine() => $"Qi {Mathf.FloorToInt(_qiNow)}/{_maxQi:0}"
+    // the Ki line: the bar's amount, the Ki gathered in the palm (charged shot) and the Reforço charges left
+    private string KiLine() => $"Ki {Mathf.FloorToInt(_kiNow)}/{_maxKi:0}"
         + (_palm > 0.5f ? (_palm >= _palmCost - 0.01f ? $" · palma {_palmCost:0} PRONTO" : $" · palma {Mathf.FloorToInt(_palm)}/{_palmCost:0}") : "")
         + (_reinforce > 0 ? $" · reforço {_reinforce}" : "");
 
-    /// <summary>The Qi line now (checks).</summary>
-    public string QiText => _qi.Text;
+    /// <summary>The Ki line now (checks).</summary>
+    public string KiText => _ki.Text;
 
     /// <summary>What K does here, in the controls line (it changes next to a carcass).</summary>
-    public void SetQiKeyHint(string hint)
+    public void SetKiKeyHint(string hint)
     {
-        _qiHint = hint;
+        _kiHint = hint;
         if (_valeMode) return;
         string t = ControlsLine();
         if (_controls.Text != t) _controls.Text = t;
     }
 
     // the footer's shortcuts, written with the current controls
-    private string ControlsLine() => Bindings.F(_valeMode ? _valeTemplate : _controlsTemplate.Replace("{qi}", _qiHint));
+    private string ControlsLine() => Bindings.F(_valeMode ? _valeTemplate : _controlsTemplate.Replace("{ki}", _kiHint));
 
     // a control changed: every line that names a key is written again
     private void RefreshTexts()
@@ -485,7 +485,7 @@ public partial class PlainsHud : CanvasLayer
         if (f > 0) { _bars.DrawRect(new Rect2(x, y, f, h), fill); _bars.DrawRect(new Rect2(x, y, f, 1), hi); }
     }
 
-    // bars in the style of the prototype's qi bar: ink backdrop, outline, dark trough, fill with a light top line;
+    // bars in the style of the prototype's ki bar: ink backdrop, outline, dark trough, fill with a light top line;
     // the Vida still coming from a herb shows as a green segment after the fill
     private void DrawBars()
     {
@@ -499,12 +499,12 @@ public partial class PlainsHud : CanvasLayer
             if (extra > 0) _bars.DrawRect(new Rect2(x + fill, 5, extra, 5), new Color(RegenC, 0.8f));
         }
         if (_maxVig > 0) Bar(x, 15, w, 3, _vig / _maxVig, VigBack, Vig, VigHi);
-        Bar(x, 24, w, 4, _maxQi <= 0 ? 0 : _qiNow / _maxQi, QiBack, QiC, QiHi);
-        if (_palm > 0.5f && _maxQi > 0)
+        Bar(x, 24, w, 4, _maxKi <= 0 ? 0 : _kiNow / _maxKi, KiBack, KiC, KiHi);
+        if (_palm > 0.5f && _maxKi > 0)
         {
-            // the Qi that left the bar for the palm, still shown after the fill so the force can be read
-            float fill = Mathf.Round(w * Mathf.Clamp(_qiNow / _maxQi, 0, 1)), seg = Mathf.Round(w * Mathf.Clamp(_palm / _maxQi, 0, 1 - _qiNow / _maxQi));
-            _bars.DrawRect(new Rect2(x + fill, 23, seg, 6), new Color(QiHi, 0.85f));
+            // the Ki that left the bar for the palm, still shown after the fill so the force can be read
+            float fill = Mathf.Round(w * Mathf.Clamp(_kiNow / _maxKi, 0, 1)), seg = Mathf.Round(w * Mathf.Clamp(_palm / _maxKi, 0, 1 - _kiNow / _maxKi));
+            _bars.DrawRect(new Rect2(x + fill, 23, seg, 6), new Color(KiHi, 0.85f));
             _bars.DrawRect(new Rect2(x + fill, 23, seg, 1), Colors.White);
         }
     }
@@ -627,7 +627,7 @@ public partial class PlainsHud : CanvasLayer
     public void ShowTitle(List<Row>? options, string message = "", string title = "SpiritOfMurin — Planície Verdejante")
     {
         _title.Box.Visible = options != null;
-        foreach (var c in new Control[] { _bars, _life, _vigor, _qi, _level, _hands, _controls, _footer }) c.Visible = options == null;
+        foreach (var c in new Control[] { _bars, _life, _vigor, _ki, _level, _hands, _controls, _footer }) c.Visible = options == null;
         _titleShown = options != null;
         if (options == null) return;
         _title.Title.Text = title; _title.Header.Text = message; _title.Selected = 0; Fill(_title, options);

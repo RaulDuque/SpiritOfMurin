@@ -34,12 +34,12 @@ public sealed class BaseStats
     public float StepVigorCost { get; set; } = 12;
     /// <summary>Vigor a cut costs.</summary>
     public float CutVigorCost { get; set; } = 3;
-    /// <summary>Maximum Qi.</summary>
-    public float MaxQi { get; set; } = 100;
-    /// <summary>Qi regained per second (meditating fills it).</summary>
-    public float QiRegen { get; set; } = 0.5f;
-    /// <summary>Qi spent to preserve a material while skinning.</summary>
-    public float QiPreserveCost { get; set; } = 15;
+    /// <summary>Maximum Ki.</summary>
+    public float MaxKi { get; set; } = 100;
+    /// <summary>Ki regained per second (meditating fills it).</summary>
+    public float KiRegen { get; set; } = 0.5f;
+    /// <summary>Ki spent to preserve a material while skinning.</summary>
+    public float KiPreserveCost { get; set; } = 15;
     /// <summary>Base chance of a secondary material.</summary>
     public float SecondaryChance { get; set; } = 0.10f;
     /// <summary>Base potency multiplier of medicinal preparations.</summary>
@@ -67,8 +67,8 @@ public sealed class PerPoint
     public float AgiCap { get; set; } = 0.40f;
     /// <summary>SOR: secondary material chance per point.</summary>
     public float SorSecondaryChance { get; set; } = 0.05f;
-    /// <summary>QI: maximum Qi per point.</summary>
-    public float QiMaxQi { get; set; } = 15;
+    /// <summary>KI: maximum Ki per point.</summary>
+    public float KiMaxKi { get; set; } = 15;
 }
 
 /// <summary>A proficiency's name and practice thresholds for grades 1, 2, 3.</summary>
@@ -101,7 +101,7 @@ public sealed class CreatureDef
     public float DamagePerLevel { get; set; }
 }
 
-/// <summary>Spiritual extraction: which part of which creature turns into what with Qi at grade 3.</summary>
+/// <summary>Spiritual extraction: which part of which creature turns into what with Ki at grade 3.</summary>
 public sealed class SpiritualDef
 {
     /// <summary>Carcass part ("presas").</summary>

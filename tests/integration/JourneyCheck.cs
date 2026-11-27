@@ -18,7 +18,7 @@ namespace SpiritOfMurin.Tests;
 /// <item><c>--phase=new</c>: a new journey. Knife; examine the trail from the clearing and follow it to
 /// the burrow; focus the rabbit (level); hunt it; skin at Esfolar 0 (torn hide) and butcher; cook at the
 /// campfire and eat (vigor); cut strips; the first level; a second rabbit at Esfolar 1 (common hide); the
-/// bag and H; a third rabbit skinned with Qi (K); the sheet's preview and each attribute's effect;
+/// bag and H; a third rabbit skinned with Ki (K); the sheet's preview and each attribute's effect;
 /// meditate (writes the journey) and record what must come back.</item>
 /// <item><c>--phase=resume</c>: the game opened again, the title menu, Continuar by key, and everything
 /// compared with what was recorded; used carcasses and collected objects stay gone; meditating again does
@@ -165,8 +165,8 @@ public partial class JourneyCheck : Node
     {
         await Frames(10);
         var inv = _game.Inventory; var stats = _game.Stats; var skills = _game.Skills;
-        Check("new journey: level 1, empty hands, full bars", stats.Level == 1 && _player.Equipped == Player.Weapon.None && _game.Qi == stats.MaxQi && _player.Vigor == _player.MaxVigor,
-            $"Nv {stats.Level}, Qi {_game.Qi}/{stats.MaxQi}, vigor {_player.Vigor}/{_player.MaxVigor}");
+        Check("new journey: level 1, empty hands, full bars", stats.Level == 1 && _player.Equipped == Player.Weapon.None && _game.Ki == stats.MaxKi && _player.Vigor == _player.MaxVigor,
+            $"Nv {stats.Level}, Ki {_game.Ki}/{stats.MaxKi}, vigor {_player.Vigor}/{_player.MaxVigor}");
         Check("the HUD shows the level and how much is missing", _game.Hud.LevelText.StartsWith("Nv 1 · XP 0/20 (faltam 20)"), _game.Hud.LevelText);
         await Shot("01-nova-jornada");
 
@@ -253,13 +253,13 @@ public partial class JourneyCheck : Node
         await Frames(90);
         Check("H uses the herb from the bag (heals over time)", _player.Health > hp && Recent($"Usou {_game.Catalog.Get(herb).Name}"), $"{hp} → {_player.Health:0.0}; {Last(1)}");
 
-        // third rabbit skinned with Qi
+        // third rabbit skinned with Ki
         var r3 = NextRabbit(r2?.BurrowAt ?? _game.Gen.StartPixel);
         bool h3 = r3 != null && await Hunt(r3);
-        float qi = _game.Qi;
+        float ki = _game.Ki;
         if (h3) { await GoToCarcass(r3!.CreatureId); await Tap(Godot.Key.K); }
-        Check("K at Esfolar Iniciante guides Qi: fine hide, −15 Qi", h3 && Count("pele_fina") == 1 && _game.Qi <= qi - 14, $"pele fina {Count("pele_fina")}, Qi {qi:0} → {_game.Qi:0}");
-        await Shot("07-esfolar-com-qi");
+        Check("K at Esfolar Iniciante guides Ki: fine hide, −15 Ki", h3 && Count("pele_fina") == 1 && _game.Ki <= ki - 14, $"pele fina {Count("pele_fina")}, Ki {ki:0} → {_game.Ki:0}");
+        await Shot("07-esfolar-com-ki");
 
         // the sheet: preview before spending, and each attribute's effect
         _game.GainXp(stats.XpToNext(stats.Level) + stats.XpToNext(stats.Level + 1), "teste: pontos para os seis atributos"); // controlled: enough points for all six
@@ -279,9 +279,9 @@ public partial class JourneyCheck : Node
         await SelectAttr("sor");
         float sc = stats.SecondaryChance; await Tap(Godot.Key.E);
         Check("SOR: secondary chance up", stats.SecondaryChance > sc, $"{sc:P0} → {stats.SecondaryChance:P0}");
-        await SelectAttr("qi");
-        float mq = stats.MaxQi; await Tap(Godot.Key.E);
-        Check("QI: maximum Qi +15", stats.MaxQi == mq + 15, $"{mq} → {stats.MaxQi}");
+        await SelectAttr("ki");
+        float mq = stats.MaxKi; await Tap(Godot.Key.E);
+        Check("KI: maximum Ki +15", stats.MaxKi == mq + 15, $"{mq} → {stats.MaxKi}");
         await Tap(Godot.Key.C);
         // AGI measured on the body: walking speed while W is held, before and after the point
         async Task<float> WalkSpeed()
@@ -327,14 +327,14 @@ public partial class JourneyCheck : Node
         Check("the same level, XP, points and attributes", now.Level == expect.Level && now.Xp == expect.Xp && now.Points == expect.Points && now.Attributes.OrderBy(kv => kv.Key).SequenceEqual(expect.Attributes.OrderBy(kv => kv.Key)),
             $"Nv {now.Level}, XP {now.Xp}, pontos {now.Points}, {string.Join(" ", now.Attributes.Select(kv => kv.Key + kv.Value))}");
         Check("the same proficiencies", now.Practice.OrderBy(kv => kv.Key).SequenceEqual(expect.Practice.OrderBy(kv => kv.Key)) && now.PracticeKeys.Count == expect.PracticeKeys.Count, string.Join(" ", now.Practice.Select(kv => $"{kv.Key}:{kv.Value}")));
-        Check("the same Vida, Qi, vigor and knife in hand", Mathf.Abs(now.Health - expect.Health) < 0.01f && Mathf.Abs(now.Qi - expect.Qi) < 1 && Mathf.Abs(now.Vigor - expect.Vigor) < 1 && now.Equipped == "knife" && _player.MaxHealth == _game.Stats.MaxHealth,
-            $"Vida {now.Health}/{_player.MaxHealth}, Qi {now.Qi:0}, vigor {now.Vigor:0}, {now.Equipped}");
+        Check("the same Vida, Ki, vigor and knife in hand", Mathf.Abs(now.Health - expect.Health) < 0.01f && Mathf.Abs(now.Ki - expect.Ki) < 1 && Mathf.Abs(now.Vigor - expect.Vigor) < 1 && now.Equipped == "knife" && _player.MaxHealth == _game.Stats.MaxHealth,
+            $"Vida {now.Health}/{_player.MaxHealth}, Ki {now.Ki:0}, vigor {now.Vigor:0}, {now.Equipped}");
         var loaded = Nodes<Pickup>().Select(p => p.FeatureId).ToHashSet();
         Check("collected objects stay collected", expect.Collected.All(id => !loaded.Contains(id)) && expect.Collected.Count > 0, $"{expect.Collected.Count} collected");
         var carcasses = Nodes<Carcass>().Select(c => c.CreatureId).ToHashSet();
         var used = expect.Dead.Keys.Where(id => expect.PartsTaken.Count(p => p.StartsWith(id + "#")) >= 2).ToList();
         Check("used carcasses are not recreated; hunted animals do not come back", used.Count >= 2 && used.All(id => !carcasses.Contains(id)) && !Nodes<Rabbit>().Any(r => expect.Dead.ContainsKey(r.CreatureId)), $"{used.Count} carcasses used");
-        // the third rabbit was only skinned (with Qi): its carcass comes back with the meat alone
+        // the third rabbit was only skinned (with Ki): its carcass comes back with the meat alone
         var partial = expect.Dead.Keys.Where(id => expect.PartsTaken.Count(p => p.StartsWith(id + "#")) == 1).ToList();
         var back = Nodes<Carcass>().Where(c => partial.Contains(c.CreatureId)).ToList();
         Check("a half-used carcass comes back with only what is left", partial.Count == 1 && back.Count == 1 && back[0].Parts.SequenceEqual(new[] { "meat" }), $"{string.Join(",", partial)}: {string.Join(",", back.SelectMany(c => c.Parts))}");

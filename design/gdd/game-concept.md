@@ -3,6 +3,7 @@
 *Created: 2026-11-24*
 *Status: Draft*
 *Conceito escolhido no /brainstorm: "Mil Caminhos do Dao"*
+*Terminologia (2026-11-27, pedido 14): a energia espiritual se chama **Ki**. Documentos e relatórios anteriores a essa data dizem "Qi"; é a mesma coisa.*
 
 ---
 
@@ -56,14 +57,14 @@ descoberta e a expressão.
 ## Unique Hook
 
 É como **Symphony of the Night**, **e também** cada técnica encontrada é uma
-peça (forma de espada, elemento de qi, passo) que você combina **com as próprias
+peça (forma de espada, elemento de ki, passo) que você combina **com as próprias
 mãos, por sequência de comandos**, em artes que o jogo reconhece e nomeia —
 e as passagens que se abrem não são só portas, são também **posturas inimigas**
 que você aprendeu a ler.
 
 *Posicionamento:* a referência mais próxima do "combinar por sequência" é
 **Magicka** (elementos combinados por teclas). O diferencial de SpiritOfMurin é
-a camada forma + qi + passo, o reconhecimento nomeado de combinações lendárias,
+a camada forma + ki + passo, o reconhecimento nomeado de combinações lendárias,
 e o vínculo direto entre descoberta no mundo (túmulos, marcas na pedra) e o que
 o jogador consegue fazer nas mãos.
 
@@ -75,7 +76,7 @@ o jogador consegue fazer nas mãos.
 
 | Aesthetic | Priority | How We Deliver It |
 | ---- | ---- | ---- |
-| **Expression** (self-expression, creativity) | 1 | Combinações sistêmicas de forma + qi + passo; estilo próprio reconhecido e nomeado pelo mundo; cor do qi muda conforme o caminho |
+| **Expression** (self-expression, creativity) | 1 | Combinações sistêmicas de forma + ki + passo; estilo próprio reconhecido e nomeado pelo mundo; cor do ki muda conforme o caminho |
 | **Discovery** (exploration, secrets) | 2 | Técnicas em túmulos, manuais, corpos e masmorras; portões de conhecimento; combinações lendárias escondidas por pistas fragmentadas |
 | **Challenge** (obstacle course, mastery) | 3 | Inimigos e chefes com posturas legíveis; padrões aprendidos por repetição; execução de sequências |
 | **Fantasy** (make-believe, role-playing) | 4 | Ser um cultivador Murim que avança por reinos rumo ao Dao da Espada |
@@ -91,7 +92,7 @@ o jogador consegue fazer nas mãos.
 - O jogador **observa posturas** inimigas e procura no mundo a resposta para a
   guarda que o derrotou.
 - O jogador **experimenta combinações** fora do roteiro ("e se eu juntar esse
-  passo com a feitiçaria de qi que já conheço?") e volta a regiões antigas para
+  passo com a feitiçaria de ki que já conheço?") e volta a regiões antigas para
   testá-las.
 - O jogador **procura peças específicas** porque elas completam uma combinação
   que ele imagina (efeito Vampire Survivors: o item ignorado vira o desejado).
@@ -100,18 +101,18 @@ o jogador consegue fazer nas mãos.
 ### Core Mechanics (Systems we build)
 
 1. **Combate encadeado por sequência de comandos** — passo, corte, feitiçaria
-   de qi e cancelamento; comandos direcionais relativos ao alvo travado (trava
+   de ki e cancelamento; comandos direcionais relativos ao alvo travado (trava
    suave); buffer de input e janelas de cancelamento definidos em dados.
 2. **Posturas legíveis** — inimigos com guardas reconhecíveis primeiro pela
    silhueta; cada guarda tem uma resposta aprendível.
-3. **Sistema de combinação híbrido** — base sistêmica (forma + elemento de qi +
+3. **Sistema de combinação híbrido** — base sistêmica (forma + elemento de ki +
    passo → resultado, por regras) e combinações lendárias autorais escondidas,
    reconhecidas e nomeadas quando executadas.
 4. **Exploração como aprendizado** — fragmentos (páginas de manual, inscrições,
    pegadas e cortes na pedra) concedem peças; portões de conhecimento no mundo.
 5. **Progressão dupla** — níveis por experiência (corpo) e reinos de cultivo com
    avanços conquistados que desbloqueiam algo nas mãos (um cancelamento, um passo,
-   um elemento de qi). Alquimia (fornalha operada à mão, falha legível) como
+   um elemento de ki). Alquimia (fornalha operada à mão, falha legível) como
    segundo caminho de cultivo, introduzida em etapas.
 
 ---
@@ -156,14 +157,14 @@ o jogador consegue fazer nas mãos.
 ## Core Loop
 
 ### Moment-to-Moment (30 seconds)
-Mover-se com WASD e encadear passo, corte, feitiçaria de qi e cancelamento por
+Mover-se com WASD e encadear passo, corte, feitiçaria de ki e cancelamento por
 sequência de comandos, relativos ao inimigo travado. Ler a postura do inimigo e
 responder com a sequência certa. A satisfação vem do fluxo do encadeamento, do
 impacto (hitstop, feedback de cancelamento) e de reconhecer a guarda.
 
 ### Short-Term (5-15 minutes)
 Explorar → lutar → encontrar um fragmento (página de manual, inscrição, marcas
-na pedra, pílula) → ganhar uma peça nova (forma, qi ou passo) → testá-la no
+na pedra, pílula) → ganhar uma peça nova (forma, ki ou passo) → testá-la no
 próximo encontro. Aqui nasce o "e se eu juntar isto com aquilo?".
 
 ### Session-Level (30-120 minutes)
@@ -174,7 +175,7 @@ meio manual, uma passagem ainda intransponível, uma pílula que falhou.
 
 ### Long-Term Progression
 Níveis (experiência) fortalecem o corpo. Reinos de cultivo exigem avanços
-conquistados e ampliam o que o qi suporta: mais peças por sequência, novos tipos
+conquistados e ampliam o que o ki suporta: mais peças por sequência, novos tipos
 de peça. Espada e alquimia alimentam o cultivo; a espada é o caminho inicial, e o
 jogador decide quanto se dedica a cada arte. Meta de longo prazo: o **Dao da
 Espada**.
@@ -197,7 +198,7 @@ Toda grande descoberta muda o que você consegue fazer com as mãos (recompensa)
 com a espada ou com sua energia espiritual.
 
 *Design test*: Um avanço de reino dá só atributos ou desbloqueia algo nas mãos
-(um cancelamento, um passo, um elemento de qi)? → Precisa desbloquear algo nas
+(um cancelamento, um passo, um elemento de ki)? → Precisa desbloquear algo nas
 mãos. Atributos são bônus, nunca o prêmio principal.
 
 ### Pillar 2: O estilo é seu
@@ -263,9 +264,9 @@ pedra ensina o golpe, e o golpe repete a pedra.
 **Princípios de apoio:**
 1. **Silhueta primeiro, cor depois.** Cada guarda tem silhueta própria (lâmina
    alta, lâmina baixa, postura aberta, postura fechada), legível em 1–2 quadros.
-   *Teste:* a guarda é reconhecível em escala de cinza e sob efeitos de qi? Se
+   *Teste:* a guarda é reconhecível em escala de cinza e sob efeitos de ki? Se
    não, redesenhar a silhueta, não a cor.
-2. **O qi nunca cobre a leitura.** O qi do jogador é desenhado atrás da silhueta
+2. **O ki nunca cobre a leitura.** O ki do jogador é desenhado atrás da silhueta
    do inimigo ou com transparência; o contorno do inimigo em guarda fica sempre
    por cima. *Teste:* entre um efeito mais espetacular e a guarda legível, a
    guarda vence.
@@ -277,7 +278,7 @@ pedra ensina o golpe, e o golpe repete a pedra.
 **Filosofia de cor:** ambiente em tons terrosos e jade dessaturados, com baixo
 contraste de valor. **Ciano-branco** = conhecimento que se pode aprender
 (inscrições, pegadas, cortes). **Vermelho-ocre** = intenção hostil (guarda de
-ataque, telegraph). **Âmbar** = alquimia. A **cor do qi muda conforme o caminho
+ataque, telegraph). **Âmbar** = alquimia. A **cor do ki muda conforme o caminho
 do jogador** (reforça *O estilo é seu*). A cor nunca é o único portador de
 informação (acessibilidade para daltônicos).
 
@@ -298,7 +299,7 @@ cores; identidade mais marcante, custo alto e guardas menos legíveis) e
 | Castlevania: Symphony of the Night | Portões de conhecimento; "será que agora consigo entrar?"; magia por sequência de comandos | Visão de cima 3/4; os portões incluem posturas inimigas; comandos relativos ao alvo travado | Valida que a memória do jogador como mapa e o comando aprendido são satisfatórios |
 | Vampire Survivors | Habilidade + item que evoluem juntos; a descoberta muda o que você procura | A evolução é descoberta executando a sequência com as mãos, não por menu ou automaticamente | Valida o prazer de combinações que reorientam a busca |
 | Minecraft | Liberdade de escolher os próprios objetivos; investigar um lugar a sessão inteira | Mundo autoral denso de pistas, não procedural; objetivos escolhidos dentro de uma jornada de cultivo | Valida sessões guiadas pelo jogador |
-| Magicka | Combinar elementos por sequência de teclas | Camada forma + qi + passo; combinações lendárias nomeadas; vínculo com descoberta no mundo | Referência de posicionamento mais próxima do gancho |
+| Magicka | Combinar elementos por sequência de teclas | Camada forma + ki + passo; combinações lendárias nomeadas; vínculo com descoberta no mundo | Referência de posicionamento mais próxima do gancho |
 | Hollow Knight / Noita | Conhecimento e retorno (HK); descobrir regras pelo experimento (Noita) | Ambientação Murim; aprendizado vem de mestres e túmulos | Comparáveis para o mesmo tipo de jogador |
 
 **Non-game inspirations**: obras de Murim e cultivação, principalmente *Contos
@@ -341,7 +342,7 @@ perfeito e repete um chefe cem vezes até aprender o padrão.
 
 **Decisões técnicas já tomadas:**
 - **Comandos relativos ao alvo travado** (trava suave): "frente" é em direção ao inimigo travado.
-- **Animação em camadas** (recomendação do technical-director): a forma tem sprites do corpo; o qi é VFX/paleta por cima; o passo é modificador de deslocamento e timing. O custo de arte por peça deve ser aditivo, não multiplicativo.
+- **Animação em camadas** (recomendação do technical-director): a forma tem sprites do corpo; o ki é VFX/paleta por cima; o passo é modificador de deslocamento e timing. O custo de arte por peça deve ser aditivo, não multiplicativo.
 - **Frame data em dados**, não em grafos de animação da engine; simulação de combate em timestep fixo.
 - **Memória do mundo como banco de fatos** (IDs de conhecimento, registro de artes do jogador), com número de versão no save desde o primeiro save e IDs estáveis em texto.
 - **Sem streaming de mundo** na etapa 1; regiões futuras ligadas por transições de cena ou áreas discretas.
@@ -359,7 +360,7 @@ perfeito e repete um chefe cem vezes até aprender o padrão.
 
 ### Technical Risks
 (Parecer TD-FEASIBILITY: **CONCERNS** — MVP tecnicamente viável; dois riscos altos a tratar na arquitetura.)
-- **ALTO:** explosão combinatória de animação (forma × qi × passo) — mitigação: animação em camadas.
+- **ALTO:** explosão combinatória de animação (forma × ki × passo) — mitigação: animação em camadas.
 - **ALTO:** ambiguidade de comandos direcionais em 3/4 — mitigado pela decisão de comandos relativos ao alvo; atenção a normalização de diagonais e ghosting de teclado (evitar mais de direção + 1 botão simultâneos).
 - **MÉDIO:** sensação do buffer de input e dos cancelamentos (exige ferramenta de debug visual desde a primeira semana).
 - **MÉDIO:** versionamento e migração de save da memória do mundo.
@@ -378,7 +379,7 @@ perfeito e repete um chefe cem vezes até aprender o padrão.
 - Corte gracioso: cada região deve ser desenhada como capítulo fechado (começo, mestre, avanço, fim).
 
 ### Open Questions
-- O encadeamento de passo, corte e qi é divertido com as mãos? → Protótipo de combate com formas simples (etapa 1).
+- O encadeamento de passo, corte e ki é divertido com as mãos? → Protótipo de combate com formas simples (etapa 1).
 - 3–4 peças geram combinações visivelmente diferentes? → Segundo protótipo de combinação com animação em camadas.
 - Qual engine? → `/setup-engine`.
 - Qual é o ritmo real de produção de arte (quadros finalizados por dia)? → Medir nas primeiras semanas de arte.
@@ -390,11 +391,11 @@ perfeito e repete um chefe cem vezes até aprender o padrão.
 
 **Core hypothesis**: Explorar para encontrar uma técnica e usá-la com as
 próprias mãos contra a guarda que antes derrotava o jogador é divertido, e
-encadear passo, corte e qi é satisfatório por si só.
+encadear passo, corte e ki é satisfatório por si só.
 
 **Required for MVP** (etapa 1, o primeiro marco):
 1. Uma região pequena: trilha, acampamento de discípulos, túmulo da mestra.
-2. Cadeia base de combate: passo, corte, uma feitiçaria de qi, cancelamento, com comandos relativos ao alvo travado.
+2. Cadeia base de combate: passo, corte, uma feitiçaria de ki, cancelamento, com comandos relativos ao alvo travado.
 3. O discípulo de guarda fechada, que vence o jogador de frente.
 4. A cadeia de descoberta: metade do manual no corpo de um discípulo → anotação na margem → túmulo da mestra → pegadas ao lado do corte na pedra → técnica do passo lateral.
 5. A revanche: outro espadachim com a mesma guarda, vencível com o passo lateral.

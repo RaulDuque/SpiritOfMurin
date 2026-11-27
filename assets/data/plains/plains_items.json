@@ -33,7 +33,7 @@
     "couro_comum":        { "name": "Couro Comum", "description": "Couro de javali inteiro. Material de bolsa." },
     "couro_grosso":       { "name": "Couro Grosso", "description": "Couro intacto, com a resistência do javali. Material de bolsa (e de armadura, mais adiante)." },
     "presa_javali":       { "name": "Presas de Javali", "description": "Duas presas curvas. Material de forja inicial, mais adiante." },
-    "presa_espiritual":   { "name": "Presa Espiritual", "description": "Extraída com um fio de Qi: guarda a força do javali. Catalisador, mais adiante." },
+    "presa_espiritual":   { "name": "Presa Espiritual", "description": "Extraída com um fio de Ki: guarda a força do javali. Catalisador, mais adiante." },
     "tendao":             { "name": "Tendão", "description": "Material secundário da caça. Serve de cordão (arcos e costura, mais adiante)." },
     "tira_amarracao":     { "name": "Tira de Amarração", "description": "Tira de pele para amarrar. Material da bolsa." },
     "bolsa_simples":      { "name": "Bolsa Simples", "description": "Presa na cintura: deixa uma erva à mão.", "passive": "Tecla H usa a melhor erva da bolsa sem abrir o inventário." }
