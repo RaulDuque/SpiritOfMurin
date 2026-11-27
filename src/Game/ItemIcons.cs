@@ -97,6 +97,8 @@ public static class ItemIcons
                 O(-3, -6, 6, 11); R(-2, -6, 4, 2, "#f4fbff"); R(-3, -4, 6, 7, "#cfe6ee"); R(1, -4, 2, 7, "#9fc4d2"); R(-2, 3, 4, 2, "#8a877a"); R(-1, -3, 1, 3, "#ffffff"); break;
             case "vara_bambu": // a straight green rod with its rings
                 O(-7, -1, 14, 2); R(-7, -1, 14, 2, "#5f8f4a"); R(-7, -1, 14, 1, "#7fae5d"); R(-3, -1, 1, 2, "#3b6332"); R(2, -1, 1, 2, "#3b6332"); R(6, -1, 1, 2, "#d8d29a"); break;
+            case "casca_salgueiro": // a curled strip of grey bark
+                O(-5, -2, 10, 5); R(-5, -2, 10, 3, "#8a7a5e"); R(-5, 1, 10, 2, "#6a5a44"); R(-5, -2, 10, 1, "#a8987a"); R(3, -2, 2, 5, "#d8c08a"); break;
             case "broto_bambu": // a pale shoot in green sheaths
                 O(-3, -5, 6, 10); R(-2, -5, 4, 3, "#e6e0a8"); R(-3, -2, 6, 5, "#7fae5d"); R(-3, 3, 6, 2, "#5f8f4a"); R(0, -2, 1, 5, "#4d7a3c"); break;
             // the prologue (prototype icons)

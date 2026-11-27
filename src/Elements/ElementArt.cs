@@ -59,6 +59,7 @@ public static class ElementArts
     private static readonly Dictionary<string, ElementArt> Arts = new()
     {
         ["pinheiro"] = new PinheiroArt(),
+        ["salgueiro"] = new SalgueiroArt(), // /create arvore (pedido 14)
         ["bambu"] = new BambuArt(),
         ["arbusto"] = new ArbustoArt(),
         ["rocha"] = new RochaArt(),

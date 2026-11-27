@@ -27,6 +27,7 @@
     "pedra_bruta":        { "name": "Pedra Bruta", "description": "Pedaço de rocha que dá para polir. Material de lâminas de pedra." },
     "quartzo":            { "name": "Cristal de Quartzo", "description": "Achado no veio da rocha. Material raro (catalisador e venda, mais adiante)." },
     "vara_bambu":         { "name": "Vara de Bambu", "description": "Haste reta e leve. Material de cabo." },
+    "casca_salgueiro":    { "name": "Casca de Salgueiro", "description": "Tira de casca amarga da margem. Mascada, alivia a dor na hora.", "heal_now": 1, "medicine": true, "quick_slot": true },
     "broto_bambu":        { "name": "Broto de Bambu", "description": "Broto tenro achado na touceira. Dá um pouco de vigor.", "vigor_now": 12 },
     "grama_sangue_q0":    { "name": "Grama Sangue-de-Coelho (amassada)", "description": "Colhida às pressas, perdeu seiva. Fecha feridas aos poucos.", "regen_amount": 3, "regen_seconds": 6.0, "medicine": true, "quick_slot": true },
     "grama_sangue_q1":    { "name": "Grama Sangue-de-Coelho", "description": "Cortada no talo. Fecha feridas aos poucos.", "regen_amount": 4, "regen_seconds": 6.0, "medicine": true, "quick_slot": true },

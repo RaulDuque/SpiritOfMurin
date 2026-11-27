@@ -1,0 +1,17 @@
+{
+  "id": "salgueiro",
+  "name": "Salgueiro de margem",
+  "family": "arvore",
+  "art": "salgueiro",
+  "habitats": { "bank": 1.5, "grass": 0.15 },
+  "base_half_width": 8, "base_height": 11,
+  "depleted_half_width": 5, "depleted_height": 5,
+  "toughness": 5,
+  "tools": ["machado"],
+  "refusal": "O tronco do salgueiro é fibroso demais para isso: precisa de um machado.",
+  "leaves": "toco",
+  "drops": [ { "item": "tora", "min": 1, "max": 2 } ],
+  "bonus": [ { "item": "casca_salgueiro", "chance": 0.25, "per_sor": 0.03, "cap": 0.6, "count": 1 } ],
+  "xp": 3,
+  "look": { "crown": "#5f8a44", "crown_light": "#8fbf5a", "crown_dark": "#3f6a34", "strands": 7, "strand_length": 24 }
+}
