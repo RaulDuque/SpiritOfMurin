@@ -40,7 +40,7 @@ public sealed class BookPage
     /// <summary>The command written out ("J → J → J").</summary>
     public string Command => Seq.Count == 0 ? "—" : string.Join(" ", Seq.Select(s => s.Kind switch
     {
-        "key" => Bindings.Key1(s.Value), "dir" => s.Value, "plus" => "+", "then" => "→", _ => "?",
+        "key" => Bindings.Key1(s.Value), "hold" => $"segurar {Bindings.Key1(s.Value)}", "release" => "soltar", "dir" => s.Value, "plus" => "+", "then" => "→", _ => "?",
     }));
 
     /// <summary>The whole page as text (checks, and the page under the list on a narrow screen).</summary>
@@ -86,6 +86,7 @@ public sealed class BookPage
             ? (new() { ("key", "sneak"), ("plus", ""), ("dir", "direção"), ("plus", ""), ("key", "step") }, "Na Planície: sem trava, segure o andar quieto. Atravessa o que o passo curto não alcança.")
             : (new() { ("dir", "direção"), ("plus", ""), ("key", "step") }, "Sem trava: um passo longo que atravessa a fenda."),
         "Passo da Lâmina Silenciosa" => (new() { ("dir", "lado"), ("plus", ""), ("key", "step"), ("then", ""), ("key", "cut"), ("then", ""), ("key", "qi") }, "Quebra a guarda. O qi segue o corte sem ruído."),
+        "Disparo de Qi Concentrado" => (new() { ("hold", "qi"), ("then", ""), ("release", "qi") }, Bindings.F("Segure [qi]: o Qi sai da barra e se junta na palma (dá para mirar). Solte para disparar. Um toque rápido continua sendo o disparo comum.")),
         _ => (new(), ""),
     };
 
@@ -101,6 +102,7 @@ public sealed class BookPage
             "dash" => $"custo: {p.QiCost:0} Qi, {p.VigorCost:0} vigor · {p.Distance:0} px",
             "thrust" => $"custo: {p.QiCost:0} Qi, {p.VigorCost:0} vigor · alcance {p.Reach:0} px · dano {p.Damage}",
             "lamina" => $"dano {p.Damage} · alcance {p.Range:0} px · guarda quebrada {p.Stagger:0.#} s",
+            "qi_charge" => $"carga completa: {p.QiCost:0} Qi no total (já inclui o disparo){(p.VigorCost > 0 ? $" + {p.VigorCost:0} vigor" : "")} · dano {p.Damage} · alcance {p.Range:0} px · rompe a guarda ({p.Stagger:0.#} s aberta) | carga parcial: dano proporcional ao Qi investido, sem ruptura",
             _ => "",
         };
         return st switch
@@ -305,6 +307,7 @@ public partial class BookPanel : Control
         var widths = seq.Select(s => s.Kind switch
         {
             "key" => Mathf.Max(18, font.GetStringSize(Bindings.Key1(s.Value), HorizontalAlignment.Left, -1, 9).X + 10),
+            "hold" or "release" => Mathf.Max(34, font.GetStringSize(Bindings.Key1(s.Value), HorizontalAlignment.Left, -1, 9).X + 12),
             "dir" => Mathf.Max(30, font.GetStringSize(s.Value, HorizontalAlignment.Left, -1, 8).X + 8),
             "unknown" => 22f, _ => 14f,
         }).ToList();
@@ -317,6 +320,13 @@ public partial class BookPanel : Control
                 string label = Bindings.Key1(v);
                 DrawRect(new Rect2(x - 1, y - 9, bw + 2, 19), Ink); DrawRect(new Rect2(x, y - 8, bw, 15), new Color("#efe4c8")); DrawRect(new Rect2(x, y + 5, bw, 2), new Color("#c9b78f"));
                 DrawString(font, new Vector2(x, y + 3), label, HorizontalAlignment.Center, bw, 9, new Color("#1c1712"));
+            }
+            else if (k is "hold" or "release")
+            {
+                string label = Bindings.Key1(v);
+                DrawRect(new Rect2(x - 1, y - 9, bw + 2, 19), Ink); DrawRect(new Rect2(x, y - 8, bw, 15), k == "hold" ? new Color("#d4fbf6") : new Color("#efe4c8")); DrawRect(new Rect2(x, y + 5, bw, 2), new Color("#c9b78f"));
+                DrawString(font, new Vector2(x, y + 3), label, HorizontalAlignment.Center, bw, 9, new Color("#1c1712"));
+                DrawString(font, new Vector2(x - 6, y + 17), k == "hold" ? "segurar" : "soltar", HorizontalAlignment.Center, bw + 12, 7, Ink2);
             }
             else if (k == "unknown") { DrawRect(new Rect2(x, y - 9, bw, 18), Ink2); DrawRect(new Rect2(x + 1, y - 8, bw - 2, 16), new Color("#b8a37a")); DrawString(font, new Vector2(x, y + 4), "?", HorizontalAlignment.Center, bw, 11, Ink); }
             else if (k == "dir")

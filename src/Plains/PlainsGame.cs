@@ -295,6 +295,8 @@ public partial class PlainsGame : Node2D, IMapSource
         Player.EmptyHanded += () => Hud.Toast(Bindings.F("Mãos vazias: fabrique uma ferramenta no inventário ([inventory])."));
         Player.OutOfBreath += () => Hud.Toast("Sem fôlego: espere o vigor voltar ou coma carne assada.");
         Player.TechniqueRefused += (_, m) => { Hud.Toast(m); Sfx?.Play("fizzle"); };
+        Player.SecretFound += OnSecret;
+        Player.ChargeCancelled += back => { if (back > 0.5f) Hud.Toast($"A concentração se desfaz: {back:0} de Qi voltam à barra."); };
         Player.QiFired += OnQiShot;
         Panels = new GamePanels(Hud, Player, this, MapZoomDefault);
         Hud.RowClicked += OnRowClicked;
@@ -415,6 +417,7 @@ public partial class PlainsGame : Node2D, IMapSource
         }
         Hud.SetHealth(Player.Health, Player.MaxHealth, Player.PendingRegen);
         Hud.SetEnergy(Player.Vigor, Player.MaxVigor, Qi, Stats.MaxQi);
+        Hud.SetCharge(Player.ChargeInvested, Player.ChargeCost);
         Hud.SetLevel(Stats.Level, Stats.Xp, Stats.XpToNext(Stats.Level), Stats.Points);
         UpdateWaves(dt);
         UpdateFocus();
@@ -491,7 +494,7 @@ public partial class PlainsGame : Node2D, IMapSource
     public void QiKey()
     {
         if (QiKeyAction == "esfolar") TryInteract(true);
-        else Player.RequestQi();
+        else Player.BeginQi();
     }
 
     /// <summary>
@@ -519,6 +522,18 @@ public partial class PlainsGame : Node2D, IMapSource
     /// <summary>Raised when a qi shot ends: how far it went and whether it hit something.</summary>
     public event System.Action<QiWave, bool>? QiShotEnded;
 
+    // the first charged shot reveals the secret technique (also when it was not found in the Vale)
+    private void OnSecret(string id)
+    {
+        if (id != "qi_charge" || Book.Any(b => b.Tech == "qi_charge")) return;
+        Book.Add(new BookEntry { Name = Tech.Data.QiCharge.Name, Kind = "técnica", Key = "segurar Qi, soltar", Where = "Descoberta por você na Planície Verdejante. O Qi se junta na palma enquanto o botão fica preso.", Tech = "qi_charge",
+            State = Tech.State("qi_wave") == TechniqueState.Weakened ? "Enfraquecida" : "Plena" });
+        Tech.Set("qi_charge", Tech.State("qi_wave") == TechniqueState.Weakened ? TechniqueState.Weakened : TechniqueState.Full);
+        Hud.Banner(Tech.Data.QiCharge.Name, 2.8f);
+        Hud.Toast(Bindings.F("Técnica secreta descoberta: segurar [qi] concentra o Qi; soltar dispara. Veja o Livro ([book])."));
+        Sfx?.Play("learn");
+    }
+
     private void OnQiShot(Player.QiShot shot)
     {
         var w = new QiWave { Shot = shot, GlobalPosition = shot.Origin, ZIndex = 10 };
@@ -538,6 +553,11 @@ public partial class PlainsGame : Node2D, IMapSource
                 if (n is not IHittable h || !h.CanBeHit || w.HitSet.Contains(h.CreatureId)) continue;
                 if (h.GlobalPosition.DistanceTo(w.Foot) > (w.Shot.Lamina ? 22 : 16) + h.BodyRadius) continue;
                 w.HitSet.Add(h.CreatureId);
+                if (w.Shot.Breaks && h is Boar bb && bb.BreakGuard(w.Shot.Stagger))
+                {
+                    Hud.Toast("O Qi concentrado rompe a investida: o javali fica aberto!");
+                    Sfx?.Play("hit");
+                }
                 h.ReceiveHit(w.Shot.Damage);
                 hit = true;
                 if (!w.Shot.Lamina) { w.Stop(); break; }

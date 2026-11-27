@@ -74,6 +74,10 @@ public partial class Boar : CharacterBody2D, IHittable
     }
 
     /// <inheritdoc />
+    /// <summary>Breaks the boar's defence (warning or charge) for a while; true when there was one to break.</summary>
+    public bool BreakGuard(float seconds) { bool b = Brain.Break(seconds); if (b) _spark = 0.3f; return b; }
+
+    /// <inheritdoc />
     public HitResult ReceiveHit(int damage)
     {
         var r = Brain.TakeHit(damage);

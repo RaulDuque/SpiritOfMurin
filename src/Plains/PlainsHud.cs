@@ -87,7 +87,7 @@ public partial class PlainsHud : CanvasLayer
     private float _bannerT, _speechT;
     private bool _valeMode;
     private ColorRect _overlay = null!;
-    private float _health, _max = 10, _pending, _vig, _maxVig, _qiNow, _maxQi, _focusFrac, _overlayTime, _overlayHold;
+    private float _health, _max = 10, _pending, _vig, _maxVig, _qiNow, _maxQi, _focusFrac, _overlayTime, _overlayHold, _palm, _palmCost = 100;
     private readonly List<(Label L, float T)> _toastLabels = new();
 
     /// <summary>True while the inventory is open.</summary>
@@ -310,11 +310,22 @@ public partial class PlainsHud : CanvasLayer
     {
         _vig = vigor; _maxVig = maxVigor; _qiNow = qi; _maxQi = maxQi;
         _vigor.Text = maxVigor > 0 ? $"Vigor {Mathf.FloorToInt(vigor)}/{maxVigor:0}" : "";
-        _qi.Text = $"Qi {Mathf.FloorToInt(qi)}/{maxQi:0}";
+        _qi.Text = $"Qi {Mathf.FloorToInt(qi)}/{maxQi:0}" + (_palm > 0.5f ? (_palm >= _palmCost - 0.01f ? $" · palma {_palmCost:0} PRONTO" : $" · palma {Mathf.FloorToInt(_palm)}/{_palmCost:0}") : "");
         _bars.QueueRedraw();
     }
 
-    /// <summary>Updates the level line.</summary>
+    /// <summary>Shows the Qi gathered in the palm by a charge (0 hides it): a bright segment after the bar and the amount in words.</summary>
+    public void SetCharge(float invested, float cost)
+    {
+        if (Mathf.IsEqualApprox(invested, _palm)) return;
+        _palm = invested; _palmCost = cost;
+        _qi.Text = $"Qi {Mathf.FloorToInt(_qiNow)}/{_maxQi:0}" + (invested > 0.5f ? (invested >= cost - 0.01f ? $" · palma {cost:0} PRONTO" : $" · palma {Mathf.FloorToInt(invested)}/{cost:0}") : "");
+        _bars.QueueRedraw();
+    }
+
+    /// <summary>The Qi line now (checks).</summary>
+    public string QiText => _qi.Text;
+
     /// <summary>What K does here, in the controls line (it changes next to a carcass).</summary>
     public void SetQiKeyHint(string hint)
     {
@@ -415,6 +426,13 @@ public partial class PlainsHud : CanvasLayer
         }
         if (_maxVig > 0) Bar(x, 15, w, 3, _vig / _maxVig, VigBack, Vig, VigHi);
         Bar(x, 24, w, 4, _maxQi <= 0 ? 0 : _qiNow / _maxQi, QiBack, QiC, QiHi);
+        if (_palm > 0.5f && _maxQi > 0)
+        {
+            // the Qi that left the bar for the palm, still shown after the fill so the force can be read
+            float fill = Mathf.Round(w * Mathf.Clamp(_qiNow / _maxQi, 0, 1)), seg = Mathf.Round(w * Mathf.Clamp(_palm / _maxQi, 0, 1 - _qiNow / _maxQi));
+            _bars.DrawRect(new Rect2(x + fill, 23, seg, 6), new Color(QiHi, 0.85f));
+            _bars.DrawRect(new Rect2(x + fill, 23, seg, 1), Colors.White);
+        }
     }
 
     // ------------------------------------------------------------------ messages

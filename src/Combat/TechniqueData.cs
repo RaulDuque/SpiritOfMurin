@@ -38,8 +38,12 @@ public sealed class TechniqueParams
     public float Lunge { get; set; }
     /// <summary>Lamina: seconds allowed between side step → cut → qi.</summary>
     public float ComboWindow { get; set; }
-    /// <summary>Lamina: seconds the guard stays broken.</summary>
+    /// <summary>Lamina / charged shot: seconds the guard stays broken.</summary>
     public float Stagger { get; set; }
+    /// <summary>Charged shot: seconds the button must be held before the charge starts (a shorter press is the plain shot).</summary>
+    public float Hold { get; set; }
+    /// <summary>Charged shot: Qi drawn into the palm per second while charging.</summary>
+    public float Drain { get; set; }
 }
 
 /// <summary>A technique's name and its two versions.</summary>
@@ -59,7 +63,7 @@ public sealed class TechniqueData
     /// <summary>Default path.</summary>
     public const string DefaultPath = "res://assets/data/combat_techniques.json";
     /// <summary>Ids of the techniques the seal covers.</summary>
-    public static readonly string[] SealedIds = { "thrust", "qi_wave", "side_step", "dash", "lamina" };
+    public static readonly string[] SealedIds = { "thrust", "qi_wave", "side_step", "dash", "lamina", "qi_charge" };
 
     /// <summary>Plains level at which sealed techniques come back weakened.</summary>
     public int UnlockLevel { get; set; } = 3;
@@ -73,11 +77,13 @@ public sealed class TechniqueData
     public TechniqueDef Thrust { get; set; } = new();
     /// <summary>The Silent Blade Step combination.</summary>
     public TechniqueDef Lamina { get; set; } = new();
+    /// <summary>The secret charged Qi shot (hold the Qi button): qi_cost is the full charge's total cost.</summary>
+    public TechniqueDef QiCharge { get; set; } = new();
 
     /// <summary>The definition by id.</summary>
     public TechniqueDef Get(string id) => id switch
     {
-        "qi_wave" => QiWave, "side_step" => SideStep, "dash" => Dash, "thrust" => Thrust, "lamina" => Lamina, _ => new TechniqueDef { Name = id },
+        "qi_wave" => QiWave, "side_step" => SideStep, "dash" => Dash, "thrust" => Thrust, "lamina" => Lamina, "qi_charge" => QiCharge, _ => new TechniqueDef { Name = id },
     };
 
     /// <summary>Parses the data.</summary>

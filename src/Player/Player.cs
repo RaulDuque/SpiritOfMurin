@@ -18,7 +18,7 @@ public partial class Player : CharacterBody2D
     public enum ActionKind { None, Cut, Step, Thrust, Qi, Side, Dash, Recoil }
 
     /// <summary>A qi shot leaving the hand: where from, which way, how far and fast, its damage, and whether it is the Silent Blade Step.</summary>
-    public readonly record struct QiShot(Vector2 Origin, Vector2 Dir, float Range, float Speed, int Damage, bool Lamina, float Stagger);
+    public readonly record struct QiShot(Vector2 Origin, Vector2 Dir, float Range, float Speed, int Damage, bool Lamina, float Stagger, bool Breaks = false, float Charge = 0);
 
     /// <summary>The prologue techniques and their state (full, sealed, weakened); null = none known (the plain body).</summary>
     public TechniqueSet? Tech { get; set; }
@@ -138,6 +138,109 @@ public partial class Player : CharacterBody2D
 
     // turns the body to where the attack goes (the pose, the blade, the shot and the hit area all read Facing)
     private void TurnToAim() => Facing = AimDirection;
+
+    // ---- the secret charged Qi shot (pedido 13, item 8) ----
+    private enum ChargeState { None, Pending, Charging }
+    private ChargeState _charge;
+    private float _chargeT;
+    private bool _chargeVigorPaid;
+
+    /// <summary>Qi already drawn into the palm by the charge in progress (0 when not charging).</summary>
+    public float ChargeInvested { get; private set; }
+    /// <summary>True while the Qi button is held past the tap and the palm gathers Qi.</summary>
+    public bool Charging => _charge == ChargeState.Charging;
+    /// <summary>The full charge's total cost (100), from the data.</summary>
+    public float ChargeCost => ChargeParams()?.QiCost ?? 100;
+    /// <summary>True when the charge has reached its full cost: it holds, ready, until the button is let go.</summary>
+    public bool ChargeComplete => Charging && ChargeInvested >= ChargeCost - 0.01f;
+    /// <summary>Raised the first time a secret technique is performed ("qi_charge"), so the region can record it.</summary>
+    public event Action<string>? SecretFound;
+    /// <summary>Raised when a charge is cancelled (inventory, pause, focus lost): the Qi invested goes back to the bar.</summary>
+    public event Action<float>? ChargeCancelled;
+
+    // the version in force: the charge follows the Qi shot's state (unknown counts as the shot's version, so it can be discovered)
+    private TechniqueParams? ChargeParams()
+    {
+        if (Tech == null) return null;
+        var cs = Tech.State("qi_charge");
+        if (cs == TechniqueState.Sealed) return null;
+        return Tech.State("qi_wave") switch
+        {
+            TechniqueState.Full => cs == TechniqueState.Weakened ? Tech.Data.QiCharge.Weak : Tech.Data.QiCharge.Full,
+            TechniqueState.Weakened => Tech.Data.QiCharge.Weak,
+            _ => null,
+        };
+    }
+
+    /// <summary>
+    /// The Qi button was pressed (any key bound to "qi"). A short press is the plain shot (fired when let go);
+    /// held past <c>hold</c> seconds, the palm starts drawing Qi; letting go fires one charged shot.
+    /// </summary>
+    public void BeginQi()
+    {
+        if (InputLocked || Health <= 0 || Lying > 0 || _charge != ChargeState.None) return;
+        if (ChargeParams() == null || Tech?.Params("qi_wave") == null) { RequestQi(); return; } // sealed or unknown: the plain path (and its refusal)
+        _charge = ChargeState.Pending; _chargeT = 0; ChargeInvested = 0; _chargeVigorPaid = false;
+    }
+
+    private void UpdateCharge(float dt, bool locked)
+    {
+        if (locked) { CancelCharge(); return; }
+        var cp = ChargeParams();
+        if (cp == null) { CancelCharge(); return; }
+        bool held = InputMap.HasAction("qi") && Input.IsActionPressed("qi");
+        if (_charge == ChargeState.Pending)
+        {
+            _chargeT += dt;
+            if (!held) { _charge = ChargeState.None; RequestQi(); return; } // a tap: the plain shot
+            if (_chargeT < cp.Hold || _act != null) return;
+            if (MaxVigor > 0 && cp.VigorCost > 0)
+            {
+                if (Vigor < cp.VigorCost) { TechniqueRefused?.Invoke("qi_charge", $"{Tech!.Data.QiCharge.Name}: falta vigor ({Mathf.FloorToInt(Vigor)}/{cp.VigorCost:0})."); _charge = ChargeState.None; return; }
+                Vigor -= cp.VigorCost; _vigorWait = VigorRegenDelay; _chargeVigorPaid = true;
+            }
+            _charge = ChargeState.Charging;
+            ActionStarted?.Invoke(ActionKind.Qi, -1);
+        }
+        // charging: aim follows the cursor; Qi flows from the bar into the palm up to the full cost, never more
+        Facing = AimDirection;
+        float take = Mathf.Min(cp.Drain * dt, Mathf.Min(cp.QiCost - ChargeInvested, Qi));
+        if (take > 0) { Qi -= take; ChargeInvested += take; }
+        if (!held) ReleaseCharge(cp);
+    }
+
+    // one shot, paid by what was invested (the shot's own cost is inside the 100: nothing else is charged)
+    private void ReleaseCharge(TechniqueParams cp)
+    {
+        float k = Mathf.Clamp(ChargeInvested / Mathf.Max(1, cp.QiCost), 0, 1);
+        bool full = ChargeInvested >= cp.QiCost - 0.01f;
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(cp.Damage * k));
+        _charge = ChargeState.None;
+        TurnToAim();
+        _act = new Act { Kind = ActionKind.Qi, Startup = 0.02f, Active = 0.02f, Recovery = 0.3f * RecoveryMultiplier, CancelAt = 0.2f, Fired = true };
+        Vector2 o = GlobalPosition + new Vector2(Facing.X * 14, -12 + Facing.Y * 10);
+        QiFired?.Invoke(new QiShot(o, Facing, cp.Range, cp.Speed, dmg, false, full ? cp.Stagger : 0, full, ChargeInvested));
+        ActionStarted?.Invoke(ActionKind.Qi, full ? 100 : Mathf.RoundToInt(ChargeInvested));
+        ChargeInvested = 0;
+        if (Tech != null && Tech.State("qi_charge") == TechniqueState.Unknown) SecretFound?.Invoke("qi_charge");
+    }
+
+    /// <summary>Stops a charge without a shot; the Qi already in the palm goes back to the bar (never charged twice).</summary>
+    public void CancelCharge()
+    {
+        if (_charge == ChargeState.None) return;
+        float back = ChargeInvested;
+        Qi = Mathf.Min(MaxQi, Qi + back);
+        ChargeInvested = 0; _charge = ChargeState.None;
+        _guard = true; // the button still held when the game comes back is not a new press
+        ChargeCancelled?.Invoke(back);
+    }
+
+    /// <inheritdoc />
+    public override void _Notification(int what)
+    {
+        if (what == NotificationApplicationFocusOut) CancelCharge();
+    }
 
     /// <summary>Asks for a qi shot (K). It waits in the buffer like a cut or a step.</summary>
     public void RequestQi() { if (!InputLocked && Health > 0 && Lying <= 0) _buffer = (ActionKind.Qi, Tuning.BufferTime); }
@@ -308,6 +411,7 @@ public partial class Player : CharacterBody2D
     {
         Equipped = StartWeapon;
         Health = MaxHealth;
+        AddChild(new QiPalm { Name = "QiPalm" });
     }
 
     /// <summary>Takes damage from a hit coming from <paramref name="from"/>. Ignored while invulnerable. Returns true when it landed.</summary>
@@ -348,7 +452,7 @@ public partial class Player : CharacterBody2D
         _time += dt;
         _invulnerable = Mathf.Max(0, _invulnerable - dt);
         _evade = Mathf.Max(0, _evade - dt);
-        if (MaxQi > 0) Qi = Mathf.Min(MaxQi, Qi + QiRegen * dt);
+        if (MaxQi > 0 && _charge != ChargeState.Charging) Qi = Mathf.Min(MaxQi, Qi + QiRegen * dt);
         _hurtFlash = Mathf.Max(0, _hurtFlash - dt);
         if (_regenLeft > 0 && Health > 0)
         {
@@ -374,6 +478,7 @@ public partial class Player : CharacterBody2D
             else _buffer = (ActionKind.Cut, Tuning.BufferTime);
         }
         else if (Input.IsActionJustPressed("step")) _buffer = (ActionKind.Step, Tuning.BufferTime);
+        if (_charge != ChargeState.None) UpdateCharge(dt, locked);
         if (_buffer is { } b) _buffer = b.Time - dt > 0 ? (b.Kind, b.Time - dt) : null;
 
         if (_act != null) Advance(dt);
@@ -384,7 +489,8 @@ public partial class Player : CharacterBody2D
         }
 
         _moving = false;
-        if (_act == null)
+        if (_charge == ChargeState.Charging) { Velocity = Vector2.Zero; }
+        else if (_act == null)
         {
             Velocity = move * Tuning.MoveSpeed * MoveSpeedMultiplier * (sneaking ? Tuning.SneakFactor : 1f);
             if (move != Vector2.Zero) { Facing = move.Normalized(); _moving = true; _walk += dt * (sneaking ? 4.5f : 8f); }

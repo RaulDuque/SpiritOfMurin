@@ -128,6 +128,18 @@ public sealed class BoarBrain
     /// <summary>The charge ran into something solid: it ends there and the recovery starts.</summary>
     public void NotifyBlocked() { if (State == BoarState.Charge) EnterRecover(); }
 
+    /// <summary>
+    /// A guard-breaking hit (the full charged Qi shot, a reinforced strike that rolled the break): the warning
+    /// or the charge stops and the boar stays open for <paramref name="seconds"/> more, so the hit that follows lands.
+    /// Returns true when there was a defence to break.
+    /// </summary>
+    public bool Break(float seconds)
+    {
+        if (State is not (BoarState.Warn or BoarState.Charge)) return false;
+        EnterRecover(); _extraRecover = seconds;
+        return true;
+    }
+
     /// <summary>A blade reached the boar. Damage only lands when it is open (rooting, recovering, walking home).</summary>
     public HitResult TakeHit(int damage)
     {

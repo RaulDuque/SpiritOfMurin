@@ -10,7 +10,8 @@
     "angle / time / iframes / radius_min / radius_max": "passo lateral: graus que contorna o alvo travado, duração, invulnerabilidade, raio mínimo e máximo da volta (px)",
     "reach / lunge": "estocada: alcance (px) e avanço do corpo (px)",
     "combo_window": "Passo da Lâmina Silenciosa: segundos entre passo lateral → corte → Qi",
-    "stagger": "Passo da Lâmina Silenciosa: segundos de guarda quebrada"
+    "stagger": "Passo da Lâmina Silenciosa e Disparo Concentrado: segundos de guarda quebrada",
+    "qi_charge": "técnica secreta: segure o botão de Qi. qi_cost é o custo TOTAL da carga completa (já inclui o disparo); hold: segundos segurando antes de a carga começar (um toque mais curto é o disparo comum); drain: Qi por segundo puxado para a palma; damage: dano da carga completa (a parcial dá dano proporcional ao Qi investido, mínimo 1); só a carga completa rompe a guarda (stagger)"
   },
   "unlock_level": 3,
   "qi_wave": {
@@ -32,6 +33,11 @@
     "name": "Estocada",
     "full": { "qi_cost": 0, "vigor_cost": 0, "reach": 64, "lunge": 22, "damage": 2 },
     "weak": { "qi_cost": 0, "vigor_cost": 8, "reach": 40, "lunge": 12, "damage": 1 }
+  },
+  "qi_charge": {
+    "name": "Disparo de Qi Concentrado",
+    "full": { "qi_cost": 100, "vigor_cost": 0, "damage": 6, "range": 260, "speed": 420, "stagger": 1.4, "hold": 0.22, "drain": 90 },
+    "weak": { "qi_cost": 100, "vigor_cost": 15, "damage": 3, "range": 150, "speed": 340, "stagger": 0.8, "hold": 0.22, "drain": 70 }
   },
   "lamina": {
     "name": "Passo da Lâmina Silenciosa",

@@ -212,6 +212,8 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         Player.MaxQi = Combat.PlayerQiMax; Player.QiRegen = Combat.PlayerQiRegen; Player.Qi = Player.MaxQi;
         Player.MaxVigor = 0;
         Player.Tech = Tech;
+        Player.SecretFound += OnSecret;
+        Player.ChargeCancelled += back => { if (back > 0.5f) Hud.Toast($"A concentração se desfaz: {back:0} de Qi voltam à barra."); };
         Player.CutSlack = Combat.CutSlack; Player.ThrustSlack = Combat.ThrustSlack; // the prototype's hit test is a little wider than the blade
         Player.LockTarget = () => Lock;
         Player.BladeActive += OnBlade;
@@ -292,6 +294,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         if (_hitstopReal > 0) { _hitstopReal -= (float)delta / Mathf.Max(0.01f, (float)Engine.TimeScale); if (_hitstopReal <= 0) Engine.TimeScale = 1; }
         Hud.SetHealth(Player.Health, Player.MaxHealth, Player.PendingRegen);
         Hud.SetEnergy(0, 0, Player.Qi, Player.MaxQi);
+        Hud.SetCharge(Player.ChargeInvested, Player.ChargeCost);
         Hud.SetHands(Bindings.F($"espada · {Story.Book.Count} páginas no Livro ([book])"));
         Fx.Lock = Lock;
         // the locked target at the top, as in the prototype: name, health and what its guard is doing
@@ -410,7 +413,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         else if (e.IsActionPressed("inventory")) { RefreshInventory(); Hud.ShowInventory(true); Player.InputLocked = true; Sfx.Play("page"); }
         else if (e.IsActionPressed("lock")) ToggleLock();
         else if (e.IsActionPressed("use")) { var s = NearSpot(); if (s != null) Interact(s); else return; }
-        else if (e.IsActionPressed("qi")) Player.RequestQi();
+        else if (e.IsActionPressed("qi")) Player.BeginQi();
         else if (e.IsActionPressed("heal")) UseItem("balsamo");
         else return;
         GetViewport().SetInputAsHandled();
@@ -592,14 +595,31 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
                 if (f.GlobalPosition.DistanceTo(w.Foot) < (w.Shot.Lamina ? 22 : 16))
                 {
                     w.HitSet.Add(f.Id);
-                    string r = StrikeFighter(f, w.Foot - w.Shot.Dir * w.Shot.Speed * 0.2f, w.Shot.Damage, w.Shot.Lamina, w.Shot.Stagger, false, melee: false);
-                    if (r == "parried" && !w.Shot.Lamina) w.Stop();
+                    bool guarded = f.Guarding;
+                    string r = StrikeFighter(f, w.Foot - w.Shot.Dir * w.Shot.Speed * 0.2f, w.Shot.Damage, w.Shot.Lamina || w.Shot.Breaks, w.Shot.Stagger, false, melee: false);
+                    if (w.Shot.Breaks && guarded && f.Type != ValeFighter.Kind.Statue && r is "hit" or "killed")
+                    {
+                        Fx.Say(f.GlobalPosition + new Vector2(0, -58), "guarda rompida", ValeTerrain.Learn, 1.2f);
+                        if (Story.Once("chargeBreak")) Hud.Toast("O Qi concentrado rompe a guarda. Ataque agora!");
+                    }
+                    if (r == "parried" && !w.Shot.Lamina && !w.Shot.Breaks) w.Stop();
                 }
             }
             foreach (var p in _pots.Where(p => IsInstanceValid(p) && !p.IsQueuedForDeletion()).ToList())
                 if (p.GlobalPosition.DistanceTo(w.Foot) < 16) BreakPot(p);
             if (w.Done) { w.QueueFree(); _waves.Remove(w); }
         }
+    }
+
+    // the first charged shot reveals the secret technique: the banner and a page in the book
+    private void OnSecret(string id)
+    {
+        if (id != "qi_charge" || Story.Book.Any(b => b.Tech == "qi_charge")) return;
+        Story.AddBook(new BookEntry { Name = Tech.Data.QiCharge.Name, Kind = "técnica", Key = "segurar Qi, soltar", Where = $"Descoberta por você: {ValeMap.AreaName(Player.GlobalPosition)}. O Qi se junta na palma enquanto o botão fica preso.", Tech = "qi_charge", State = "Plena" });
+        Tech.Set("qi_charge", TechniqueState.Full);
+        Hud.Banner(Tech.Data.QiCharge.Name, 2.8f);
+        Hud.Toast(Bindings.F("Técnica secreta descoberta: segurar [qi] concentra o Qi; soltar dispara. Veja o Livro ([book])."));
+        Sfx.Play("learn");
     }
 
     private void TriggerLamina()
