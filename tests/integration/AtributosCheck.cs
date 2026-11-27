@@ -27,6 +27,9 @@ namespace SpiritOfMurin.Tests;
 /// <item><c>--phase=oldsave</c>: Qi → Ki — a real journey written by the game before the rename
 /// (<c>tests/fixtures/saves/jornada_antes_do_ki.json</c>, keys "qi") continues with its Ki, its KI points and its
 /// Livro under the new names; preferences from before with the Qi control on another button keep it as Ki.</item>
+/// <item><c>--phase=visual</c> (pedido 14.1): in the Vale, the Reforço de Ki puts a blue glow around the sword
+/// (seen from the side) and a reinforced cut leaves a blue trail; a plain cut's trail is the larger jade crescent.
+/// Pictures with <c>--shots=</c>.</item>
 /// </list>
 /// Files: <c>user://teste_atr.json</c>; preferences <c>user://teste_atr_prefs.json</c> (pass <c>--prefs=</c>).
 /// Teleports and the boar's position are named in the checks.
@@ -52,7 +55,7 @@ public partial class AtributosCheck : Node
         SaveGame.Erase(SavePath);
         if (Godot.FileAccess.FileExists(Prefs.Path)) DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(Prefs.Path));
         Bindings.Init(); Assist.Reload(); Aim.Reload(); Aim.UseForSession(false);
-        _ = _phase switch { "vale" => ValePhase(), "oldsave" => OldSavePhase(), _ => PlainsPhase() };
+        _ = _phase switch { "vale" => ValePhase(), "oldsave" => OldSavePhase(), "visual" => VisualPhase(), _ => PlainsPhase() };
     }
 
     private void Check(string name, bool ok, string detail = "") { _results.Add((name, ok, detail)); GD.Print($"{(ok ? "OK  " : "FAIL")} {name}{(detail.Length > 0 ? " — " + detail : "")}"); }
@@ -196,6 +199,34 @@ public partial class AtributosCheck : Node
         bool saved = SaveGame.Write(SavePath, _pg.Snapshot());
         string now = Godot.FileAccess.GetFileAsString(SavePath);
         Check("saving again writes only the new spelling", saved && !KiMigration.IsOld(now) && now.Contains("\"ki\": 100"));
+        Finish();
+    }
+
+    // ------------------------------------------------------------------ 14.1: the look of the Reforço and the cut
+    private async Task VisualPhase()
+    {
+        _c = GD.Load<PackedScene>("res://src/Campaign/Campaign.tscn").Instantiate<CampaignRoot>();
+        _c.SavePath = SavePath; _c.ShowIntro = false; _c.StartWith = "new";
+        AddChild(_c);
+        await Frames(40);
+        var v = _c.Vale!; var p = v.Player;
+        p.KiRegen = 0;
+        p.GlobalPosition = ValeMap.Start + new Vector2(0, -60); p.Face(Vector2.Right); // named: the trail by the start
+        p.GetNode<Camera2D>("Camera").ResetSmoothing(); await Frames(6);
+        // a plain cut: the larger jade crescent
+        await Tap(Key.J); await Frames(3);
+        await Shot("07-corte-normal-maior");
+        await Frames(40);
+        // the Reforço: Shift + J held
+        p.Ki = 100;
+        Press(Key.Shift, true); await Flush(); await Frames(1);
+        Press(Key.J, true); await Flush(); await Frames(30);
+        Press(Key.J, false); await Flush(); await Frames(1); Press(Key.Shift, false); await Flush(); await Frames(10);
+        p.Face(Vector2.Right); await Frames(4);
+        Check("the Reforço is on (3 reinforced strikes)", p.ReinforceCharges == 3, $"{p.ReinforceCharges}");
+        await Shot("08-reforco-brilho-azul");
+        await Tap(Key.J); await Frames(3);
+        await Shot("09-corte-reforcado-azul");
         Finish();
     }
 

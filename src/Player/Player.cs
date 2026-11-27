@@ -451,7 +451,15 @@ public partial class Player : CharacterBody2D
         public float Duration => Kind is ActionKind.Step or ActionKind.Side or ActionKind.Dash or ActionKind.Recoil ? Startup : Startup + Active + Recovery;
     }
 
-    private sealed class Slash { public Vector2 World; public float Angle, Length, Life, Max; }
+    private sealed class Slash { public Vector2 World; public float Angle, Length, Life, Max; public bool Reinforced; }
+
+    // ---- how the cut's trail and the Reforço's glow look (pedido 14.1). Pure look: the hit area is the tuning's reach.
+    /// <summary>Trail length (px) of each strike: sword cut, third cut of the combo, knife cut, thrust.</summary>
+    private const float SlashSword = 52f, SlashSwordThird = 66f, SlashKnife = 26f, SlashThrust = 18f;
+    /// <summary>Trail thickness (px) and how long it stays (s).</summary>
+    private const float SlashThick = 3f, SlashLife = 0.2f;
+    /// <summary>The Reforço de Ki: the blue glow around the blade (outer halo, inner light) and the trail of a reinforced strike.</summary>
+    private static readonly Color ReinforceHalo = new("#3d8bff"), ReinforceLight = new("#bfe3ff");
 
     private Act? _act;
     private (ActionKind Kind, float Time)? _buffer;
@@ -816,7 +824,8 @@ public partial class Player : CharacterBody2D
             {
                 World = GlobalPosition + (Equipped == Weapon.Knife ? new Vector2(Facing.X * 14f, -12f + Facing.Y * 10f) : new Vector2(Facing.X * 22f, -14f + Facing.Y * 16f)),
                 Angle = Facing.Angle() + Mathf.DegToRad(side) + Mathf.Pi / 2f,
-                Length = a.Kind == ActionKind.Thrust ? 10f : Equipped == Weapon.Knife ? 16f : a.N == 3 ? 44f : 34f, Life = 0.16f, Max = 0.16f,
+                Length = a.Kind == ActionKind.Thrust ? SlashThrust : Equipped == Weapon.Knife ? SlashKnife : a.N == 3 ? SlashSwordThird : SlashSword,
+                Life = SlashLife, Max = SlashLife, Reinforced = a.Reinforced,
             });
         }
         if (a.Kind == ActionKind.Step) _ghosts.Add((GlobalPosition, 0.22f));
@@ -863,8 +872,14 @@ public partial class Player : CharacterBody2D
         {
             Vector2 c = s.World - GlobalPosition;
             float k = Mathf.Min(1f, s.Life / s.Max * 1.5f), dx = Mathf.Cos(s.Angle), dy = Mathf.Sin(s.Angle) * 0.7f;
+            Color core = s.Reinforced ? ReinforceLight : Learn, glow = s.Reinforced ? ReinforceHalo : LearnGlow;
             for (float i = -s.Length / 2; i < s.Length / 2; i++)
-                DrawRect(new Rect2(Mathf.Round(c.X + dx * i), Mathf.Round(c.Y + dy * i), 2, 2), new Color(Mathf.Abs(i) < s.Length / 3 ? Learn : LearnGlow, k));
+            {
+                // thicker in the middle, thinner at the ends: a crescent, not a stick
+                float t = 1 - Mathf.Abs(i) / (s.Length / 2);
+                float w = Mathf.Max(1, Mathf.Round(SlashThick * (0.5f + 0.5f * t)));
+                DrawRect(new Rect2(Mathf.Round(c.X + dx * i - w / 2), Mathf.Round(c.Y + dy * i - w / 2), w, w), new Color(Mathf.Abs(i) < s.Length / 3 ? core : glow, k));
+            }
         }
     }
 
@@ -1180,6 +1195,25 @@ public partial class Player : CharacterBody2D
                 float midX = Mathf.Round((shX + hand.X) * 0.5f), midY = Mathf.Round((shY + hand.Y) * 0.5f);
                 p.Rect(midX - 1, midY + 1, 3, 2, Shade);
                 p.Rect(hand.X - 1, hand.Y - 2, 3, 2, Trim);
+            }
+
+            // the Reforço de Ki: a blue glow around the blade while strikes are reinforced (and growing during the gesture)
+            float glow = ReinforceCharges > 0 || StrikeReinforced ? 1f : _reinforcing ? ReinforceProgress : 0f;
+            if (glow > 0 && Equipped != Weapon.None)
+            {
+                float pulse = 0.75f + 0.25f * Mathf.Sin(_time * 9f);
+                Vector2 d = (tip - hand).Normalized();
+                // soft light (no outline): a wide faint halo, a narrower brighter one, then sparks along the edge
+                p.GlowLine(hand.X - d.X * 2, hand.Y - d.Y * 2, tip.X + d.X * 3, tip.Y + d.Y * 3, new Color(ReinforceHalo, 0.22f * glow * pulse), 5);
+                p.GlowLine(hand.X - d.X, hand.Y - d.Y, tip.X + d.X * 2, tip.Y + d.Y * 2, new Color(ReinforceHalo, 0.45f * glow * pulse), 3);
+                float len = (tip - hand).Length();
+                Vector2 n = new(-d.Y, d.X);
+                for (int k = 0; k < 3; k++)
+                {
+                    float f = Mathf.PosMod(_time * 1.6f + k / 3f, 1f);
+                    Vector2 sp = hand + d * (len * f) + n * (k % 2 == 0 ? 2 : -2);
+                    p.GlowLine(sp.X, sp.Y, sp.X, sp.Y, new Color(ReinforceLight, glow * (1 - f * 0.6f)), 1);
+                }
             }
 
             if (Equipped == Weapon.Sword)

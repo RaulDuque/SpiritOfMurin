@@ -11,6 +11,19 @@ namespace SpiritOfMurin.Characters;
 public sealed class PixelPainter
 {
     private readonly List<(Rect2 Rect, Color Color)> _ops = new();
+    private readonly List<(Rect2 Rect, Color Color)> _glow = new();
+
+    /// <summary>
+    /// Adds a glow line: no outline, drawn between the outline pass and the colour pass, so it shows around
+    /// the shapes and under them (the Reforço de Ki's light around the blade). Translucent colours blend.
+    /// </summary>
+    public void GlowLine(float x0f, float y0f, float x1f, float y1f, Color c, int w = 1)
+    {
+        int n0 = _ops.Count;
+        Line(x0f, y0f, x1f, y1f, c, w);
+        _glow.AddRange(_ops.GetRange(n0, _ops.Count - n0));
+        _ops.RemoveRange(n0, _ops.Count - n0);
+    }
 
     /// <summary>Adds a filled rectangle (rounded to whole pixels).</summary>
     public void Rect(float x, float y, float w, float h, Color c) =>
@@ -32,11 +45,12 @@ public sealed class PixelPainter
         }
     }
 
-    /// <summary>Draws the outline pass, then the colour pass (all in <paramref name="tint"/> when given: a hit flash), onto <paramref name="item"/>, and clears.</summary>
+    /// <summary>Draws the outline pass, the glow pass, then the colour pass (all in <paramref name="tint"/> when given: a hit flash), onto <paramref name="item"/>, and clears.</summary>
     public void Flush(CanvasItem item, Color outline, Color? tint = null)
     {
         foreach (var (r, _) in _ops) item.DrawRect(new Rect2(r.Position - Vector2.One, r.Size + Vector2.One * 2), outline);
+        if (tint == null) foreach (var (r, c) in _glow) item.DrawRect(r, c);
         foreach (var (r, c) in _ops) item.DrawRect(r, tint ?? c);
-        _ops.Clear();
+        _ops.Clear(); _glow.Clear();
     }
 }
