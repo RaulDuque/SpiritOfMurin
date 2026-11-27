@@ -45,6 +45,7 @@ public partial class ValeCheck : Node
     /// <inheritdoc />
     public override void _Ready()
     {
+        Game.Aim.UseForSession(false); // written for aiming by facing: the real cursor over the window must not steer the cuts
         foreach (string a in OS.GetCmdlineUserArgs())
         {
             if (a.StartsWith("--phase=")) _phase = a["--phase=".Length..];

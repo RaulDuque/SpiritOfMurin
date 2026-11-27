@@ -26,6 +26,7 @@ public partial class ControlsCheck : Node
     /// <inheritdoc />
     public override void _Ready()
     {
+        Game.Aim.UseForSession(false); // written for aiming by facing: the real cursor over the window must not steer the cuts
         foreach (string a in OS.GetCmdlineUserArgs()) if (a.StartsWith("--shots=")) _shots = a["--shots=".Length..];
         _main = GD.Load<PackedScene>("res://src/Main/Main.tscn").Instantiate<Main>();
         AddChild(_main);

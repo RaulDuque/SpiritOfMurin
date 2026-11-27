@@ -26,6 +26,10 @@ foreach ($phase in 'measure', 'click', 'map', 'map2') {
 foreach ($phase in 'vale', 'vale2', 'controls', 'controls2', 'assist', 'assist2', 'book', 'layout') {
   & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/RecoveryCheck.tscn -- "--phase=$phase" '--prefs=user://teste_rec_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
 }
+# pedido 13: aim, techniques, bag, money
+foreach ($phase in 'aim') {
+  & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/NovidadesCheck.tscn -- "--phase=$phase" '--prefs=user://teste_nov_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+}
 if ($SoPrologo) { if ($fail -eq 0) { Write-Host "Prologo: todos os testes passaram." } else { Write-Host "$fail execucao(oes) com falha." }; exit $fail }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/unit/UnitRunner.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ControlsCheck.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }

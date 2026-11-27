@@ -26,6 +26,7 @@ public partial class PlainsCapture : Node
     /// <inheritdoc />
     public override void _Ready()
     {
+        Game.Aim.UseForSession(false); // written for aiming by facing: the real cursor over the window must not steer the cuts
         foreach (string a in OS.GetCmdlineUserArgs())
         {
             if (a.StartsWith("--mode=")) _mode = a["--mode=".Length..];

@@ -6,6 +6,12 @@ public sealed record Suite(string Group, string Name, string Scene, string[] Arg
 /// <summary>Os testes do projeto, na ordem em que dependem uns dos outros (a mesma do tools/godot/testes-janela.ps1).</summary>
 public static class Suites
 {
+    /// <summary>As fases do teste do pedido 13 (mira, técnicas, bolsa, moedas), na ordem.</summary>
+    public static readonly (string Phase, string About)[] Novidades =
+    {
+        ("aim", "Mira pelo mouse: andar para um lado e acertar para o outro; tecla remapeada; faca; Qi; alvo travado tem prioridade; destravar volta ao cursor; mira por teclado; outras janelas."),
+    };
+
     /// <summary>Monta a lista para as sementes escolhidas. <paramref name="quick"/> deixa só o prólogo, a recuperação e a unidade.</summary>
     public static List<Suite> Build(int[] seeds, bool quick)
     {
@@ -24,6 +30,9 @@ public static class Suites
             ("assist", "Modo de assistência liga e salva."), ("assist2", "Continua ligado; desliga."),
             ("book", "Livro da Planície: selado e enfraquecido com números reais."), ("layout", "Minimapa em três tamanhos; cantos do mouse em janela, maximizada e tela cheia.") })
             l.Add(new("Recuperação do protótipo", ph, rec, new[] { $"--phase={ph}", "--prefs=user://teste_rec_prefs.json" }, WindowOnly: ph == "layout", About: about));
+        const string nov = "res://tests/integration/NovidadesCheck.tscn";
+        foreach (var (ph, about) in Novidades)
+            l.Add(new("Novidades (pedido 13)", ph, nov, new[] { $"--phase={ph}", "--prefs=user://teste_nov_prefs.json" }, About: about));
         if (quick) return l;
         foreach (var ph in new[] { "full", "sealed", "resume2", "resume3", "migrate", "migrate2" })
             l.Add(new("Técnicas seladas", ph, tech, new[] { $"--phase={ph}" }, About: "Selo no despertar e volta enfraquecida no nível 3, com medições."));

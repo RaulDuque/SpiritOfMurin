@@ -33,6 +33,7 @@ public partial class DisplayCheck : Node
     /// <inheritdoc />
     public override void _Ready()
     {
+        Game.Aim.UseForSession(false); // written for aiming by facing: the real cursor over the window must not steer the cuts
         foreach (string a in OS.GetCmdlineUserArgs()) { if (a.StartsWith("--phase=")) _phase = a["--phase=".Length..]; if (a.StartsWith("--shots=")) _shots = a["--shots=".Length..]; }
         GD.Print($"window on screen {DisplayServer.WindowGetCurrentScreen()} of {DisplayServer.GetScreenCount()} ({DisplayServer.GetName()}), screen size {DisplayServer.ScreenGetSize(DisplayServer.WindowGetCurrentScreen())}");
         if (_phase != "map2") SaveGame.Erase(SavePath);

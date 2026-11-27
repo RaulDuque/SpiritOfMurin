@@ -28,6 +28,7 @@ public partial class PlainsRoute : Node
     /// <inheritdoc />
     public override void _Ready()
     {
+        Game.Aim.UseForSession(false); // written for aiming by facing: the real cursor over the window must not steer the cuts
         foreach (string a in OS.GetCmdlineUserArgs())
         {
             if (a.StartsWith("--seed=")) _seed = int.Parse(a["--seed=".Length..]);
