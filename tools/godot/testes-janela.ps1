@@ -30,6 +30,10 @@ foreach ($phase in 'vale', 'vale2', 'controls', 'controls2', 'assist', 'assist2'
 foreach ($phase in 'aim', 'charge', 'charge-plains', 'reinforce', 'bag', 'money', 'money2', 'oldsave') {
   & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/NovidadesCheck.tscn -- "--phase=$phase" '--prefs=user://teste_nov_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
 }
+# pedido 14.0: FOR, CON, critical, Vida in numbers, damage numbers, Qi -> Ki with old files
+foreach ($phase in 'plains', 'vale', 'oldsave') {
+  & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/AtributosCheck.tscn -- "--phase=$phase" '--prefs=user://teste_atr_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+}
 if ($SoPrologo) { if ($fail -eq 0) { Write-Host "Prologo: todos os testes passaram." } else { Write-Host "$fail execucao(oes) com falha." }; exit $fail }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/unit/UnitRunner.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ControlsCheck.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }

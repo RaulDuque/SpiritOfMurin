@@ -19,6 +19,14 @@ public static class Suites
         ("oldsave", "Save de antes desta entrega (sem moedas) carrega com itens e equipamento; o despertar começa sem dinheiro."),
     };
 
+    /// <summary>As fases do teste do pedido 14.0 (FOR, CON, crítico, números de vida e de dano, Qi → Ki).</summary>
+    public static readonly (string Phase, string About)[] Atributos =
+    {
+        ("plains", "FOR 5 aumenta o corte da faca (1 → 1,3); crítico ×1,5 com '!'; CON 5 recebe 3,4 de 4; vida do javali em números dentro da barra; números de dano ligam e desligam no Modo de assistência; FOR salvo."),
+        ("vale", "Prólogo: vida do discípulo em números na barra; o golpe mostra o dano; sem ficha, sem FOR nem crítico."),
+        ("oldsave", "Qi → Ki: jornada real de antes do renome continua com Ki, KI e o Livro; a tecla do Qi num botão do mouse vira a do Ki."),
+    };
+
     /// <summary>Monta a lista para as sementes escolhidas. <paramref name="quick"/> deixa só o prólogo, a recuperação e a unidade.</summary>
     public static List<Suite> Build(int[] seeds, bool quick)
     {
@@ -40,6 +48,9 @@ public static class Suites
         const string nov = "res://tests/integration/NovidadesCheck.tscn";
         foreach (var (ph, about) in Novidades)
             l.Add(new("Novidades (pedido 13)", ph, nov, new[] { $"--phase={ph}", "--prefs=user://teste_nov_prefs.json" }, About: about));
+        const string atr = "res://tests/integration/AtributosCheck.tscn";
+        foreach (var (ph, about) in Atributos)
+            l.Add(new("Atributos e Ki (pedido 14)", ph, atr, new[] { $"--phase={ph}", "--prefs=user://teste_atr_prefs.json" }, About: about));
         if (quick) return l;
         foreach (var ph in new[] { "full", "sealed", "resume2", "resume3", "migrate", "migrate2" })
             l.Add(new("Técnicas seladas", ph, tech, new[] { $"--phase={ph}" }, About: "Selo no despertar e volta enfraquecida no nível 3, com medições."));
