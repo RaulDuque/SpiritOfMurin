@@ -30,6 +30,8 @@ namespace SpiritOfMurin.Tests;
 /// <item><c>--phase=visual</c> (pedido 14.1): in the Vale, the Reforço de Ki puts a blue glow around the sword
 /// (seen from the side) and a reinforced cut leaves a blue trail; a plain cut's trail is the larger jade crescent.
 /// Pictures with <c>--shots=</c>.</item>
+/// <item><c>--phase=mapa</c> (pedido 14.2): a new Planície journey — the minimap and the map (M) mark each kind of
+/// place with its own picture (campfire, mat, burrow, herb, coins, marker), and the map's legend shows the same pictures.</item>
 /// </list>
 /// Files: <c>user://teste_atr.json</c>; preferences <c>user://teste_atr_prefs.json</c> (pass <c>--prefs=</c>).
 /// Teleports and the boar's position are named in the checks.
@@ -55,7 +57,7 @@ public partial class AtributosCheck : Node
         SaveGame.Erase(SavePath);
         if (Godot.FileAccess.FileExists(Prefs.Path)) DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(Prefs.Path));
         Bindings.Init(); Assist.Reload(); Aim.Reload(); Aim.UseForSession(false);
-        _ = _phase switch { "vale" => ValePhase(), "oldsave" => OldSavePhase(), "visual" => VisualPhase(), _ => PlainsPhase() };
+        _ = _phase switch { "vale" => ValePhase(), "oldsave" => OldSavePhase(), "visual" => VisualPhase(), "mapa" => MapPhase(), _ => PlainsPhase() };
     }
 
     private void Check(string name, bool ok, string detail = "") { _results.Add((name, ok, detail)); GD.Print($"{(ok ? "OK  " : "FAIL")} {name}{(detail.Length > 0 ? " — " + detail : "")}"); }
@@ -227,6 +229,25 @@ public partial class AtributosCheck : Node
         await Shot("08-reforco-brilho-azul");
         await Tap(Key.J); await Frames(3);
         await Shot("09-corte-reforcado-azul");
+        Finish();
+    }
+
+    // ------------------------------------------------------------------ 14.2: pictures on the map
+    private async Task MapPhase()
+    {
+        _pg = GD.Load<PackedScene>("res://src/Plains/Plains.tscn").Instantiate<PlainsGame>();
+        _pg.SavePath = SavePath; _pg.ShowIntro = false; _pg.Start = PlainsGame.StartMode.New;
+        AddChild(_pg);
+        await Frames(40);
+        var icons = _pg.LegendIcons;
+        Check("the Planície's legend lists the pictures", icons.Contains(MapIcon.Campfire) && icons.Contains(MapIcon.Mat) && icons.Contains(MapIcon.Burrow) && icons.Contains(MapIcon.Herb) && icons.Contains(MapIcon.Coins));
+        Check("every picture has a legend name", icons.All(i => MapIcons.Name(i).Length > 0));
+        _pg.MapMarkers.Add(_pg.Player.GlobalPosition + new Vector2(120, 40)); // a marker to show its picture
+        await Frames(4);
+        await Shot("10-minimapa-com-icones");
+        _pg.Panels.OpenMap(); await Frames(6);
+        await Shot("11-mapa-com-icones-e-legenda");
+        _pg.Panels.Choose("back"); await Frames(2);
         Finish();
     }
 

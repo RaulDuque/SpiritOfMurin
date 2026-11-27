@@ -39,7 +39,9 @@ public partial class PlainsGame : Node2D, IMapSource
     /// <inheritdoc />
     public string MapTitle => $"Planície Verdejante · semente {SeedInUse}";
     /// <inheritdoc />
-    public string MapLegend => "relva · areia: margem · azul: água e vau · marrom: lamaçal · verde-escuro: arbustos\nlaranja: fogueira · ciano: esteira · bege: tocas · vermelho: javalis · ✕ marcadores";
+    public string MapLegend => "Chão: relva · areia: margem · azul: água e vau · marrom: lamaçal · verde-escuro: arbustos";
+    /// <inheritdoc />
+    public IReadOnlyList<MapIcon> LegendIcons { get; } = new[] { MapIcon.Player, MapIcon.Campfire, MapIcon.Mat, MapIcon.Burrow, MapIcon.Boar, MapIcon.Herb, MapIcon.Coins, MapIcon.Marker, MapIcon.Clue };
     /// <inheritdoc />
     public string MapWhere
     {
@@ -171,10 +173,13 @@ public partial class PlainsGame : Node2D, IMapSource
             foreach (var f in _mapChunks[c].Features)
                 switch (f.Kind)
                 {
-                    case FeatureKind.Campfire: v.WorldDot(f.Position, new Color("#e8a13a"), 3); break;
-                    case FeatureKind.MeditationMat: v.WorldDot(f.Position, new Color("#6fd8d2"), 3); break;
-                    case FeatureKind.Burrow: v.WorldDot(f.Position, new Color("#efe4c8"), 1.5f); break;
-                    case FeatureKind.Boar: if (World.State.CarcassAt(PlainsGenerator.CreatureIdOf(f)) == null) v.WorldDot(f.Position, new Color("#7a3a32"), 2); break;
+                    // each kind of place has its own picture (pedido 14.2; drawn in Game/MapIcons.cs)
+                    case FeatureKind.Campfire: v.WorldIcon(f.Position, MapIcon.Campfire); break;
+                    case FeatureKind.MeditationMat: v.WorldIcon(f.Position, MapIcon.Mat); break;
+                    case FeatureKind.Burrow: v.WorldIcon(f.Position, MapIcon.Burrow); break;
+                    case FeatureKind.Boar: if (World.State.CarcassAt(PlainsGenerator.CreatureIdOf(f)) == null) v.WorldIcon(f.Position, MapIcon.Boar); break;
+                    case FeatureKind.Herb: if (!World.State.IsCollected(f.Id)) v.WorldIcon(f.Position, MapIcon.Herb); break;
+                    case FeatureKind.CoinPouch: if (!World.State.IsCollected(f.Id)) v.WorldIcon(f.Position, MapIcon.Coins); break;
                 }
         v.WorldLabel(Gen.StartPixel + new Vector2(0, -40), "clareira", MapView.Ink);
     }

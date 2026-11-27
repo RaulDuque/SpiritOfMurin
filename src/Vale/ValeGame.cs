@@ -33,7 +33,9 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     /// <inheritdoc />
     public string MapTitle => "Vale de Bambus";
     /// <inheritdoc />
-    public string MapLegend => "só o que você já viu · ciano: esteira de meditação\nselo vermelho: onde a pista surgiu · ✕ marcadores";
+    public string MapLegend => "O mapa mostra só o que você já viu.";
+    /// <inheritdoc />
+    public IReadOnlyList<MapIcon> LegendIcons { get; } = new[] { MapIcon.Player, MapIcon.Mat, MapIcon.Clue, MapIcon.Marker };
     /// <inheritdoc />
     public string MapWhere => $"{ValeMap.AreaName(Player.GlobalPosition)}. {WhereDetail()}";
     /// <inheritdoc />
@@ -123,7 +125,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         v.WorldTexture(Vector2.Zero, new Vector2(ValeMap.MW, ValeMap.MH) * ValeMap.TS, _seenTex);
         foreach (var (name, at) in ValeMap.Landmarks)
             if (Seen(Mathf.FloorToInt(at.X / ValeMap.TS), Mathf.FloorToInt(at.Y / ValeMap.TS))) v.WorldLabel(at, name, MapView.Ink);
-        if (Seen(Mathf.FloorToInt(ValeMap.Meditate.X / ValeMap.TS), Mathf.FloorToInt(ValeMap.Meditate.Y / ValeMap.TS))) v.WorldDot(ValeMap.Meditate, new Color("#6fd8d2"), 3);
+        if (Seen(Mathf.FloorToInt(ValeMap.Meditate.X / ValeMap.TS), Mathf.FloorToInt(ValeMap.Meditate.Y / ValeMap.TS))) v.WorldIcon(ValeMap.Meditate, MapIcon.Mat);
     }
 
     /// <summary>The save file.</summary>

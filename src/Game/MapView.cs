@@ -21,8 +21,10 @@ public interface IMapSource
     Vector2 MapFacing { get; }
     /// <summary>Manual markers (world px), saved with the journey.</summary>
     List<Vector2> MapMarkers { get; }
-    /// <summary>A short legend.</summary>
+    /// <summary>A short legend of the ground colours (the places have pictures: see <see cref="LegendIcons"/>).</summary>
     string MapLegend { get; }
+    /// <summary>The pictures this region's map uses, in legend order (pedido 14.2).</summary>
+    IReadOnlyList<MapIcon> LegendIcons => System.Array.Empty<MapIcon>();
     /// <summary>The map's title.</summary>
     string MapTitle { get; }
     /// <summary>"Onde estou?": the place the player stands in, in words.</summary>
@@ -114,6 +116,14 @@ public partial class MapView : Control
         if (Compact) r = Mathf.Max(1, r - 1);
         DrawRect(new Rect2(p - new Vector2(r + 1, r + 1), new Vector2(r * 2 + 2, r * 2 + 2)), Ink);
         DrawRect(new Rect2(p - new Vector2(r, r), new Vector2(r * 2, r * 2)), c);
+    }
+
+    /// <summary>A place's picture at a world point (its size follows the map: small on the minimap, larger on the full map).</summary>
+    public void WorldIcon(Vector2 world, MapIcon icon)
+    {
+        Vector2 p = ToScreen(world);
+        if (!Inside(p)) return;
+        MapIcons.Draw(this, p, icon, Compact ? 1 : 2);
     }
 
     /// <summary>Zooms by a factor, keeping the centre.</summary>
@@ -304,8 +314,22 @@ public partial class MapView : Control
                 y += 3;
             }
         }
+        // the legend: the same pictures the map draws, with their names, two per line
+        var icons = s.LegendIcons;
+        if (icons.Count > 0 && y < box.End.Y - 30)
+        {
+            y += 4; Head("Legenda");
+            float colW = w / 2;
+            for (int i = 0; i < icons.Count && y < box.End.Y - 22; i++)
+            {
+                float cx = x + (i % 2) * colW;
+                MapIcons.Draw(this, new Vector2(cx + 6, y + 5), icons[i], 1.5f);
+                DrawString(font, new Vector2(cx + 14, y + 8), MapIcons.Name(icons[i]), HorizontalAlignment.Left, colW - 16, 8, Ink);
+                if (i % 2 == 1 || i == icons.Count - 1) y += 11;
+            }
+        }
         var legend = s.MapLegend;
-        if (legend.Length > 0 && y < box.End.Y - 20) { y = Mathf.Max(y + 4, box.End.Y - 10 * legend.Split('\n').Length - 2); foreach (var l in legend.Split('\n')) Body(l, Ink2, 7); }
+        if (legend.Length > 0 && y < box.End.Y - 20) { int lines = Wrap(legend, w - 10, 7).Count; y = Mathf.Max(y + 4, box.End.Y - 10 * lines - 2); Body(legend, Ink2, 7); }
     }
 
     /// <summary>Splits a text into lines that fit a width at a font size.</summary>
