@@ -1,0 +1,18 @@
+{
+  "id": "rocha_quartzo",
+  "name": "Rocha com veio de quartzo",
+  "family": "rocha",
+  "art": "rocha",
+  "habitats": { "grass": 1.0, "bank": 1.2, "bushes": 0.8, "mud": 0.6 },
+  "base_half_width": 12, "base_height": 13,
+  "depleted_half_width": 0, "depleted_height": 0,
+  "toughness": 5,
+  "tools": ["picareta"],
+  "refusal": "A rocha é dura demais para isso: precisa de uma picareta.",
+  "leaves": "cascalho",
+  "veined": true,
+  "drops": [ { "item": "pedra_bruta", "min": 2, "max": 3 } ],
+  "bonus": [ { "item": "quartzo", "chance": 0.12, "per_sor": 0.04, "cap": 0.6, "count": 1 } ],
+  "xp": 3,
+  "look": { "vein": "#e6efe8" }
+}

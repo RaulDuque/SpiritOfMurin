@@ -1,6 +1,7 @@
 {
   "_doc": {
     "coin_pouch_amount": "moedas da bolsinha na clareira, dois passos a leste da esteira de meditação (pedido 13: dinheiro da jornada)",
+    "bamboo": "touceira de bambu por habitat (pedido 14, Entrega 5): sorteio à parte, só nos tiles que não ganharam outra coisa, para a semente não mudar o que já tinha. Que árvore, rocha ou bambu nasce em cada lugar vem de assets/data/elements (habitats)",
     "about": "Planície Verdejante: regras de geração por semente. Distâncias em tiles de 32 px; probabilidades por tile (0-1). Lido por src/Plains/PlainsGenSettings.cs. Esquema documentado em design/gdd/plains-first-stretch.md.",
     "coin_pouch_amount": 25,
   "chunk_tiles": "lado de um bloco (chunk) em tiles",
@@ -40,8 +41,8 @@
   "mud_anchor_angle": 145.0,
   "anchor_angle_jitter": 20.0,
   "per_habitat": {
-    "bank":   { "flint": 0.07,  "branch": 0.05,  "pine": 0.05,  "boulder": 0.035, "bush": 0.0,  "burrow": 0.0,   "rooted": 0.0,  "boar": 0.0 },
-    "grass":  { "flint": 0.004, "branch": 0.008, "pine": 0.022, "boulder": 0.014, "bush": 0.03, "burrow": 0.0,   "rooted": 0.0,  "boar": 0.0 },
+    "bank":   { "flint": 0.07,  "branch": 0.05,  "pine": 0.05,  "boulder": 0.035, "bush": 0.0,  "burrow": 0.0,   "rooted": 0.0,  "boar": 0.0, "bamboo": 0.06 },
+    "grass":  { "flint": 0.004, "branch": 0.008, "pine": 0.022, "boulder": 0.014, "bush": 0.03, "burrow": 0.0,   "rooted": 0.0,  "boar": 0.0, "bamboo": 0.006 },
     "bushes": { "flint": 0.0,   "branch": 0.01,  "pine": 0.01,  "boulder": 0.02,  "bush": 0.17, "burrow": 0.035, "rooted": 0.0,  "boar": 0.0 },
     "mud":    { "flint": 0.0,   "branch": 0.0,   "pine": 0.0,   "boulder": 0.01,  "bush": 0.02, "burrow": 0.0,   "rooted": 0.035, "boar": 0.006 }
   },

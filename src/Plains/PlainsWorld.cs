@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using SpiritOfMurin.Characters;
 using SpiritOfMurin.Creatures;
@@ -36,6 +37,12 @@ public partial class PlainsWorld : Node2D
 
     /// <summary>Boar tuning (level-1 of the kind's range; each animal gets a copy scaled to its level).</summary>
     public BoarTuning BoarTuning { get; set; } = new();
+
+    /// <summary>The elements (trees, rocks, bamboo, bushes) the generator's features become; null = the old decor only.</summary>
+    public SpiritOfMurin.Elements.ElementCatalog? Elements { get; set; }
+
+    /// <summary>Raised for every workable element created (so the game can hook its events).</summary>
+    public event Action<SpiritOfMurin.Elements.WorldElement>? ElementSpawned;
 
     /// <summary>Progression data (creature levels); null keeps every animal at its base tuning.</summary>
     public ProgressionData? Progression { get; set; }
@@ -152,6 +159,35 @@ public partial class PlainsWorld : Node2D
         return body;
     }
 
+    // pedido 14, Entrega 5: which element a tree, rock, bamboo or bush feature becomes (data in assets/data/elements).
+    // The clearing's guaranteed ones stay as they were (decor), so the waking place never changes.
+    private Node MakeElement(Feature f)
+    {
+        string family = f.Kind switch { FeatureKind.Pine => "arvore", FeatureKind.Boulder => "rocha", FeatureKind.Bamboo => "bambu", _ => "arbusto" };
+        if (Elements == null || (Gen.IsForced(f.Tile) && f.Kind != FeatureKind.Bush))
+        {
+            var kind = f.Kind switch { FeatureKind.Pine => Obstacle.Kind.Pine, FeatureKind.Boulder => Obstacle.Kind.Boulder, FeatureKind.Bamboo => Obstacle.Kind.Bamboo, _ => Obstacle.Kind.Bush };
+            return new Obstacle { Type = kind, Variation = f.Variation, Position = f.Position, Name = Safe(f.Id) };
+        }
+        string habitat = Gen.HabitatAt(f.Tile.X, f.Tile.Y).ToString().ToLowerInvariant();
+        var def = Elements.Pick(family, habitat, Gen.RollAt(f.Tile, 50)) ?? Elements.Family(family).FirstOrDefault();
+        if (def == null) return new Obstacle { Type = Obstacle.Kind.Pine, Variation = f.Variation, Position = f.Position, Name = Safe(f.Id) };
+        var e = new SpiritOfMurin.Elements.WorldElement
+        {
+            Def = def, PlaceId = f.Id, Variation = f.Variation, Work = State.WorkOf(f.Id), Position = f.Position, Name = Safe(f.Id),
+            Movers = def.ContactRadius > 0 ? MoversNear : null,
+        };
+        if (def.Workable) ElementSpawned?.Invoke(e);
+        return e;
+    }
+
+    // the bodies that bend the bushes: the swordsman and the animals
+    private IEnumerable<CharacterBody2D> MoversNear()
+    {
+        if (Player != null) yield return Player;
+        foreach (var n in GetTree().GetNodesInGroup("creatures")) if (n is CharacterBody2D b) yield return b;
+    }
+
     /// <summary>Item id of a collectable feature, or null.</summary>
     public static string? ItemOf(FeatureKind k) => k switch
     {
@@ -176,12 +212,8 @@ public partial class PlainsWorld : Node2D
             case FeatureKind.Flint or FeatureKind.Branch or FeatureKind.Herb or FeatureKind.Root or FeatureKind.CoinPouch:
                 if (State.IsCollected(f.Id)) return null;
                 return new Pickup { FeatureId = f.Id, ItemId = ItemOf(f.Kind)!, Kind = f.Kind, Variation = f.Variation, Position = f.Position, Name = f.Id.Replace('@', '_').Replace(',', '_') };
-            case FeatureKind.Pine:
-                return new Obstacle { Type = Obstacle.Kind.Pine, Variation = f.Variation, Position = f.Position, Name = Safe(f.Id) };
-            case FeatureKind.Boulder:
-                return new Obstacle { Type = Obstacle.Kind.Boulder, Variation = f.Variation, Position = f.Position, Name = Safe(f.Id) };
-            case FeatureKind.Bush:
-                return new Obstacle { Type = Obstacle.Kind.Bush, Variation = f.Variation, Position = f.Position, Name = Safe(f.Id) };
+            case FeatureKind.Pine or FeatureKind.Boulder or FeatureKind.Bush or FeatureKind.Bamboo:
+                return MakeElement(f);
             case FeatureKind.Track:
             {
                 var parts = f.Link.Split('|');

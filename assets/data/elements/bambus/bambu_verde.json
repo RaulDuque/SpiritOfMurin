@@ -1,0 +1,17 @@
+{
+  "id": "bambu_verde",
+  "name": "Touceira de bambu",
+  "family": "bambu",
+  "art": "bambu",
+  "habitats": { "bank": 1.0, "grass": 0.25 },
+  "base_half_width": 14, "base_height": 6,
+  "depleted_half_width": 0, "depleted_height": 0,
+  "toughness": 3,
+  "tools": ["faca", "machado"],
+  "refusal": "As hastes são lisas e duras: corte com uma faca ou um machado.",
+  "leaves": "talos",
+  "drops": [ { "item": "vara_bambu", "min": 2, "max": 3 } ],
+  "bonus": [ { "item": "broto_bambu", "chance": 0.15, "per_sor": 0.03, "cap": 0.5, "count": 1 } ],
+  "xp": 2,
+  "look": { "stalks": 3 }
+}

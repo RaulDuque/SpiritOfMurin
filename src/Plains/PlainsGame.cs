@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using SpiritOfMurin.Elements;
 using SpiritOfMurin.Characters;
 using SpiritOfMurin.Creatures;
 using SpiritOfMurin.Items;
@@ -262,6 +263,10 @@ public partial class PlainsGame : Node2D, IMapSource
     public PlayerStats Stats { get; private set; } = null!;
     /// <summary>The damage numbers of the assist mode.</summary>
     public CombatText Numbers { get; private set; } = null!;
+    /// <summary>The world's elements (trees, rocks, bamboo, bushes) from assets/data/elements (pedido 14, Entrega 5).</summary>
+    public ElementCatalog Elements { get; private set; } = new();
+    /// <summary>The item in the hand (its id), or "" with empty hands.</summary>
+    public string EquippedItem { get; private set; } = "";
     /// <summary>Proficiencies.</summary>
     public Proficiencies Skills { get; private set; } = null!;
     /// <summary>The screen layer.</summary>
@@ -381,6 +386,9 @@ public partial class PlainsGame : Node2D, IMapSource
         Ambient = AmbientSettings.Load();
         Wind.Def = Ambient.Wind;
         World.Ambient = Ambient;
+        Elements = ElementCatalog.Load();
+        World.Elements = Elements;
+        World.ElementSpawned += e => e.UsedUp += OnElementUsedUp;
         World.Setup(Gen, state);
         SetupAmbience(d, awaken);
         World.CreatureSpawned += OnCreatureSpawned;
@@ -404,6 +412,7 @@ public partial class PlainsGame : Node2D, IMapSource
         if (d != null)
         {
             state.Restore(d.Collected, d.Dead.ToDictionary(kv => kv.Key, kv => new Vector2(kv.Value[0], kv.Value[1])), d.PartsTaken, d.Trails);
+            state.RestoreWork(d.Worked); // trees cut, rocks broken (journeys from before: none)
             Stats.Restore(d.Level, d.Xp, d.Points, d.TotalXp, d.Attributes);
             Skills.Restore(d.Practice, d.PracticeKeys);
             Inventory.Restore(d.Inventory.Select(i => (i.Id, i.Count)));
@@ -428,7 +437,9 @@ public partial class PlainsGame : Node2D, IMapSource
         ApplyStats(fill: d == null);
         if (d != null)
         {
-            Player.Equipped = d.Equipped switch { "knife" when Inventory.Count("faca_pedra") > 0 => Player.Weapon.Knife, _ => Player.Weapon.None };
+            // the item in hand; journeys from before only say "knife"
+            string inHand = d.EquippedItem.Length > 0 ? d.EquippedItem : d.Equipped == "knife" ? "faca_pedra" : "";
+            Equip(inHand.Length > 0 && Inventory.Count(inHand) > 0 ? inHand : "");
             Player.Revive();
             Player.Heal(-(Player.MaxHealth - Mathf.Clamp(d.Health, 1, Player.MaxHealth)));
             Player.Vigor = Mathf.Clamp(d.Vigor, 0, Player.MaxVigor);
@@ -789,7 +800,63 @@ public partial class PlainsGame : Node2D, IMapSource
             var r = Player.ResolveStrike(damage, melee: true); // Reforço, FOR, critical
             if (h.ReceiveHit(r.Amount) is HitResult.Damaged or HitResult.Killed) Numbers.Dealt(h.GlobalPosition + new Vector2(0, -h.BodyRadius - 14), r);
         }
+        // the world's elements (pedido 14, Entrega 5): a tree, a rock, a bamboo clump within the blade's arc
+        foreach (var n in GetTree().GetNodesInGroup("elements"))
+        {
+            if (n is not WorldElement e || e.State != ElementState.Standing || e.Def.Family == "arbusto" || _hitThisSwing.Contains(e.PlaceId)) continue;
+            if (!Player.InBladeArc(origin, dir, reach, Player.Tuning.HitArcDegrees, e.GlobalPosition + new Vector2(0, -4), Mathf.Max(6, e.Def.BaseHalfWidth))) continue;
+            _hitThisSwing.Add(e.PlaceId);
+            StrikeElement(e);
+        }
     }
+
+    private ulong _refusedAt;
+
+    /// <summary>A strike of the tool in hand on an element: work, refusal or nothing (decor). Returns what happened.</summary>
+    public WorkResult StrikeElement(WorldElement e)
+    {
+        var tool = ToolInHand;
+        var res = e.Strike(tool?.Kind ?? "", tool?.Power ?? 1, Player.GlobalPosition);
+        bool rock = e.Def.Family == "rocha";
+        switch (res)
+        {
+            case WorkResult.Worked:
+                World.State.SetWork(e.PlaceId, e.Work);
+                Sfx?.Play(rock ? "stone" : "hit");
+                break;
+            case WorkResult.WrongTool:
+                Sfx?.Play(rock ? "stone" : "parry");
+                if (Time.GetTicksMsec() - _refusedAt > 1500) { _refusedAt = Time.GetTicksMsec(); Hud.Toast(e.Def.Refusal.Length > 0 ? e.Def.Refusal : $"{e.Def.Name}: essa ferramenta não serve."); }
+                break;
+            case WorkResult.NotWorkable when rock && tool?.Kind == "picareta":
+                Sfx?.Play("stone");
+                if (Time.GetTicksMsec() - _refusedAt > 1500) { _refusedAt = Time.GetTicksMsec(); Hud.Toast("Esta pedra não tem veio: procure uma rocha com o veio claro à vista."); }
+                break;
+        }
+        return res;
+    }
+
+    // the strike that used an element up: its materials, once (the work is saved as full, so it never gives again)
+    private void OnElementUsedUp(WorldElement e)
+    {
+        World.State.SetWork(e.PlaceId, e.Work);
+        var got = ResourceRules.Yield(e.Def, SeedInUse, e.PlaceId, Stats.Get("sor"));
+        var parts = new List<string>();
+        foreach (var (item, count) in got)
+        {
+            Inventory.Add(item, count);
+            bool bonus = e.Def.Bonus.Any(b => b.Item == item);
+            parts.Add($"+{count} {Catalog.Get(item).Name}{(bonus ? " (achado!)" : "")}");
+        }
+        Sfx?.Play(e.Def.Family == "rocha" ? "stone" : e.Def.Family == "arvore" ? "gate" : "pickup");
+        Hud.Toast($"{e.Def.Name}: " + (parts.Count > 0 ? string.Join(" · ", parts) : "nada aproveitável."));
+        LastYield = got;
+        if (e.Def.Xp > 0) GainXp(e.Def.Xp, e.Def.Name, quiet: true);
+        RefreshRows();
+    }
+
+    /// <summary>What the last used-up element gave (checks).</summary>
+    public List<(string Item, int Count)> LastYield { get; private set; } = new();
 
     /// <summary>Focuses the nearest visible animal within <see cref="FocusRadius"/>, or clears the focus.</summary>
     public void ToggleFocus()
@@ -836,6 +903,19 @@ public partial class PlainsGame : Node2D, IMapSource
 
     private bool Blade => Player.Equipped != Player.Weapon.None;
 
+    /// <summary>The nearest standing workable element within reach of the feet (≈ 30 px), or null.</summary>
+    public WorldElement? NearestWorkable()
+    {
+        WorldElement? best = null; float bestD = 30;
+        foreach (var n in GetTree().GetNodesInGroup("elements"))
+            if (n is WorldElement { State: ElementState.Standing } e && e.Def.Workable)
+            {
+                float d = e.GlobalPosition.DistanceTo(Player.GlobalPosition) - e.Def.BaseHalfWidth;
+                if (d < bestD) { bestD = d; best = e; }
+            }
+        return best;
+    }
+
     private static string PartName(string part) => part switch { "hide" => "a pele", "meat" => "a carne", _ => "as presas" };
 
     private void UpdatePrompt()
@@ -851,6 +931,15 @@ public partial class PlainsGame : Node2D, IMapSource
             MeditationMat => Bindings.F("[use] · meditar (grava a jornada)"),
             _ => null,
         };
+        if (t == null && !Hud.AnyPanelOpen && NearestWorkable() is { } we)
+        {
+            // a tree, a rock or a bamboo within reach: what the cut button does with what is in hand
+            t = we;
+            var tool = ToolInHand;
+            text = tool != null && we.Def.Tools.Contains(tool.Kind)
+                ? Bindings.F($"[cut] · {(we.Def.Family == "rocha" ? "quebrar" : "cortar")} {we.Def.Name.ToLowerInvariant()} ({Mathf.CeilToInt((we.Def.Toughness - we.Work) / Mathf.Max(0.01f, tool.Power))} golpes)")
+                : $"{we.Def.Name}: precisa de {string.Join(" ou ", we.Def.Tools.Select(k => k switch { "machado" => "um machado", "picareta" => "uma picareta", "faca" => "uma faca", _ => k }))}";
+        }
         Vector2 screen = t == null ? Vector2.Zero : GetViewport().GetCanvasTransform() * t.GlobalPosition;
         Hud.SetPrompt(text, screen);
     }
@@ -1006,7 +1095,8 @@ public partial class PlainsGame : Node2D, IMapSource
             Seed = SeedInUse, Spot = new[] { Spot.X, Spot.Y }, Hour = Sky.Hour,
             Collected = collected, Dead = dead.ToDictionary(kv => kv.Key, kv => new[] { kv.Value.X, kv.Value.Y }), PartsTaken = parts, Trails = trails,
             Inventory = Inventory.Entries.Select(e => new SavedItem { Id = e.Id, Count = e.Count }).ToList(),
-            Equipped = Player.Equipped switch { Player.Weapon.Knife => "knife", Player.Weapon.Sword => "sword", _ => "none" },
+            Equipped = Player.Equipped switch { Player.Weapon.Knife => "knife", Player.Weapon.Sword => "sword", Player.Weapon.Axe => "axe", Player.Weapon.Pickaxe => "pickaxe", _ => "none" },
+            EquippedItem = EquippedItem, Worked = World.State.WorkSnapshot(),
             Health = Player.Health, Vigor = Player.Vigor, Ki = Ki,
             Level = Stats.Level, Xp = Stats.Xp, Points = Stats.Points, TotalXp = Stats.TotalXp, Attributes = Stats.Attributes,
             Practice = practice, PracticeKeys = keys, Crafted = _crafted.ToList(),
@@ -1028,12 +1118,24 @@ public partial class PlainsGame : Node2D, IMapSource
         if (!open) Player.ReleaseGuard();
     }
 
-    private void RefreshHands() => Hud.SetHands(Player.Equipped switch
+    private void RefreshHands() => Hud.SetHands((EquippedItem.Length > 0 ? Catalog.Get(EquippedItem).Name : Player.Equipped == Player.Weapon.Sword ? "espada" : "vazias")
+        + (Inventory.Count("bolsa_simples") > 0 ? Bindings.F(" · Bolsa Simples ([heal])") : ""));
+
+    /// <summary>
+    /// Puts an item in the hand (its <c>equip</c>: knife, axe, pickaxe) or empties the hand (""). The tool's numbers
+    /// (reach, damage) come from the item's <c>tool</c> data.
+    /// </summary>
+    public void Equip(string itemId)
     {
-        Player.Weapon.Knife => Catalog.Get("faca_pedra").Name,
-        Player.Weapon.Sword => "espada",
-        _ => "vazias",
-    } + (Inventory.Count("bolsa_simples") > 0 ? Bindings.F(" · Bolsa Simples ([heal])") : ""));
+        var d = itemId.Length > 0 ? Catalog.Get(itemId) : null;
+        EquippedItem = d == null || d.Equip.Length == 0 ? "" : itemId;
+        Player.Equipped = d?.Equip switch { "knife" => Player.Weapon.Knife, "axe" => Player.Weapon.Axe, "pickaxe" => Player.Weapon.Pickaxe, _ => Player.Weapon.None };
+        Player.ToolReach = d?.Tool?.Reach ?? 0; Player.ToolDamage = d?.Tool?.Damage ?? 0;
+        RefreshHands();
+    }
+
+    /// <summary>The tool in hand (null with empty hands or a weapon that is no tool).</summary>
+    public ToolDef? ToolInHand => EquippedItem.Length > 0 ? Catalog.Get(EquippedItem).Tool : null;
 
     /// <summary>What using an item does now, in words (shown in the inventory).</summary>
     public string Effect(ItemDef d)
@@ -1052,10 +1154,10 @@ public partial class PlainsGame : Node2D, IMapSource
         foreach (var (id, count) in Inventory.Entries)
         {
             var d = Catalog.Get(id);
-            bool inHand = d.Equip == "knife" && Player.Equipped == Player.Weapon.Knife;
-            string tag = d.Equip == "knife" ? (inHand ? "  [na mão]" : Bindings.F("  [[use]: equipar]")) : d.Usable ? Bindings.F("  [[use]: usar]") : "";
+            bool inHand = id == EquippedItem;
+            string tag = d.Equip.Length > 0 ? (inHand ? "  [na mão]" : Bindings.F("  [[use]: equipar]")) : d.Usable ? Bindings.F("  [[use]: usar]") : "";
             // the main action now: equip a tool, eat meat, use a herb; nothing for materials
-            string action = d.Equip == "knife" ? (inHand ? "Na mão" : "Equipar") : d.Usable ? (id.StartsWith("carne") ? "Comer" : "Usar") : "";
+            string action = d.Equip.Length > 0 ? (inHand ? "Na mão" : "Equipar") : d.Usable ? (id.StartsWith("carne") ? "Comer" : "Usar") : "";
             string detail = (d.Description + " " + Effect(d)).Trim() + (action.Length > 0 ? "" : id.StartsWith("carne") ? " Crua: asse na fogueira (Fabricar) para poder comer." : " Material: serve para fabricar.");
             rows.Add(new PlainsHud.Row(false, id, $"{d.Name} ×{count}{tag}", detail, !inHand, Icon: id, Count: count, Equipped: inHand, Action: action, Name: d.Name));
         }
@@ -1117,11 +1219,11 @@ public partial class PlainsGame : Node2D, IMapSource
     {
         var d = Catalog.Get(id);
         if (Inventory.Count(id) <= 0) return false;
-        if (d.Equip == "knife")
+        if (d.Equip.Length > 0)
         {
-            Player.Equipped = Player.Equipped == Player.Weapon.Knife ? Player.Weapon.None : Player.Weapon.Knife;
-            Hud.Toast(Player.Equipped == Player.Weapon.Knife ? $"{d.Name} na mão." : "Mãos vazias.");
-            RefreshHands(); RefreshRows();
+            Equip(EquippedItem == id ? "" : id);
+            Hud.Toast(EquippedItem == id ? $"{d.Name} na mão." : "Mãos vazias.");
+            RefreshRows();
             return true;
         }
         if (!d.Usable) { Hud.Toast($"{d.Name}: {d.Description}"); return false; }

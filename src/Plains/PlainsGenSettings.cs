@@ -23,6 +23,11 @@ public sealed class HabitatChances
     public float Rooted { get; set; }
     /// <summary>A boar's home spot.</summary>
     public float Boar { get; set; }
+    /// <summary>
+    /// A bamboo clump (pedido 14, Entrega 5): rolled apart, only on tiles that got nothing from the other kinds,
+    /// so adding bamboo never moves what a seed already had.
+    /// </summary>
+    public float Bamboo { get; set; }
 }
 
 /// <summary>

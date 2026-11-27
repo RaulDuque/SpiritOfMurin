@@ -1,0 +1,17 @@
+{
+  "id": "pinheiro",
+  "name": "Pinheiro",
+  "family": "arvore",
+  "art": "pinheiro",
+  "habitats": { "grass": 1.0, "bushes": 0.6, "bank": 0.5 },
+  "base_half_width": 7, "base_height": 11,
+  "depleted_half_width": 4, "depleted_height": 5,
+  "toughness": 6,
+  "tools": ["machado"],
+  "refusal": "O tronco é grosso demais para isso: precisa de um machado.",
+  "leaves": "toco",
+  "drops": [ { "item": "tora", "min": 2, "max": 3 } ],
+  "bonus": [ { "item": "resina", "chance": 0.10, "per_sor": 0.03, "cap": 0.5, "count": 1 } ],
+  "xp": 3,
+  "look": { "trunk_extra": 4, "lean": 1 }
+}

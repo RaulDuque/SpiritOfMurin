@@ -4,6 +4,19 @@ using SpiritOfMurin.Plains;
 
 namespace SpiritOfMurin.Items;
 
+/// <summary>What a tool does (pedido 14, Entrega 5): which elements it works, how much per strike, its reach and damage.</summary>
+public sealed class ToolDef
+{
+    /// <summary>"machado", "picareta" or "faca" (matched against an element's <c>tools</c>).</summary>
+    public string Kind { get; set; } = "";
+    /// <summary>Work per strike (strikes needed = toughness / power).</summary>
+    public float Power { get; set; } = 1;
+    /// <summary>Reach of the strike (px); 0 = the weapon's own (the knife's).</summary>
+    public float Reach { get; set; }
+    /// <summary>Damage on animals; 0 = the weapon's own.</summary>
+    public int Damage { get; set; }
+}
+
 /// <summary>One item's data (snake_case in <c>plains_items.json</c>).</summary>
 public sealed class ItemDef
 {
@@ -13,8 +26,10 @@ public sealed class ItemDef
     public string Name { get; set; } = "";
     /// <summary>Short inventory text.</summary>
     public string Description { get; set; } = "";
-    /// <summary>Weapon this item equips ("knife"), or empty.</summary>
+    /// <summary>What this item puts in the hand ("knife", "axe", "pickaxe"), or empty.</summary>
     public string Equip { get; set; } = "";
+    /// <summary>Its tool numbers, or null when it is not a tool.</summary>
+    public ToolDef? Tool { get; set; }
     /// <summary>Life restored gradually when used.</summary>
     public int RegenAmount { get; set; }
     /// <summary>Seconds over which <see cref="RegenAmount"/> is restored.</summary>

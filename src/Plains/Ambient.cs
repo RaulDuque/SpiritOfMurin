@@ -202,19 +202,32 @@ public partial class GrassSway : Node2D
         QueueRedraw();
     }
 
+    private readonly System.Collections.Generic.List<Vector2> _bodies = new();
+
     /// <inheritdoc />
     public override void _Draw()
     {
         float max = 0;
-        Vector2 me = Player != null && IsInstanceValid(Player) ? Player.GlobalPosition - GlobalPosition : new Vector2(-9999, -9999);
-        float part = Settings.TallGrass.PartRadius;
+        float part = Settings.TallGrass.PartRadius, size = Data.Size * Gen.Settings.TileSize;
+        // the bodies that part the grass: the swordsman and the animals (pedido 14: the rabbit too), in this chunk's pixels
+        _bodies.Clear();
+        if (Player != null && IsInstanceValid(Player)) _bodies.Add(Player.GlobalPosition - GlobalPosition);
+        foreach (var n in GetTree().GetNodesInGroup("creatures"))
+            if (n is Node2D c && IsInstanceValid(c))
+            {
+                Vector2 q = c.GlobalPosition - GlobalPosition;
+                if (q.X > -part && q.Y > -part && q.X < size + part && q.Y < size + part) _bodies.Add(q);
+            }
         foreach (var (p, h, v) in _tufts)
         {
             float w = Wind.At(GlobalPosition + p);
             float bend = w * 2.2f * Wind.Dir.X;
-            Vector2 away = p - me;
-            float d = away.Length();
-            if (d < part) bend += Mathf.Sign(away.X == 0 ? 1 : away.X) * (part - d) / part * 4f; // parted by the passing body
+            foreach (var me in _bodies)
+            {
+                Vector2 away = p - me;
+                float d = away.Length();
+                if (d < part) bend += Mathf.Sign(away.X == 0 ? 1 : away.X) * (part - d) / part * 4f; // parted by the passing body
+            }
             max = Mathf.Max(max, Mathf.Abs(bend));
             for (int b = -1; b <= 1; b++)
             {

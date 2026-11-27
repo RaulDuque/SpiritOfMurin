@@ -1,0 +1,10 @@
+{
+  "id": "pedra",
+  "name": "Pedra",
+  "family": "rocha",
+  "art": "rocha",
+  "habitats": { "grass": 2.0, "bank": 2.0, "bushes": 2.0, "mud": 2.0 },
+  "base_half_width": 12, "base_height": 13,
+  "toughness": 0,
+  "veined": false
+}

@@ -97,6 +97,10 @@ public sealed class SaveData
     public float Hour { get; set; } = -1;
     /// <summary>The journey's money (Moedas). Journeys saved before it load with 0.</summary>
     public int Coins { get; set; }
+    /// <summary>Work done on the world's elements by place id (trees cut, rocks broken; pedido 14). Older journeys: empty.</summary>
+    public Dictionary<string, float> Worked { get; set; } = new();
+    /// <summary>The item in hand (its id), so two axes are told apart; empty in older journeys (then <see cref="Equipped"/> decides).</summary>
+    public string EquippedItem { get; set; } = "";
     /// <summary>Clues found in the Planície, oldest first (the map's "última pista").</summary>
     public List<SpiritOfMurin.Vale.Clue> Clues { get; set; } = new();
 }

@@ -11,7 +11,7 @@ public enum TileKind { Grass, Bank, Water, Ford, BushGrass, Mud }
 public enum Habitat { Grass, Bank, Water, Bushes, Mud }
 
 /// <summary>The kinds of generated objects.</summary>
-public enum FeatureKind { Flint, Branch, Pine, Boulder, Bush, Burrow, Rooted, Herb, Root, Boar, Track, Campfire, MeditationMat, CoinPouch }
+public enum FeatureKind { Flint, Branch, Pine, Boulder, Bush, Burrow, Rooted, Herb, Root, Boar, Track, Campfire, MeditationMat, CoinPouch, Bamboo }
 
 /// <summary>
 /// One generated object. <see cref="Id"/> is stable for a seed: the same kind on the same tile
@@ -253,7 +253,13 @@ public sealed class PlainsGenerator
             if (r < chance) { pick = kind; break; }
             r -= chance;
         }
-        if (pick is not { } k) yield break;
+        if (pick is not { } k)
+        {
+            // bamboo: its own roll, only where nothing else stands (the seeds keep everything they had)
+            if (Rand01(tx, ty, 40) < ch.Bamboo)
+                yield return new Feature($"bamboo@{tx},{ty}", FeatureKind.Bamboo, new Vector2I(tx, ty), origin + new Vector2(10 + Rand01(tx, ty, 41) * 12, 18 + Rand01(tx, ty, 42) * 10), variation);
+            yield break;
+        }
         var pos = origin + new Vector2(6 + Rand01(tx, ty, 11) * 14, 14 + Rand01(tx, ty, 12) * 14);
         var main = new Feature($"{Short(k)}@{tx},{ty}", k, new Vector2I(tx, ty), pos, variation);
         yield return main;
@@ -263,6 +269,12 @@ public sealed class PlainsGenerator
         if (k == FeatureKind.Rooted && Rand01(tx, ty, 14) < Settings.RootInRooted)
             yield return new Feature($"root@{tx},{ty}", FeatureKind.Root, new Vector2I(tx, ty), pos + new Vector2(3, -2), variation);
     }
+
+    /// <summary>True for the tiles of the guaranteed places (the clearing's pines, bushes, campfire…): they stay as they are.</summary>
+    public bool IsForced(Vector2I tile) => _forced.ContainsKey(tile);
+
+    /// <summary>A fixed number in [0, 1) for a tile and a salt (the generator's own rolls; salts 50+ are free for the world).</summary>
+    public float RollAt(Vector2I tile, int salt) => Rand01(tile.X, tile.Y, salt);
 
     /// <summary>The creature id an animal feature (burrow or boar spot) spawns.</summary>
     public static string CreatureIdOf(Feature f) => (f.Kind == FeatureKind.Boar ? "boar" : "rabbit") + $"@{f.Tile.X},{f.Tile.Y}";

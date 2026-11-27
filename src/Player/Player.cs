@@ -68,8 +68,8 @@ public partial class Player : CharacterBody2D
     public (Vector2 Dir, float Radius, float HalfDeg, int Phase, float Progress)? BladeArea()
     {
         if (_act is not { Kind: ActionKind.Cut or ActionKind.Thrust } a) return null;
-        bool knife = Equipped == Weapon.Knife, thrust = a.Kind == ActionKind.Thrust;
-        float reach = thrust ? a.Reach : knife ? Tuning.KnifeReach : Tuning.SwordReach;
+        bool knife = ShortTool, thrust = a.Kind == ActionKind.Thrust;
+        float reach = thrust ? a.Reach : knife ? ShortReach : Tuning.SwordReach;
         float r = reach + (thrust ? ThrustSlack : CutSlack);
         int phase = a.T < a.Startup ? 0 : a.T < a.Startup + a.Active ? 1 : 2;
         float prog = phase == 0 ? a.T / Mathf.Max(0.001f, a.Startup) : phase == 2 ? 1 - (a.T - a.Startup - a.Active) / Mathf.Max(0.001f, a.Recovery) : 1;
@@ -326,7 +326,16 @@ public partial class Player : CharacterBody2D
     private float _evade;
 
     /// <summary>What the hands hold.</summary>
-    public enum Weapon { None, Knife, Sword }
+    public enum Weapon { None, Knife, Sword, Axe, Pickaxe }
+
+    /// <summary>True for the short one-handed things (the stone knife and the tools): the knife's timing and short chain.</summary>
+    public bool ShortTool => Equipped is Weapon.Knife or Weapon.Axe or Weapon.Pickaxe;
+    /// <summary>The tool in hand (axe, pickaxe): its reach (px); 0 = the knife's. Set by the region from the item's data.</summary>
+    public float ToolReach { get; set; }
+    /// <summary>The tool in hand: its damage on animals; 0 = the knife's.</summary>
+    public int ToolDamage { get; set; }
+    private float ShortReach => Equipped is Weapon.Axe or Weapon.Pickaxe && ToolReach > 0 ? ToolReach : Tuning.KnifeReach;
+    private int ShortDamage => Equipped is Weapon.Axe or Weapon.Pickaxe && ToolDamage > 0 ? ToolDamage : Tuning.KnifeDamage;
 
     /// <summary>How loud the character is right now (animals hear by it).</summary>
     public enum NoiseLevel { Still, Sneak, Walk, Loud }
@@ -605,9 +614,9 @@ public partial class Player : CharacterBody2D
         Noise = _act != null ? NoiseLevel.Loud : !_moving ? NoiseLevel.Still : sneaking ? NoiseLevel.Sneak : NoiseLevel.Walk;
         if (_act is { Kind: ActionKind.Cut or ActionKind.Thrust, Live: true } live && live.T < live.Startup + live.Active)
         {
-            bool knife = Equipped == Weapon.Knife;
-            float reach = live.Kind == ActionKind.Thrust ? live.Reach : knife ? Tuning.KnifeReach : Tuning.SwordReach;
-            int dmg = live.Kind == ActionKind.Thrust ? live.Damage : knife ? Tuning.KnifeDamage : Tuning.SwordDamage * (live.N == 3 ? 2 : 1);
+            bool knife = ShortTool;
+            float reach = live.Kind == ActionKind.Thrust ? live.Reach : knife ? ShortReach : Tuning.SwordReach;
+            int dmg = live.Kind == ActionKind.Thrust ? live.Damage : knife ? ShortDamage : Tuning.SwordDamage * (live.N == 3 ? 2 : 1);
             BladeActive?.Invoke(GlobalPosition, Facing, reach, dmg, _swingId);
         }
 
@@ -740,7 +749,7 @@ public partial class Player : CharacterBody2D
             TurnToAim();
             int n = _act is { Kind: ActionKind.Cut } prev && prev.N < MaxChain ? prev.N + 1 : 1;
             _swingId++;
-            if (Equipped == Weapon.Knife)
+            if (ShortTool)
                 _act = new Act
                 {
                     Kind = ActionKind.Cut, N = n, Startup = Tuning.KnifeStartup, Active = Tuning.KnifeActive,
@@ -773,7 +782,7 @@ public partial class Player : CharacterBody2D
         }
     }
 
-    private int MaxChain => Equipped == Weapon.Knife ? Tuning.KnifeMaxChain : 3;
+    private int MaxChain => ShortTool ? Tuning.KnifeMaxChain : 3;
 
     public static bool InBladeArc(Vector2 origin, Vector2 dir, float reach, float arcDegrees, Vector2 target, float radius)
     {
@@ -831,9 +840,9 @@ public partial class Player : CharacterBody2D
             float side = a.Kind == ActionKind.Thrust ? 0f : a.N % 2 == 1 ? 55f : -55f;
             _slashes.Add(new Slash
             {
-                World = GlobalPosition + (Equipped == Weapon.Knife ? new Vector2(Facing.X * 14f, -12f + Facing.Y * 10f) : new Vector2(Facing.X * 22f, -14f + Facing.Y * 16f)),
+                World = GlobalPosition + (ShortTool ? new Vector2(Facing.X * 14f, -12f + Facing.Y * 10f) : new Vector2(Facing.X * 22f, -14f + Facing.Y * 16f)),
                 Angle = Facing.Angle() + Mathf.DegToRad(side) + Mathf.Pi / 2f,
-                Length = a.Kind == ActionKind.Thrust ? SlashThrust : Equipped == Weapon.Knife ? SlashKnife : a.N == 3 ? SlashSwordThird : SlashSword,
+                Length = a.Kind == ActionKind.Thrust ? SlashThrust : ShortTool ? SlashKnife : a.N == 3 ? SlashSwordThird : SlashSword,
                 Life = SlashLife, Max = SlashLife, Reinforced = a.Reinforced,
             });
         }
@@ -1128,7 +1137,7 @@ public partial class Player : CharacterBody2D
 
         float x = 0, y = 0, sy = y - 25, nx = -fy;
         Vector2 hand, tip;
-        float bladeLen = Equipped == Weapon.Knife ? 0.4f : 1f;
+        float bladeLen = Equipped == Weapon.Knife ? 0.4f : Equipped is Weapon.Axe or Weapon.Pickaxe ? 0.55f : 1f;
 
         if (_act is { Kind: ActionKind.Cut } cut)
         {
@@ -1260,6 +1269,8 @@ public partial class Player : CharacterBody2D
                 p.Line(hand.X - dir.X * 2, hand.Y - dir.Y * 2, hand.X + dir.X, hand.Y + dir.Y, Hilt, 2);
                 p.Rect(hand.X - dir.X * 3, hand.Y - dir.Y * 3, 1, 1, Gold);
             }
+            else if (Equipped is Weapon.Axe or Weapon.Pickaxe)
+                Elements.ToolArt.Draw(p, Equipped == Weapon.Axe ? "machado" : "picareta", hand, tip); // the tools' pictures: src/Elements/Tools/ToolArt.cs
             else if (Equipped == Weapon.Knife)
             {
                 p.Line(hand.X, hand.Y, tip.X, tip.Y, Flint, 2);

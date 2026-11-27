@@ -37,6 +37,22 @@ public sealed class WorldState
     public bool MarkPartTaken(string creatureId, string part) => _partsTaken.Add(creatureId + "#" + part);
 
     private readonly HashSet<string> _trails = new();
+    private readonly Dictionary<string, float> _work = new();
+
+    /// <summary>
+    /// The work done on an element of the world (a tree cut, a rock broken; pedido 14, Entrega 5), by its place id.
+    /// A used-up element keeps its full work, so it comes back as a stump and never gives its materials again.
+    /// </summary>
+    public float WorkOf(string placeId) => _work.TryGetValue(placeId, out float w) ? w : 0;
+
+    /// <summary>Records the work done on an element.</summary>
+    public void SetWork(string placeId, float work) { if (work > 0) _work[placeId] = work; else _work.Remove(placeId); }
+
+    /// <summary>Saved form of the work on elements.</summary>
+    public Dictionary<string, float> WorkSnapshot() => new(_work);
+
+    /// <summary>Restores the work on elements (replacing it).</summary>
+    public void RestoreWork(IDictionary<string, float>? work) { _work.Clear(); if (work != null) foreach (var (k, v) in work) if (v > 0) _work[k] = v; }
 
     /// <summary>Marks a trail examined. Returns false when it already was (no second practice or XP).</summary>
     public bool MarkTrailExamined(string trailId) => _trails.Add(trailId);

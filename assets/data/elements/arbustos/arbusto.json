@@ -1,0 +1,10 @@
+{
+  "id": "arbusto",
+  "name": "Arbusto",
+  "family": "arbusto",
+  "art": "arbusto",
+  "habitats": { "bushes": 1.0, "grass": 1.0 },
+  "base_half_width": 0, "base_height": 0,
+  "toughness": 0,
+  "contact_radius": 16
+}
