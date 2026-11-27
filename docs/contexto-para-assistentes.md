@@ -12,7 +12,7 @@ Atualizado em 2026-11-27.
 ## Por onde começar cada sessão
 
 1. Leia o `CLAUDE.md` da raiz (protocolo, stack, padrões) e `.claude/rules/commits-atomicos.md`.
-2. Leia `production/session-state/active.md`, se existir. É o ponto de retomada da
+2. Leia **`user-docs/tasks/README.md`** (ponto de retomada: pronto, parcial, próximas entregas, decisões abertas, próximo prompt) e `production/session-state/active.md`, se existir. É o ponto de retomada da
    sessão anterior. Ele não vai para o git e pode não existir.
 3. Se ele não existir, veja as últimas linhas de `user-docs/relatorios/README.md` e o
    relatório mais recente. Eles dizem o que foi entregue por último e o que ficou pendente.
@@ -44,6 +44,12 @@ O texto completo está no `CLAUDE.md`, em "Fluxo de trabalho: fechamento de cada
 - O conteúdo atual (Vale, discípulo, túmulo do mestre) é a base do **prólogo**: o jogador se sente forte, perde para um chefe e acorda sem nada na Planície.
 - Trabalhe em passos pequenos e testados. Pergunte antes de despejar muito conteúdo de uma vez.
 - **Visual:** a aparência procedural do protótipo fica. O criador jogou o experimento com sprites e o rejeitou (art bible, seção 8.12). Não há produção de sprites prevista.
+
+## Elementos do jogo (padrão do pedido 14)
+
+- Todo elemento tem id estável e lugares previsíveis: desenho numa classe `<Nome>Art` (`src/Elements/`), dados num JSON (`assets/data/elements/`), comportamento na classe da família, prévia na cena `src/Dev/Inspecao.tscn`. Detalhes em `docs/elementos/PADRAO.md` e `docs/elementos/INDICE.md`.
+- Para criar: `/create <tipo> "<descrição>"` (`.claude/skills/create/SKILL.md`). Fora do Claude Code, siga os passos da skill à mão.
+- A energia se chama **Ki** (antes "Qi"). A ficha tem **FOR** (decisão do pedido 14).
 
 ## Tecnologia
 

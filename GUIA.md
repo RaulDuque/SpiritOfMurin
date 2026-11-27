@@ -3,7 +3,7 @@
 Você é um assistente de IA (Claude, Cursor, Codex, ChatGPT ou outro) chegando ao **SpiritOfMurin**.
 Este guia diz **o que é o projeto, o que estudar e em que ordem**. Ele não substitui os
 documentos: aponta para eles. Se algo aqui contradisser o código ou um documento de
-design, valem o código e o documento. Atualizado em 2026-11-27.
+design, valem o código e o documento. Atualizado em 2026-11-27 (pedido 14).
 
 ---
 
@@ -29,7 +29,7 @@ Leia nesta ordem. Os itens marcados com ★ são obrigatórios antes de mexer em
 4. `.claude/docs/coding-standards.md`: doc comments, valores de jogo fora do código, testes.
 
 ### b) Onde paramos ★
-5. ★ `production/session-state/active.md`, se existir. Ele não vai para o git.
+5. ★ **`user-docs/tasks/README.md`**: o ponto de retomada. Diz o que está pronto, o que é parcial, a ordem das próximas entregas, as decisões abertas e qual prompt mandar em seguida. Também leia `production/session-state/active.md`, se existir; ele não vai para o git.
 6. ★ As **últimas linhas** de `user-docs/relatorios/README.md` e o relatório mais recente. Cada entrega tem um relatório com o que mudou, como testar e o que ficou pendente.
 7. `git log --oneline -15`.
 
@@ -64,13 +64,14 @@ Leia nesta ordem. Os itens marcados com ★ são obrigatórios antes de mexer em
 | `Save/` | Jornada (`SaveGame`) e preferências (`Prefs`) |
 | `World/`, `Audio/`, `Main/`, `Dev/` | Mundo comum, sons, campo de teste da espada, vitrine |
 
-16. Os dados de ajuste ficam em `assets/data/`: `PlayerTuning.tres`, `combat_techniques.json`, `vale_combat.json` e `plains/`. **Valores de jogo não são fixados no código.**
+16. ★ **Padrão de elementos:** `docs/elementos/PADRAO.md` (onde fica o desenho, os dados, o comportamento e a prévia de cada elemento) e `docs/elementos/INDICE.md` (onde está cada um hoje). Para criar um elemento: `/create <tipo> "<descrição>"`. Para ver um elemento: Painel → Inspeção (`src/Dev/Inspecao.tscn`).
+17. Os dados de ajuste ficam em `assets/data/`: `PlayerTuning.tres`, `combat_techniques.json`, `vale_combat.json` e `plains/`. **Valores de jogo não são fixados no código.**
 
 ### e) Testes e evidências
-17. `tools/painel-testes/LEIA-ME.md`: o `PainelDeTestes.exe` (Jogar, Vitrine, rodar testes com e sem janela).
-18. `tools/godot/testes-janela.ps1`: a bateria completa com janela no monitor 2. A última rodada deu 494/494.
-19. Os testes ficam em `tests/unit/UnitRunner.tscn` (runner próprio, atributo `[UnitTest]`) e em `tests/integration/*Check.tscn` (fases via `-- --phase=...`).
-20. As evidências (capturas) de mudanças visíveis ficam em `production/qa/evidence/<data>_<tema>/`.
+18. `tools/painel-testes/LEIA-ME.md`: o `PainelDeTestes.exe` (Jogar, Vitrine, rodar testes com e sem janela).
+19. `tools/godot/testes-janela.ps1`: a bateria completa com janela no monitor 2. A última rodada deu 494/494.
+20. Os testes ficam em `tests/unit/UnitRunner.tscn` (runner próprio, atributo `[UnitTest]`) e em `tests/integration/*Check.tscn` (fases via `-- --phase=...`).
+21. As evidências (capturas) de mudanças visíveis ficam em `production/qa/evidence/<data>_<tema>/`.
 
 ### f) Só se precisar
 - **Protótipo antigo de navegador:** `prototypes/spiritofmurin/index.html` e os testes por CDP em `tools/playtest/`.
