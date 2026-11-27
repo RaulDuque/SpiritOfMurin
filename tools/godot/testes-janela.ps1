@@ -37,5 +37,9 @@ if ($SoPrologo) { if ($fail -eq 0) { Write-Host "Prologo: todos os testes passar
 # the journey: a new one until meditating, then the game opened again (title, Continuar)
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/JourneyCheck.tscn -- --phase=new --seed=$Seed; if ($LASTEXITCODE -ne 0) { $fail++ }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/JourneyCheck.tscn -- --phase=resume --seed=$Seed; if ($LASTEXITCODE -ne 0) { $fail++ }
+# the Planície's ambience (day and night, both seeds)
+foreach ($ph in 'day', 'night', 'resume') {
+  & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/AmbientCheck.tscn -- "--phase=$ph" --seed=$Seed; if ($LASTEXITCODE -ne 0) { $fail++ }
+}
 if ($fail -eq 0) { Write-Host "Todos os testes passaram." } else { Write-Host "$fail execucao(oes) com falha." }
 exit $fail

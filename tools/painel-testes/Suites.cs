@@ -52,6 +52,9 @@ public static class Suites
             l.Add(new("Planície", $"semente {s}", "res://tests/integration/PlainsCheck.tscn", new[] { $"--seed={s}" }, About: "Mundo da semente, faca, coelho, javali, ervas."));
             l.Add(new("Jornada", $"nova, semente {s}", "res://tests/integration/JourneyCheck.tscn", new[] { "--phase=new", $"--seed={s}" }, About: "Jornada nova até meditar."));
             l.Add(new("Jornada", $"retomada, semente {s}", "res://tests/integration/JourneyCheck.tscn", new[] { "--phase=resume", $"--seed={s}" }, About: "Título → Continuar."));
+            l.Add(new("Ambientação", $"dia, semente {s}", "res://tests/integration/AmbientCheck.tscn", new[] { "--phase=day", $"--seed={s}" }, About: "Meio-dia, relógio, vento e capim, folhas, pássaros com sombra, vau lento com ondinhas, água funda bloqueia, transições, variedade, camadas."));
+            l.Add(new("Ambientação", $"noite, semente {s}", "res://tests/integration/AmbientCheck.tscn", new[] { "--phase=night", $"--seed={s}" }, About: "Noite azulada e legível, luz da fogueira e do personagem, entardecer, meditar salva a hora."));
+            l.Add(new("Ambientação", $"retomada da hora, semente {s}", "res://tests/integration/AmbientCheck.tscn", new[] { "--phase=resume", $"--seed={s}" }, About: "Continuar traz a hora salva."));
         }
         return l;
     }
