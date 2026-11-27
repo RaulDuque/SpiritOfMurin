@@ -9,7 +9,8 @@
     "leaves": "folhas soltas nas rajadas: quantas por segundo no pico, vida (s)",
     "birds": "bandos de pássaros de dia: intervalo médio entre bandos (s), mínimo e máximo de pássaros, velocidade (px/s), altura do voo (px)",
     "shallow_speed": "fator de velocidade na água rasa (vau)",
-    "ripple_interval": "segundos entre ondinhas enquanto anda na água rasa",
+    "ripple_interval": "segundos entre ondinhas enquanto anda na água rasa (e na funda)",
+    "deep_water": "água funda (pedido 14.3, só na Planície): segurando Shift o personagem anda sobre ela gastando walk_ki_per_second de Ki por segundo; sem Shift ou sem Ki, nada com swim_speed (fator de velocidade) e não ataca; depois de afundar por falta de Ki, só volta a andar sobre a água com rise_min_ki",
     "tall_grass": "capim alto: tufos por tile de relva e de arbusto, raio em que se abre quando o personagem passa (px)"
   },
   "day_seconds": 480,
@@ -31,6 +32,7 @@
   "leaves": { "per_second": 9, "life": 3.2 },
   "birds": { "interval": 22, "min": 3, "max": 6, "speed": 70, "height": 70 },
   "shallow_speed": 0.6,
+  "deep_water": { "walk_ki_per_second": 10, "swim_speed": 0.45, "rise_min_ki": 10 },
   "ripple_interval": 0.32,
   "tall_grass": { "per_grass_tile": 0.5, "per_bush_tile": 2.5, "part_radius": 18 }
 }

@@ -72,7 +72,7 @@ public partial class Rabbit : CharacterBody2D, IHittable
     public override void _Ready()
     {
         Brain = new RabbitBrain(Tuning, BurrowAt, Variation);
-        CollisionLayer = 4; CollisionMask = 1;
+        CollisionLayer = 4; CollisionMask = 1 | Plains.PlainsWorld.WaterLayer; // deep water still blocks the animals
         AddChild(new CollisionShape2D { Shape = new CircleShape2D { Radius = 4 } });
         AddToGroup("creatures");
     }

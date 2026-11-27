@@ -40,6 +40,8 @@ public sealed class AmbientSettings
     public BirdsDef Birds { get; set; } = new();
     /// <summary>Speed factor in shallow water (fords).</summary>
     public float ShallowSpeed { get; set; } = 0.6f;
+    /// <summary>Deep water: walking on it with Shift and Ki, or swimming (pedido 14.3).</summary>
+    public DeepWaterDef DeepWater { get; set; } = new();
     /// <summary>Seconds between ripples while walking in shallow water.</summary>
     public float RippleInterval { get; set; } = 0.32f;
     /// <summary>The tall grass.</summary>

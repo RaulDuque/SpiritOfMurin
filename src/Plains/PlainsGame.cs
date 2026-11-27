@@ -97,13 +97,29 @@ public partial class PlainsGame : Node2D, IMapSource
         foreach (var f in World.Objects.GetChildren().OfType<Campfire>()) f.SetNight(dark, Ambient.NightLight.CampfireRadius, Ambient.NightLight.CampfireEnergy);
         var under = TileUnder(Player.GlobalPosition);
         bool shallow = under == TileKind.Ford;
-        Player.TerrainSpeed = shallow ? Ambient.ShallowSpeed : 1f;
-        if (shallow && Player.Velocity.LengthSquared() > 1)
+        UpdateDeepWater(under == TileKind.Water, dt);
+        Player.TerrainSpeed = Player.OnWater == WaterState.Swim ? Ambient.DeepWater.SwimSpeed : shallow ? Ambient.ShallowSpeed : 1f;
+        if ((shallow || Player.OnWater != WaterState.None) && Player.Velocity.LengthSquared() > 1)
         {
             _rippleT -= dt;
             if (_rippleT <= 0) { _rippleT = Ambient.RippleInterval; Ripples.Add(Player.GlobalPosition); }
         }
         Hud.SetTime(Sky.Phase, Sky.Clock, Sky.Hour);
+    }
+
+    private bool _waterWalkTold, _swimTold;
+
+    // pedido 14.3: Shift over deep water walks on it spending Ki; otherwise (or with no Ki) the character swims
+    private void UpdateDeepWater(bool deep, float dt)
+    {
+        var before = Player.OnWater;
+        bool shift = !Player.InputLocked && InputMap.HasAction("sneak") && Input.IsActionPressed("sneak");
+        var (state, ki) = WaterRules.Step(deep, shift, Player.Ki, dt, before, Ambient.DeepWater);
+        Player.Ki = ki; Player.OnWater = state;
+        if (state == before) return;
+        if (state == WaterState.Walk && !_waterWalkTold) { _waterWalkTold = true; Hud.Toast($"Andando sobre a água: o Ki se esvai ({Ambient.DeepWater.WalkKiPerSecond:0}/s). Solte Shift para nadar."); }
+        else if (state == WaterState.Swim && before == WaterState.Walk && Player.Ki <= 0.01f) Hud.Toast("O Ki acabou: você afunda e nada devagar.");
+        else if (state == WaterState.Swim && before == WaterState.None && !_swimTold) { _swimTold = true; Hud.Toast("Água funda: você nada devagar e não ataca. Segure Shift (com Ki) para andar sobre a água."); }
     }
 
     /// <summary>The journey's money (Moedas), saved with it.</summary>

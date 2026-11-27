@@ -122,7 +122,13 @@ public partial class PlainsWorld : Node2D
         }
     }
 
-    // deep water blocks; merges each row's run of water tiles into one rectangle
+    /// <summary>
+    /// The physics layer of deep water (pedido 14.3): the animals collide with it (their mask has it), the character
+    /// does not (walking on it or swimming, see <see cref="WaterRules"/>).
+    /// </summary>
+    public const uint WaterLayer = 16;
+
+    // deep water blocks the animals; merges each row's run of water tiles into one rectangle
     private StaticBody2D? BuildWater(ChunkData data, Vector2I k)
     {
         int n = data.Size, ts = Gen.Settings.TileSize;
@@ -136,7 +142,7 @@ public partial class PlainsWorld : Node2D
                 if (w && start < 0) start = lx;
                 if (!w && start >= 0)
                 {
-                    body ??= new StaticBody2D { Name = $"Water_{k.X}_{k.Y}" };
+                    body ??= new StaticBody2D { Name = $"Water_{k.X}_{k.Y}", CollisionLayer = WaterLayer, CollisionMask = 0 };
                     float x0 = (k.X * n + start) * ts, y0 = (k.Y * n + ly) * ts, wpx = (lx - start) * ts;
                     body.AddChild(new CollisionShape2D { Position = new Vector2(x0 + wpx / 2, y0 + ts / 2f), Shape = new RectangleShape2D { Size = new Vector2(wpx, ts) } });
                     start = -1;

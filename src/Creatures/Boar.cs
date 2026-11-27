@@ -50,7 +50,7 @@ public partial class Boar : CharacterBody2D, IHittable
     public override void _Ready()
     {
         Brain = new BoarBrain(Tuning, HomeAt, Variation);
-        CollisionLayer = 4; CollisionMask = 1;
+        CollisionLayer = 4; CollisionMask = 1 | Plains.PlainsWorld.WaterLayer; // deep water still blocks the animals
         AddChild(new CollisionShape2D { Shape = new CircleShape2D { Radius = 7 } });
         AddToGroup("creatures");
     }

@@ -14,7 +14,7 @@ namespace SpiritOfMurin.Tests;
 /// <list type="bullet">
 /// <item><c>--phase=day --seed=N</c>: midday — the tint, the HUD clock and the running hour; the gusts bend the
 /// grass and blow leaves; the grass parts around the swordsman; a flock with shadows; the ford slows and
-/// ripples, deep water blocks; borders blended across chunks; varied pines and rocks; the y-sorted layers.</item>
+/// ripples; deep water is swum (slowly, no attacks) or walked on with Shift and Ki (pedido 14.3); borders blended across chunks; varied pines and rocks; the y-sorted layers.</item>
 /// <item><c>--phase=night --seed=N</c>: 23h — a bluish but legible night, the campfire's light and the faint
 /// light around the swordsman; meditating saves the hour.</item>
 /// <item><c>--phase=resume --seed=N</c>: Continuar brings the saved hour back.</item>
@@ -159,10 +159,35 @@ public partial class AmbientCheck : Node
             await Teleport(Center(land));
             Vector2I dir = dt2 - land;
             Key k = dir.X > 0 ? Key.D : dir.X < 0 ? Key.A : dir.Y > 0 ? Key.S : Key.W;
-            Press(k, true); await Flush(); await Frames(50); Press(k, false); await Flush(); await Frames(3);
+            // pedido 14.3: without Shift the swordsman swims in, slowly, and cannot attack
+            P.Ki = P.MaxKi;
+            Press(k, true); await Flush(); await Frames(50);
             var now = _g.Gen.TileOfPixel(P.GlobalPosition);
-            Check("deep water (darker) blocks the way", _g.Gen.TileAt(now.X, now.Y) != TileKind.Water, $"tile {now}");
-            await Shot($"agua-{_seed}");
+            float vSwim = P.Velocity.Length();
+            bool swimming = P.OnWater == WaterState.Swim;
+            Press(k, false); await Flush(); await Frames(3);
+            Check("deep water (darker): the swordsman swims in, slowly (×0.45), without Shift", swimming && _g.Gen.TileAt(now.X, now.Y) == TileKind.Water && Mathf.IsEqualApprox(P.TerrainSpeed, _g.Ambient.DeepWater.SwimSpeed), $"tile {now}, estado {P.OnWater}, {vSwim:0} px/s");
+            int acts = 0; P.ActionStarted += (_, _) => acts++;
+            Press(Key.J, true); await Flush(); await Frames(3); Press(Key.J, false); await Flush(); await Frames(6);
+            Check("swimming, the cut does nothing", acts == 0);
+            await Shot($"agua-nadando-{_seed}");
+            // Shift: walks on the water, spending Ki (10/s)
+            float ki0 = P.Ki;
+            Press(Key.Shift, true); await Flush(); await Frames(60);
+            bool walking = P.OnWater == WaterState.Walk;
+            await Shot($"agua-andando-sobre-{_seed}");
+            Press(Key.Shift, false); await Flush(); await Frames(2);
+            float spent = ki0 - P.Ki;
+            Check("holding Shift, the swordsman walks on the water and Ki drains (about 10/s)", walking && spent > 7 && spent < 13, $"estado {P.OnWater}, Ki gasto em ~1 s: {spent:0.0}");
+            // no Ki: sinks and swims
+            P.Ki = 0.5f;
+            Press(Key.Shift, true); await Flush(); await Frames(20);
+            Check("with no Ki left, Shift does not hold: the swordsman swims", P.OnWater == WaterState.Swim && P.Ki < 1f, $"estado {P.OnWater}, Ki {P.Ki:0.0}");
+            Press(Key.Shift, false); await Flush(); await Frames(2);
+            // the animals are still blocked by deep water
+            var rb = _g.World.Objects.GetChildren().OfType<SpiritOfMurin.Creatures.Rabbit>().FirstOrDefault();
+            Check("the animals still collide with deep water", rb == null || (rb.CollisionMask & PlainsWorld.WaterLayer) != 0);
+            await Teleport(Center(land));
         }
         // blended borders, the same across chunk edges (read through the generator)
         int fringe = _g.World.GetChildren().SelectMany(n => n.GetChildren()).OfType<ChunkGround>().Sum(c => c.FringePixels);

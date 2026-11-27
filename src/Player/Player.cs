@@ -178,7 +178,7 @@ public partial class Player : CharacterBody2D
     /// </summary>
     public void BeginKi()
     {
-        if (InputLocked || Health <= 0 || Lying > 0 || _charge != ChargeState.None) return;
+        if (InputLocked || Health <= 0 || Lying > 0 || _charge != ChargeState.None || OnWater == Plains.WaterState.Swim) return;
         if (ChargeParams() == null || Tech?.Params("ki_wave") == null) { RequestKi(); return; } // sealed or unknown: the plain path (and its refusal)
         _charge = ChargeState.Pending; _chargeT = 0; ChargeInvested = 0; _chargeVigorPaid = false;
     }
@@ -353,6 +353,12 @@ public partial class Player : CharacterBody2D
     }
 
     private int _maxHealth;
+
+    /// <summary>
+    /// Over deep water (pedido 14.3; set every frame by the Planície): walking on it (Shift, spending Ki) or swimming
+    /// (slow, no attacks). <see cref="Plains.WaterState.None"/> on land and in the prologue.
+    /// </summary>
+    public Plains.WaterState OnWater { get; set; }
 
     /// <summary>Walking speed multiplier (AGI). 1 = the tuning's speed.</summary>
     public float MoveSpeedMultiplier { get; set; } = 1f;
@@ -554,10 +560,12 @@ public partial class Player : CharacterBody2D
         }
         bool locked = InputLocked || Health <= 0 || Lying > 0;
         Vector2 move = locked ? Vector2.Zero : Input.GetVector("move_left", "move_right", "move_up", "move_down");
-        bool sneaking = !locked && InputMap.HasAction("sneak") && Input.IsActionPressed("sneak");
+        // Shift over deep water is the water walk, not sneaking (pedido 14.3)
+        bool sneaking = !locked && OnWater == Plains.WaterState.None && InputMap.HasAction("sneak") && Input.IsActionPressed("sneak");
 
         if (_guard && !Input.IsActionPressed("cut") && !Input.IsActionPressed("step")) _guard = false;
         if (locked || _guard) { }
+        else if (OnWater == Plains.WaterState.Swim) { _buffer = null; }
         else if (Input.IsActionJustPressed("cut") && InputMap.HasAction("reinforce") && Input.IsActionPressed("reinforce") && Equipped != Weapon.None)
             BeginReinforce();
         else if (Input.IsActionJustPressed("cut"))
@@ -657,6 +665,7 @@ public partial class Player : CharacterBody2D
 
     private void Start(ActionKind kind, Vector2 move)
     {
+        if (OnWater == Plains.WaterState.Swim) return; // swimming: no cut, no step, no Ki
         var rel = Rel(move);
         var target = LockTarget?.Invoke();
         if (target != null && !IsInstanceValid(target)) target = null;
@@ -845,9 +854,15 @@ public partial class Player : CharacterBody2D
             DrawRect(new Rect2(o.X - 4, o.Y - 37, 8, 11), new Color(LearnGlow, alpha));
             DrawRect(new Rect2(o.X - 2, o.Y - 40, 4, 3), new Color(Learn, alpha * 1.2f));
         }
-        // Ground shadow
+        // Ground shadow (none over deep water: a ring of Ki under the feet when walking on it)
         var sh = new Color(10 / 255f, 8 / 255f, 6 / 255f, 0.38f);
-        DrawRect(new Rect2(-11, -2, 22, 4), sh); DrawRect(new Rect2(-8, -3, 16, 6), sh);
+        if (OnWater == Plains.WaterState.None) { DrawRect(new Rect2(-11, -2, 22, 4), sh); DrawRect(new Rect2(-8, -3, 16, 6), sh); }
+        else if (OnWater == Plains.WaterState.Walk)
+        {
+            float r = 10 + 1.5f * Mathf.Sin(_time * 6f);
+            DrawArc(new Vector2(0, -1), r, 0, Mathf.Tau, 20, new Color(WaterWalkRing, 0.75f), 1);
+            DrawArc(new Vector2(0, -1), r * 0.6f, 0, Mathf.Tau, 14, new Color(WaterWalkRing, 0.35f), 1);
+        }
         if (Game.Assist.Areas && BladeArea() is { } ba)
         {
             float half = Mathf.DegToRad(ba.HalfDeg), ang = ba.Dir.Angle();
@@ -867,6 +882,7 @@ public partial class Player : CharacterBody2D
             return;
         }
         if (_invulnerable <= 0 || Mathf.PosMod(_time, 0.12f) < 0.08f) DrawFighter();
+        if (OnWater == Plains.WaterState.Swim) DrawSwimWater();
         if (_hurtFlash > 0) DrawRect(new Rect2(-8, -40, 16, 40), new Color(0.75f, 0.2f, 0.15f, _hurtFlash));
         foreach (var s in _slashes)
         {
@@ -882,6 +898,22 @@ public partial class Player : CharacterBody2D
             }
         }
     }
+
+    // swimming: the water covers the body up to the chest, with a light line where it meets the robe
+    private void DrawSwimWater()
+    {
+        float bob = Mathf.Round(Mathf.Sin(_time * 4f));
+        // the same colour as the deep water tiles, so only the foam ring shows where the body meets the water
+        DrawRect(new Rect2(-12, -16 + bob, 24, 18), SwimWater);
+        DrawRect(new Rect2(-9, -17 + bob, 18, 1), SwimWater);
+        DrawRect(new Rect2(-8, -17 + bob, 16, 1), SwimFoam);
+        DrawRect(new Rect2(-10, -16 + bob, 2, 1), new Color(SwimFoam, 0.7f)); DrawRect(new Rect2(8, -16 + bob, 2, 1), new Color(SwimFoam, 0.7f));
+        DrawRect(new Rect2(-14 + Mathf.Round(Mathf.Sin(_time * 3f) * 2), -15 + bob, 4, 1), new Color(SwimFoam, 0.6f));
+        DrawRect(new Rect2(10 - Mathf.Round(Mathf.Sin(_time * 3f) * 2), -14 + bob, 4, 1), new Color(SwimFoam, 0.6f));
+    }
+
+    /// <summary>Over deep water: the Ki ring under the feet, the water over a swimmer, its foam line.</summary>
+    private static readonly Color WaterWalkRing = new("#9fd4ff"), SwimWater = new("#22434e"), SwimFoam = new("#cfe9f2");
 
     private void DrawLying()
     {
