@@ -42,6 +42,7 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-26 | [2026-11-26-visual-cenario.md](2026-11-26-visual-cenario.md) | Como o cenário é desenhado: Vale feito à mão (tiles, ponte, rio, túmulo) e Planície gerada pela semente (passo a passo), camadas, paletas, colisões, onde mexer. Também explica o Painel de Testes (PainelDeTestes.exe, pedido 12) |
 | 2026-11-26 | [2026-11-26-mira-mouse.md](2026-11-26-mira-mouse.md) | Pedido 13, entrega 1: mira livre pelo mouse (espada, faca, Qi, tecla remapeada), alvo travado com prioridade, opção de mira por teclado em Controles |
 | 2026-11-26 | [2026-11-26-disparo-concentrado.md](2026-11-26-disparo-concentrado.md) | Pedido 13, entrega 2: técnica secreta Disparo de Qi Concentrado (carga parcial e completa de 100, ruptura da guarda, cancelamento devolve o Qi, Planície selada/enfraquecida); spoiler no fim |
+| 2026-11-26 | [2026-11-26-reforco-qi.md](2026-11-26-reforco-qi.md) | Pedido 13, entrega 3: Reforço de Qi (modificador + corte, 75 Qi, 3 golpes +10% com vida fracionária, 5% de ruptura com uma rolagem por golpe, modificador configurável); spoiler no fim |
 
 ## Prompts de imagem do criador
 
