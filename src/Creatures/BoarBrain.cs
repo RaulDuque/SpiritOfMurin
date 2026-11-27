@@ -39,6 +39,8 @@ public sealed class BoarBrain
     public int Health { get; private set; }
     /// <summary>Home spot in the mud, world pixels.</summary>
     public Vector2 Home { get; }
+    /// <summary>Pixels already run in the current charge.</summary>
+    public float Travel => _travel;
     /// <summary>True once the warning has fixed the charge direction.</summary>
     public bool DirectionLocked => State == BoarState.Warn && StateTime >= _t.WarnTime * _t.TrackFraction;
     /// <summary>True while hits deal damage.</summary>

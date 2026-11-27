@@ -37,14 +37,23 @@ public partial class PlainsHud : CanvasLayer
         public string Empty = "";
     }
 
-    private Control _root = null!, _bars = null!, _focusBar = null!;
+    private Control _root = null!, _bars = null!, _focusBar = null!, _footer = null!;
     private Label _life = null!, _vigor = null!, _qi = null!, _level = null!, _hands = null!, _seed = null!, _controls = null!, _prompt = null!, _overlayText = null!, _focus = null!;
     private VBoxContainer _toasts = null!;
-    private Menu _inv = null!, _sheet = null!, _title = null!, _story = null!, _book = null!, _pause = null!;
+    private Menu _inv = null!, _sheet = null!, _title = null!, _story = null!, _pause = null!;
     private Vector2 _laidOut;
 
     /// <summary>The world map panel.</summary>
     public MapView Map { get; private set; } = null!;
+    /// <summary>The corner minimap (shown while exploring, hidden behind panels).</summary>
+    public MapView MiniMap { get; private set; } = null!;
+    /// <summary>The Controles screen (Esc → Controles).</summary>
+    public ControlsPanel Controls { get; private set; } = null!;
+    /// <summary>The Livro de Técnicas panel.</summary>
+    public BookPanel Book { get; private set; } = null!;
+    /// <summary>The HUD's root control (panels added by the game hang from it).</summary>
+    public Control Root => _root;
+    private string _controlsTemplate = "", _valeTemplate = "", _qiHint = "[qi] Qi";
     /// <summary>True while the map is open.</summary>
     public bool MapOpen => Map.Visible;
     /// <summary>True while the pause menu is open.</summary>
@@ -72,8 +81,8 @@ public partial class PlainsHud : CanvasLayer
         return null;
     }
 
-    private Menu? MenuOf(string name) => name switch { "inv" => _inv, "sheet" => _sheet, "title" => _title, "book" => _book, "pause" => _pause, "story" => _story, _ => null };
-    private string NameOf(Menu m) => m == _inv ? "inv" : m == _sheet ? "sheet" : m == _title ? "title" : m == _book ? "book" : m == _pause ? "pause" : "story";
+    private Menu? MenuOf(string name) => name switch { "inv" => _inv, "sheet" => _sheet, "title" => _title, "pause" => _pause, "story" => _story, _ => null };
+    private string NameOf(Menu m) => m == _inv ? "inv" : m == _sheet ? "sheet" : m == _title ? "title" : m == _pause ? "pause" : "story";
     private Label _banner = null!, _speech = null!;
     private float _bannerT, _speechT;
     private bool _valeMode;
@@ -88,20 +97,22 @@ public partial class PlainsHud : CanvasLayer
     /// <summary>True while the title menu is shown.</summary>
     public bool TitleOpen => _title.Box.Visible;
     /// <summary>True while any panel is open.</summary>
-    public bool AnyPanelOpen => InventoryOpen || SheetOpen || TitleOpen || StoryOpen || BookOpen || PauseOpen || MapOpen;
+    public bool AnyPanelOpen => InventoryOpen || SheetOpen || TitleOpen || StoryOpen || BookOpen || PauseOpen || MapOpen || ControlsOpen;
+    /// <summary>True while the Controles screen is open.</summary>
+    public bool ControlsOpen => Controls.Visible;
 
     /// <summary>True while a story panel (a page, a seal, an inscription) is shown.</summary>
     public bool StoryOpen => _story.Box.Visible;
     /// <summary>True while the Livro de Técnicas is open.</summary>
-    public bool BookOpen => _book.Box.Visible;
+    public bool BookOpen => Book.Visible;
     /// <summary>The story panel's title and text.</summary>
     public string StoryText => _story.Title.Text + "\n" + _story.Detail.Text;
-    /// <summary>The book rows.</summary>
-    public List<Row> BookRows => _book.Rows;
-    /// <summary>Selected book row.</summary>
-    public int BookSelected => _book.Selected;
-    /// <summary>The book's detail text (the selected page).</summary>
-    public string BookDetail => _book.Detail.Text;
+    /// <summary>The book's pages.</summary>
+    public List<BookPage> BookRows => Book.Pages;
+    /// <summary>Selected book page.</summary>
+    public int BookSelected => Book.Selected;
+    /// <summary>The book's selected page as text (name, state, command, numbers, origin).</summary>
+    public string BookDetail => Book.PageText;
     /// <summary>The area banner text ("" when none).</summary>
     public string BannerText => _banner.Visible ? _banner.Text : "";
     /// <summary>The speech bubble text ("" when none).</summary>
@@ -161,13 +172,20 @@ public partial class PlainsHud : CanvasLayer
         float W = sz.X, H = sz.Y;
         _focus.Position = new Vector2(W / 2 - 150, 3); _focusBar.Position = new Vector2(W / 2 - 61, 17);
         _seed.Position = new Vector2(W - 156, 3);
-        _controls.Position = new Vector2(6, H - 14);
+        // the minimap sits under the seed, in the top-right corner, a little bigger on a bigger screen
+        var mm = new Vector2(Mathf.Round(Mathf.Clamp(W * 0.18f, 104, 170)), Mathf.Round(Mathf.Clamp(H * 0.2f, 66, 110)));
+        MiniMap.Size = mm; MiniMap.Position = new Vector2(W - mm.X - 4, 15);
+        // the footer: a dark strip across the bottom so the shortcuts read over any ground
+        _footer.Position = new Vector2(0, H - 15); _footer.Size = new Vector2(W, 15);
+        _controls.Position = new Vector2(6, H - 14); _controls.Size = new Vector2(W - 12, 12);
         _toasts.Position = new Vector2(W / 2 - 200, H - 98);
         _banner.Position = new Vector2(0, 52); _banner.Size = new Vector2(W, 20);
         _overlayText.Position = new Vector2(0, H / 2 - 20); _overlayText.Size = new Vector2(W, 20);
-        foreach (var m in new[] { _inv, _sheet, _title, _story, _book, _pause })
+        foreach (var m in new[] { _inv, _sheet, _title, _story, _pause })
             m.Box.Position = new Vector2(Mathf.Round((W - m.Box.Size.X) / 2), Mathf.Round(Mathf.Max(18, (H - m.Box.Size.Y) / 2 - 6)));
-        Map.Size = new Vector2(Mathf.Min(W - 40, 900), H - 40); Map.Position = new Vector2((W - Map.Size.X) / 2, 20);
+        Map.Size = new Vector2(Mathf.Min(W - 40, 900), H - 46); Map.Position = new Vector2(Mathf.Round((W - Map.Size.X) / 2), 22);
+        Book.Size = new Vector2(Mathf.Min(W - 40, 820), H - 46); Book.Position = new Vector2(Mathf.Round((W - Book.Size.X) / 2), 22);
+        Controls.Size = new Vector2(Mathf.Min(W - 24, 560), H - 34); Controls.Position = new Vector2(Mathf.Round((W - Controls.Size.X) / 2), 14);
     }
 
     private Menu MakeMenu(string title, string help, Vector2 pos, Vector2 size)
@@ -214,8 +232,19 @@ public partial class PlainsHud : CanvasLayer
         _seed = Add(MakeLabel(8, new Color(Dim, 0.75f)), new Vector2(640 - 156, 3));
         _seed.HorizontalAlignment = HorizontalAlignment.Right; _seed.Size = new Vector2(150, 12);
 
-        _controls = Add(MakeLabel(8, new Color(Text, 0.85f)), new Vector2(6, 346));
-        _controls.Text = "WASD andar · Shift quieto · E pegar/examinar · I inventário · C ficha · Espaço focar · K esfolar com Qi · H erva · J/clique corte · L/clique dir. passo";
+        _footer = new Control { MouseFilter = Control.MouseFilterEnum.Ignore };
+        _footer.Draw += () => { _footer.DrawRect(new Rect2(Vector2.Zero, _footer.Size), new Color(0.05f, 0.055f, 0.045f, 0.82f)); _footer.DrawRect(new Rect2(0, 0, _footer.Size.X, 1), new Color("#4e3824")); };
+        _root.AddChild(_footer);
+        _controls = Add(MakeLabel(8, Text), new Vector2(6, 346));
+        _controls.ClipText = true;
+        _controlsTemplate = "[walk] andar · [sneak] quieto · [use] pegar/examinar · [inventory] inventário · [sheet] ficha · [book] livro · [map] mapa · [lock] focar · {qi} · [heal] erva · [cut+] corte · [step+] passo · [menu] pausa";
+        _valeTemplate = "[walk] andar · [lock] travar · [cut+] corte · [step+] passo · [qi] Qi · [use] examinar · [heal] bálsamo · [inventory] inventário · [book] livro · [map] mapa · [menu] pausa";
+        _controls.Text = ControlsLine();
+        MiniMap = new MapView { Compact = true, Visible = false, MouseFilter = Control.MouseFilterEnum.Ignore, Name = "MiniMap", TextureFilter = CanvasItem.TextureFilterEnum.Nearest };
+        _root.AddChild(MiniMap);
+        Bindings.Changed += RefreshTexts;
+        if (DisplayManager.Instance != null) DisplayManager.Instance.Notice += Toast;
+        if (DisplayManager.Embedded && !DisplayManager.EmbedNoticeShown) { DisplayManager.EmbedNoticeShown = true; Callable.From(() => Toast(DisplayManager.EmbedNotice)).CallDeferred(); }
 
         _prompt = Add(MakeLabel(8, Text), Vector2.Zero); _prompt.Visible = false; _prompt.HorizontalAlignment = HorizontalAlignment.Center; _prompt.Size = new Vector2(200, 12);
 
@@ -228,10 +257,14 @@ public partial class PlainsHud : CanvasLayer
         _title = MakeMenu("SpiritOfMurin — Planície Verdejante", "W/S escolher · E ou Enter confirmar", new Vector2(170, 110), new Vector2(300, 130));
         _story = MakeMenu("", "E, Enter ou Esc: continuar", new Vector2(130, 90), new Vector2(380, 150));
         _story.Title.AddThemeColorOverride("font_color", new Color("#d4fbf6"));
-        _book = MakeMenu("Livro de Técnicas", "W/S folhear · B fechar", new Vector2(70, 22), new Vector2(500, 312));
+        Book = new BookPanel { Visible = false, Name = "Book" };
+        Book.Clicked += i => RowClicked?.Invoke("book", i);
+        _root.AddChild(Book);
         _pause = MakeMenu("Pausa", "W/S ou mouse escolher · E, Enter ou clique confirmar · Esc voltar", new Vector2(200, 90), new Vector2(240, 160));
-        Map = new MapView { Visible = false, Position = new Vector2(20, 20), Size = new Vector2(600, 320), MouseFilter = Control.MouseFilterEnum.Stop };
+        Map = new MapView { Visible = false, Position = new Vector2(20, 20), Size = new Vector2(600, 320), MouseFilter = Control.MouseFilterEnum.Stop, TextureFilter = CanvasItem.TextureFilterEnum.Nearest };
         _root.AddChild(Map);
+        Controls = new ControlsPanel { Visible = false, Name = "Controles" };
+        _root.AddChild(Controls);
         _banner = Add(MakeLabel(12, Text), new Vector2(0, 52)); _banner.HorizontalAlignment = HorizontalAlignment.Center; _banner.Size = new Vector2(640, 20); _banner.Visible = false;
         _speech = Add(MakeLabel(9, new Color("#ece5d0")), Vector2.Zero); _speech.HorizontalAlignment = HorizontalAlignment.Center; _speech.Size = new Vector2(300, 12); _speech.Visible = false;
         _speech.AutowrapMode = TextServer.AutowrapMode.WordSmart; _speech.CustomMinimumSize = new Vector2(300, 0);
@@ -241,7 +274,19 @@ public partial class PlainsHud : CanvasLayer
         _root.AddChild(_overlay);
         _overlayText = Add(MakeLabel(12, Text), new Vector2(0, 160)); _overlayText.HorizontalAlignment = HorizontalAlignment.Center; _overlayText.Size = new Vector2(640, 20);
         _overlayText.Modulate = new Color(1, 1, 1, 0);
+        // the panels sit above the world's words (speech, area banner, messages) and under the fade overlay
+        foreach (Control c in new Control[] { _inv.Box, _sheet.Box, _story.Box, _pause.Box, Map, Book, Controls })
+            _root.MoveChild(c, _overlay.GetIndex());
         _root.MoveChild(_title.Box, -1);
+        RefreshTexts();
+    }
+
+    /// <inheritdoc />
+    public override void _ExitTree()
+    {
+        // the controls and the display outlive the scene: let go of them
+        Bindings.Changed -= RefreshTexts;
+        if (DisplayManager.Instance != null) DisplayManager.Instance.Notice -= Toast;
     }
 
     // ------------------------------------------------------------------ corner
@@ -273,18 +318,31 @@ public partial class PlainsHud : CanvasLayer
     /// <summary>What K does here, in the controls line (it changes next to a carcass).</summary>
     public void SetQiKeyHint(string hint)
     {
+        _qiHint = hint;
         if (_valeMode) return;
-        string t = $"WASD andar · Shift quieto · E pegar/examinar · I inventário · C ficha · B livro · Espaço focar · {hint} · H erva · J/clique corte · L/clique dir. passo";
+        string t = ControlsLine();
         if (_controls.Text != t) _controls.Text = t;
+    }
+
+    // the footer's shortcuts, written with the current controls
+    private string ControlsLine() => Bindings.F(_valeMode ? _valeTemplate : _controlsTemplate.Replace("{qi}", _qiHint));
+
+    // a control changed: every line that names a key is written again
+    private void RefreshTexts()
+    {
+        _controls.Text = ControlsLine();
+        _inv.Help.Text = Bindings.F("[move_up]/[move_down] escolher · [use] ou clique: usar, equipar, fabricar · [inventory] fechar");
+        _sheet.Help.Text = Bindings.F("[move_up]/[move_down] escolher atributo · [use] ou clique: gastar 1 ponto · [sheet] fechar");
+        _title.Help.Text = Bindings.F("[move_up]/[move_down] escolher · [use] ou Enter confirmar");
+        _story.Help.Text = Bindings.F("[use], Enter ou Esc: continuar");
+        _pause.Help.Text = Bindings.F("[move_up]/[move_down] ou mouse escolher · [use], Enter ou clique confirmar · Esc voltar");
     }
 
     /// <summary>The controls line now.</summary>
     public string ControlsText => _controls.Text;
 
     /// <summary>The prologue's corner: no vigor bar, no level line (the Vale has neither).</summary>
-    public void SetValeMode(bool vale) { _valeMode = vale; _level.Visible = !vale; _controls.Text = vale
-        ? "WASD andar · Espaço travar · J/clique corte · L/clique dir. passo · K Qi · E examinar · H bálsamo · I inventário · B livro"
-        : "WASD andar · Shift quieto · E pegar/examinar · I inventário · C ficha · B livro · Espaço focar · K Qi · H erva · J/clique corte · L/clique dir. passo"; }
+    public void SetValeMode(bool vale) { _valeMode = vale; _level.Visible = !vale; _controls.Text = ControlsLine(); }
 
     /// <summary>Shows a story panel: a title and lines (a page of the manual, the seal, the inscription). Null hides it.</summary>
     public void ShowStory(string? title, IEnumerable<string>? lines = null)
@@ -296,14 +354,14 @@ public partial class PlainsHud : CanvasLayer
     }
 
     /// <summary>Opens (with rows) or closes (null) the Livro de Técnicas.</summary>
-    public void ShowBook(List<Row>? rows)
+    public void ShowBook(List<BookPage>? pages)
     {
-        _book.Box.Visible = rows != null;
-        if (rows != null) Fill(_book, rows);
+        Book.Visible = pages != null;
+        if (pages != null) Book.SetPages(pages);
     }
 
     /// <summary>Moves the book selection.</summary>
-    public void MoveBook(int d) { Move(_book, d); Refresh(_book); }
+    public void MoveBook(int d) => Book.Move(d);
 
     /// <summary>Shows the area banner for a while.</summary>
     public void Banner(string text, float seconds = 2.4f) { _banner.Text = text; _banner.Visible = true; _bannerT = seconds; }
@@ -321,7 +379,7 @@ public partial class PlainsHud : CanvasLayer
     public void SpeechAt(Vector2 screen) { if (_speech.Visible) _speech.Position = new Vector2(Mathf.Clamp(screen.X - 150, 4, Mathf.Max(4, _laidOut.X - 304)), Mathf.Max(30, screen.Y - 74)); }
 
     public void SetLevel(int level, int xp, int need, int points) =>
-        _level.Text = $"Nv {level} · XP {xp}/{need} (faltam {need - xp})" + (points > 0 ? $" · {points} ponto{(points > 1 ? "s" : "")} (C)" : "");
+        _level.Text = $"Nv {level} · XP {xp}/{need} (faltam {need - xp})" + (points > 0 ? Bindings.F($" · {points} ponto{(points > 1 ? "s" : "")} ([sheet])") : "");
 
     /// <summary>Shows what the hands hold.</summary>
     public void SetHands(string text) => _hands.Text = "Mãos: " + text;
@@ -466,19 +524,29 @@ public partial class PlainsHud : CanvasLayer
     /// <summary>Rebuilds the sheet: header, attribute rows and the detail text (preview + proficiencies).</summary>
     public void SetSheet(string title, string header, List<Row> rows, string detail)
     {
-        _sheet.Title.Text = title; _sheet.Header.Text = header; Fill(_sheet, rows); _sheet.Detail.Text = detail;
+        _sheet.Title.Text = title; _sheet.Header.Text = Bindings.F(header); Fill(_sheet, rows); _sheet.Detail.Text = Bindings.F(detail);
     }
 
     /// <summary>Shows the title menu with its options and a message line (null hides it). The corner and the controls line hide behind it.</summary>
     public void ShowTitle(List<Row>? options, string message = "", string title = "SpiritOfMurin — Planície Verdejante")
     {
         _title.Box.Visible = options != null;
-        foreach (var c in new Control[] { _bars, _life, _vigor, _qi, _level, _hands, _controls }) c.Visible = options == null;
+        foreach (var c in new Control[] { _bars, _life, _vigor, _qi, _level, _hands, _controls, _footer }) c.Visible = options == null;
+        _titleShown = options != null;
         if (options == null) return;
         _title.Title.Text = title; _title.Header.Text = message; _title.Selected = 0; Fill(_title, options);
     }
     /// <summary>Moves the title selection.</summary>
     public void MoveTitle(int d) { Move(_title, d); Refresh(_title); }
+
+    private bool _titleShown;
+
+    /// <summary>Shows the corner minimap for a region (null hides it).</summary>
+    public void SetMiniMap(IMapSource? source, float zoom)
+    {
+        MiniMap.Source = source;
+        if (source != null) { MiniMap.Zoom = zoom; MiniMap.Center = source.MapPlayer; }
+    }
 
     /// <inheritdoc />
     public override void _Process(double delta)
@@ -486,6 +554,9 @@ public partial class PlainsHud : CanvasLayer
         float dt = (float)delta;
         Vector2 size = GetViewport().GetVisibleRect().Size;
         if (size != _laidOut) Layout(size);
+        // the minimap: while exploring, never over a panel, the title or a dark overlay
+        bool mm = MiniMap.Source != null && !_titleShown && !AnyPanelOpen && _overlay.Color.A < 0.5f;
+        if (MiniMap.Visible != mm) MiniMap.Visible = mm;
         for (int i = _toastLabels.Count - 1; i >= 0; i--)
         {
             var (l, t) = _toastLabels[i];

@@ -28,6 +28,24 @@ public sealed class ValeCombat
     public float DisWindup { get; set; } = 0.5f;
     /// <summary>Disciple reach, px.</summary>
     public float DisReach { get; set; } = 64;
+    /// <summary>Senior reach, px.</summary>
+    public float SenReach { get; set; } = 70;
+    /// <summary>Degrees each side of the facing an enemy strike reaches.</summary>
+    public float StrikeHalf { get; set; } = 40;
+    /// <summary>Degrees each side for the Senior's third, wide strike.</summary>
+    public float StrikeHalfBig { get; set; } = 75;
+    /// <summary>Extra reach of the Senior's third strike, px.</summary>
+    public float StrikeBigExtra { get; set; } = 6;
+    /// <summary>Slack added to the reach when checking the strike against the player, px (the body's size).</summary>
+    public float StrikeSlack { get; set; } = 8;
+    /// <summary>Seconds a strike lasts (the lunge).</summary>
+    public float StrikeTime { get; set; } = 0.14f;
+    /// <summary>Seconds into the strike when the blade is live.</summary>
+    public float StrikeLiveAt { get; set; } = 0.04f;
+    /// <summary>Pixels the prologue adds to a cut's reach when testing a hit.</summary>
+    public float CutSlack { get; set; } = 14;
+    /// <summary>Pixels the prologue adds to a thrust's reach when testing a hit.</summary>
+    public float ThrustSlack { get; set; } = 10;
     /// <summary>Disciple cooldown, s.</summary>
     public float DisCooldown { get; set; } = 1.1f;
     /// <summary>Disciple recovery, s.</summary>

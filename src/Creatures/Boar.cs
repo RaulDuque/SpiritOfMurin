@@ -93,6 +93,7 @@ public partial class Boar : CharacterBody2D, IHittable
     public override void _Draw()
     {
         var st = Brain.State;
+        if (SpiritOfMurin.Game.Assist.Areas) DrawAssist(st);
         if (st == BoarState.Dead) return;
         // fixed direction: scuffed marks on the ground along the line it is about to run
         if (Brain.DirectionLocked)
@@ -138,5 +139,29 @@ public partial class Boar : CharacterBody2D, IHittable
             }
         if (_hitFlash > 0) R(-12, -18, 24, 13, new Color(1, 1, 1, _hitFlash * 3));
         if (_spark > 0) { R(hx + 2, hy - 4, 1, 4, Tusk); R(hx, hy - 2, 5, 1, Tusk); }
+    }
+
+    // the assist mode (Esc → Modo de assistência): the charge's corridor from the brain's own numbers —
+    // the warning (dashed, filling), the live charge (solid), the recovery (a hollow open ring: hit it now)
+    private void DrawAssist(BoarState st)
+    {
+        float half = Tuning.ChargeHitRadius;
+        if (st == BoarState.Warn)
+        {
+            float k = Mathf.Clamp(Brain.StateTime / Mathf.Max(0.01f, Tuning.WarnTime), 0, 1);
+            var pts = SpiritOfMurin.Game.Assist.Corridor(Vector2.Zero, Brain.Facing, Tuning.ChargeDistance, half);
+            for (int i = 0; i < 4; i++) SpiritOfMurin.Game.Assist.Line(this, pts[i], pts[(i + 1) % 4], new Color(SpiritOfMurin.Game.Assist.ThreatC, 0.9f), 1, 4);
+            DrawColoredPolygon(SpiritOfMurin.Game.Assist.Corridor(Vector2.Zero, Brain.Facing, Mathf.Max(1, Tuning.ChargeDistance * k), half), new Color(SpiritOfMurin.Game.Assist.ThreatC, 0.2f));
+            DrawArc(Vector2.Zero, 16, 0, Mathf.Tau, 20, new Color(SpiritOfMurin.Game.Assist.GuardC, 0.8f), 2); // hits glance off now
+        }
+        else if (st == BoarState.Charge)
+        {
+            var pts = SpiritOfMurin.Game.Assist.Corridor(Vector2.Zero, Brain.Facing, Mathf.Max(8, Tuning.ChargeDistance - Brain.Travel), half);
+            DrawColoredPolygon(pts, new Color(SpiritOfMurin.Game.Assist.ThreatC, 0.45f));
+            for (int i = 0; i < 4; i++) DrawLine(pts[i], pts[(i + 1) % 4], SpiritOfMurin.Game.Assist.ThreatC, 3);
+            DrawArc(Vector2.Zero, 16, 0, Mathf.Tau, 20, new Color(SpiritOfMurin.Game.Assist.GuardC, 0.8f), 2);
+        }
+        else if (st == BoarState.Recover)
+            SpiritOfMurin.Game.Assist.Arc(this, Vector2.Zero, 0, Mathf.Pi, 16 + 4 * Mathf.Sin(Brain.StateTime * 8), new Color(SpiritOfMurin.Game.Assist.OpenC, 0.9f), 2, 4);
     }
 }

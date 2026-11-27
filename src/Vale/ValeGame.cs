@@ -33,32 +33,99 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     /// <inheritdoc />
     public string MapTitle => "Vale de Bambus";
     /// <inheritdoc />
-    public string MapLegend => "só o que você já viu · ciano: esteira de meditação · ocre: missão em andamento\n✕ marcadores";
+    public string MapLegend => "só o que você já viu · ciano: esteira de meditação\nselo vermelho: onde a pista surgiu · ✕ marcadores";
+    /// <inheritdoc />
+    public string MapWhere => $"{ValeMap.AreaName(Player.GlobalPosition)}. {WhereDetail()}";
+    /// <inheritdoc />
+    public IReadOnlyList<MapNote> MapNotes => _notes;
+    private readonly List<MapNote> _notes = new();
+
+    private string WhereDetail()
+    {
+        Vector2 p = Player.GlobalPosition;
+        string dir = Facing8(Player.Facing);
+        if (Map.AtPixel(p) == VTile.Bridge) return $"Sobre a ponte, olhando para {dir}.";
+        if (p.Y < 13 * ValeMap.TS) return $"Dentro do acampamento, olhando para {dir}.";
+        if (p.Y < 17 * ValeMap.TS) return $"Na margem norte do rio, olhando para {dir}.";
+        if (p.Y < 21 * ValeMap.TS) return $"Na margem sul do rio, perto da ponte, olhando para {dir}.";
+        return $"Olhando para {dir}.";
+    }
+
+    /// <summary>A facing in words (norte, nordeste…): up on the screen is north.</summary>
+    public static string Facing8(Vector2 f)
+    {
+        if (f.LengthSquared() < 0.0001f) return "o sul";
+        int i = Mathf.PosMod(Mathf.RoundToInt(Mathf.Atan2(f.Y, f.X) / (Mathf.Pi / 4)), 8);
+        return new[] { "o leste", "o sudeste", "o sul", "o sudoeste", "o oeste", "o noroeste", "o norte", "o nordeste" }[i];
+    }
+
+    private static readonly Dictionary<string, Vector2> QuestDefaultAt = new()
+    {
+        ["guarda"] = new Vector2(29, 15.8f) * ValeMap.TS, ["manual"] = ValeMap.Corpse, ["senior"] = ValeMap.CampEntry, ["lamina"] = ValeMap.Stele,
+    };
+
+    // the notebook in the order things happened: the missions (with their seals) and the clues
+    private void RebuildNotes()
+    {
+        _notes.Clear();
+        foreach (var (id, done) in Story.Quests)
+        {
+            if (!Quests.TryGetValue(id, out var q)) continue;
+            Vector2 at = Story.QuestAt.TryGetValue(id, out var a) && a.Length == 2 ? new Vector2(a[0], a[1]) : QuestDefaultAt.GetValueOrDefault(id, Player.GlobalPosition);
+            _notes.Add(new MapNote(q.Name, q.Desc, done, at, QuestToward(id), false));
+        }
+        foreach (var c in Story.Clues)
+            _notes.Add(new MapNote("Pista", c.Text, false, c.At.Length == 2 ? new Vector2(c.At[0], c.At[1]) : null, c.Toward.Length == 2 ? new Vector2(c.Toward[0], c.Toward[1]) : null, true));
+    }
+
+    private static Vector2? QuestToward(string id) => id switch { "guarda" or "manual" => new Vector2(51, 26) * ValeMap.TS, "senior" => new Vector2(29, 7) * ValeMap.TS, _ => null };
+
+    /// <summary>Notes a clue in the map's notebook (once per id) and says so.</summary>
+    public void AddClue(string id, string text, Vector2 at, Vector2? toward = null)
+    {
+        if (Story.Clues.Exists(c => c.Id == id)) return;
+        Story.Clues.Add(new Clue { Id = id, Text = text, At = new[] { at.X, at.Y }, Toward = toward is { } t ? new[] { t.X, t.Y } : System.Array.Empty<float>() });
+        RebuildNotes();
+        Hud.Toast(Bindings.F($"Pista anotada no mapa ([map])."));
+    }
+
+    private ImageTexture? _seenTex;
+    private int _seenVersion = -1, _seenTexVersion = -2;
+
+    private static Color MapPaperColor(VTile t) => t switch
+    {
+        VTile.Path => new Color("#9a7d55"), VTile.Camp => new Color("#b59c72"), VTile.Water => new Color("#5f8a8a"), VTile.Chasm => new Color("#2a2620"),
+        VTile.Bridge => new Color("#7a5a3a"), VTile.Rock => new Color("#6f6a5c"), VTile.TombWall or VTile.CutWall or VTile.Door => new Color("#55545a"),
+        VTile.TombFloor => new Color("#8d8a84"), VTile.Bamboo => new Color("#6f8f55"), VTile.Tent => new Color("#8f4a36"), VTile.Stele => new Color("#6f6a5c"),
+        VTile.Gate => new Color("#6d4f33"), VTile.Pine => new Color("#4c6a48"), _ => new Color("#b3a882"),
+    };
     /// <summary>The pause menu and the map.</summary>
     public GamePanels Panels { get; private set; } = null!;
 
-    private static Color MapColor(VTile t) => t switch
-    {
-        VTile.Water => new Color("#2c5a5e"), VTile.Bridge => new Color("#7a5a3a"), VTile.Chasm => new Color("#090a0b"), VTile.Path => new Color("#86704f"),
-        VTile.Camp => new Color("#77684a"), VTile.TombFloor => new Color("#3a3a3f"), VTile.TombWall or VTile.CutWall or VTile.Door => new Color("#6c6b72"),
-        VTile.Rock => new Color("#8a877a"), VTile.Bamboo => new Color("#5f8f4a"), VTile.Pine => new Color("#2f5a3a"), VTile.Tent => new Color("#8f3d2c"),
-        VTile.Gate => new Color("#6d4f33"), VTile.Stele => new Color("#9a978b"), _ => new Color("#4c5a3e"),
-    };
 
     /// <inheritdoc />
     public void DrawMap(MapView v)
     {
-        for (int ty = 0; ty < ValeMap.MH; ty++)
-            for (int tx = 0; tx < ValeMap.MW; tx++)
-                if (Seen(tx, ty)) v.WorldRect(new Vector2(tx * ValeMap.TS, ty * ValeMap.TS), new Vector2(ValeMap.TS, ValeMap.TS), MapColor(Map.At(tx, ty)));
+        // one texel per tile, only what was seen (the prototype's map colours on parchment)
+        if (_seenTex == null || _seenTexVersion != _seenVersion)
+        {
+            var img = Image.CreateEmpty(ValeMap.MW, ValeMap.MH, false, Image.Format.Rgba8);
+            for (int ty = 0; ty < ValeMap.MH; ty++)
+                for (int tx = 0; tx < ValeMap.MW; tx++)
+                {
+                    if (!Seen(tx, ty)) continue;
+                    var t = Map.At(tx, ty); if (t == VTile.Gate && Story.GateOpen) t = VTile.Camp;
+                    img.SetPixel(tx, ty, MapPaperColor(t));
+                }
+            if (_seenTex == null) _seenTex = ImageTexture.CreateFromImage(img); else _seenTex.Update(img);
+            _seenTexVersion = _seenVersion;
+        }
+        v.WorldTexture(Vector2.Zero, new Vector2(ValeMap.MW, ValeMap.MH) * ValeMap.TS, _seenTex);
         foreach (var (name, at) in ValeMap.Landmarks)
-            if (Seen(Mathf.FloorToInt(at.X / ValeMap.TS), Mathf.FloorToInt(at.Y / ValeMap.TS))) v.WorldLabel(at, name, new Color("#ece5d0"));
+            if (Seen(Mathf.FloorToInt(at.X / ValeMap.TS), Mathf.FloorToInt(at.Y / ValeMap.TS))) v.WorldLabel(at, name, MapView.Ink);
         if (Seen(Mathf.FloorToInt(ValeMap.Meditate.X / ValeMap.TS), Mathf.FloorToInt(ValeMap.Meditate.Y / ValeMap.TS))) v.WorldDot(ValeMap.Meditate, new Color("#6fd8d2"), 3);
-        foreach (var (id, done) in Story.Quests)
-            if (!done && QuestTarget(id) is { } q && Seen(Mathf.FloorToInt(q.X / ValeMap.TS), Mathf.FloorToInt(q.Y / ValeMap.TS))) v.WorldDot(q, new Color("#e2a640"), 3);
     }
 
-    private static Vector2? QuestTarget(string id) => id switch { "guarda" or "manual" => ValeMap.Statue, "senior" => new Vector2(29 * ValeMap.TS, 7 * ValeMap.TS), _ => null };
     /// <summary>The save file.</summary>
     [Export] public string SavePath { get; set; } = SaveGame.DefaultPath;
     /// <summary>Show the opening overlay (tests turn it off).</summary>
@@ -145,6 +212,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         Player.MaxQi = Combat.PlayerQiMax; Player.QiRegen = Combat.PlayerQiRegen; Player.Qi = Player.MaxQi;
         Player.MaxVigor = 0;
         Player.Tech = Tech;
+        Player.CutSlack = Combat.CutSlack; Player.ThrustSlack = Combat.ThrustSlack; // the prototype's hit test is a little wider than the blade
         Player.LockTarget = () => Lock;
         Player.BladeActive += OnBlade;
         Player.QiFired += OnQi;
@@ -159,6 +227,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         Hud.SetValeMode(true);
         Player.InputLocked = true;
         Panels = new GamePanels(Hud, Player, this, 0.15f);
+        Hud.SetMiniMap(this, 0.085f);
         Hud.RowClicked += (panel, i) => { if (panel == "inv") { UseItem(Hud.Rows[i].Id); RefreshInventory(); } else if (panel == "book") Hud.ShowBook(BookRows()); };
     }
 
@@ -204,6 +273,8 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
             if (ShowIntro) Hud.Overlay("SpiritOfMurin — Vale de Bambus", 1.6f);
             Hud.Toast("Suba a trilha. O acampamento dos discípulos fica além do rio.");
         }
+        _seenVersion++;
+        RebuildNotes();
         Player.Face(Vector2.Up);
         Player.GetNode<Camera2D>("Camera").ResetSmoothing();
         _built.Ground.QueueRedraw();
@@ -221,8 +292,17 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         if (_hitstopReal > 0) { _hitstopReal -= (float)delta / Mathf.Max(0.01f, (float)Engine.TimeScale); if (_hitstopReal <= 0) Engine.TimeScale = 1; }
         Hud.SetHealth(Player.Health, Player.MaxHealth, Player.PendingRegen);
         Hud.SetEnergy(0, 0, Player.Qi, Player.MaxQi);
-        Hud.SetHands($"espada · {Story.Book.Count} páginas no Livro (B)");
+        Hud.SetHands(Bindings.F($"espada · {Story.Book.Count} páginas no Livro ([book])"));
         Fx.Lock = Lock;
+        // the locked target at the top, as in the prototype: name, health and what its guard is doing
+        if (Lock != null && IsInstanceValid(Lock) && Lock.Alive)
+        {
+            string name = Lock.Type switch { ValeFighter.Kind.Senior => "Espadachim Sênior", ValeFighter.Kind.Statue => "Estátua da Mestra", _ => "Discípulo da Guarda Fechada" };
+            string stance = Lock.Type == ValeFighter.Kind.Statue ? "pedra em guarda" : Lock.Stagger > 0 ? "guarda quebrada" : Lock.Type == ValeFighter.Kind.Senior && Lock.AttackStance ? "postura de ataque"
+                : Lock.Fooled > 0 ? "flanco aberto" : Lock.State == ValeFighter.St.Recover ? "recuperando" : "guarda fechada";
+            Hud.SetFocus($"{name} · {stance}", Lock.Type == ValeFighter.Kind.Statue ? 1 : (float)Lock.Hp / Mathf.Max(1, Lock.Max));
+        }
+        else Hud.SetFocus(null, 0);
         var cam = Player.GetNode<Camera2D>("Camera");
         _shake = Mathf.Max(0, _shake - dt * 30);
         cam.Offset = _shake > 0 ? new Vector2((float)GD.RandRange(-_shake, _shake), (float)GD.RandRange(-_shake, _shake)) : Vector2.Zero;
@@ -235,8 +315,8 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
             if (_reveal <= 0)
             {
                 Player.InputLocked = Hud.AnyPanelOpen;
-                Hud.Toast("Com o alvo travado: L ou clique direito + direção para o lado do inimigo.");
-                Hud.Toast("Experimente na estátua: Espaço trava nela.");
+                Hud.Toast(Bindings.F("Com o alvo travado: [step+] + direção para o lado do inimigo."));
+                Hud.Toast(Bindings.F("Experimente na estátua: [lock] trava nela."));
             }
             return;
         }
@@ -270,7 +350,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         {
             _seenAt = pt;
             for (int y = pt.Y - 6; y <= pt.Y + 6; y++) for (int x = pt.X - 8; x <= pt.X + 8; x++)
-                if (x >= 0 && y >= 0 && x < ValeMap.MW && y < ValeMap.MH && Mathf.Pow((x - pt.X) / 8f, 2) + Mathf.Pow((y - pt.Y) / 6f, 2) <= 1) _seen[y * ValeMap.MW + x] = true;
+                if (x >= 0 && y >= 0 && x < ValeMap.MW && y < ValeMap.MH && Mathf.Pow((x - pt.X) / 8f, 2) + Mathf.Pow((y - pt.Y) / 6f, 2) <= 1 && !_seen[y * ValeMap.MW + x]) { _seen[y * ValeMap.MW + x] = true; _seenVersion++; }
         }
         string an = ValeMap.AreaName(Player.GlobalPosition);
         if (an != _area) { _area = an; Hud.Banner(an); }
@@ -286,10 +366,10 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         var s = NearSpot();
         string? text = s switch
         {
-            "corpse" => "E · examinar o corpo", "door" => "E · examinar o selo", "slab" => "E · examinar a marca na pedra",
-            "stele" => "E · ler a inscrição", "chest" => "E · abrir o baú", "meditate" => "E · meditar (grava a jornada)", _ => null,
+            "corpse" => "[use] · examinar o corpo", "door" => "[use] · examinar o selo", "slab" => "[use] · examinar a marca na pedra",
+            "stele" => "[use] · ler a inscrição", "chest" => "[use] · abrir o baú", "meditate" => "[use] · meditar (grava a jornada)", _ => null,
         };
-        Hud.SetPrompt(text, GetViewport().GetCanvasTransform() * Player.GlobalPosition);
+        Hud.SetPrompt(text == null ? null : Bindings.F(text), GetViewport().GetCanvasTransform() * Player.GlobalPosition);
     }
 
     // ------------------------------------------------------------------ input
@@ -298,7 +378,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     public override void _UnhandledInput(InputEvent e)
     {
         if (Finale != null) { Finale.Input(e); GetViewport().SetInputAsHandled(); return; }
-        if (!Hud.StoryOpen || Hud.PauseOpen || Hud.MapOpen) { if (Panels.Input(e)) { GetViewport().SetInputAsHandled(); return; } }
+        if (!Hud.StoryOpen || Hud.PauseOpen || Hud.MapOpen || Panels.OwnsStory) { if (Panels.Input(e)) { GetViewport().SetInputAsHandled(); return; } }
         if (Hud.StoryOpen)
         {
             if (e.IsActionPressed("use") || e.IsActionPressed("ui_accept") || e.IsActionPressed("ui_cancel") || e.IsActionPressed("cut"))
@@ -357,7 +437,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     {
         var (name, desc) = ValeItems.Of(e.Id);
         bool use = e.Id is "balsamo" or "pedra";
-        return new PlainsHud.Row(false, e.Id, $"{name} ×{e.Count}{(use ? "  [E: usar]" : "")}", desc, true);
+        return new PlainsHud.Row(false, e.Id, $"{name} ×{e.Count}{(use ? Bindings.F("  [[use]: usar]") : "")}", Bindings.F(desc), true);
     }).Prepend(new PlainsHud.Row(false, "espada", "Espada  [na mão]", ValeItems.Of("espada").Desc, true, "Equipamento")).ToList());
 
     /// <summary>Uses a prologue item (the balm heals, the qi stone fills the Qi). Returns true when used.</summary>
@@ -375,19 +455,8 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         return true;
     }
 
-    /// <summary>The book's rows: name (with the state of prologue techniques) and the page's text.</summary>
-    public List<PlainsHud.Row> BookRows()
-    {
-        var rows = new List<PlainsHud.Row>(); string last = "";
-        foreach (var b in Story.Book.OrderBy(b => b.Kind == "técnica" ? 0 : b.Kind == "combinação" ? 1 : 2))
-        {
-            string group = b.Kind != last ? (b.Kind == "técnica" ? "Técnicas" : b.Kind == "combinação" ? "Combinações" : "Fragmentos") : "";
-            last = b.Kind;
-            string state = b.State.Length > 0 ? $"  [{b.State}]" : "";
-            rows.Add(new PlainsHud.Row(false, b.Name, b.Name + state, $"{b.Name} · {b.Kind}\nComando: {(b.Key.Length > 0 ? b.Key : "—")}\n{b.Where}", true, group));
-        }
-        return rows;
-    }
+    /// <summary>The book's pages: name, state, command, numbers and origin (the torn page while the combination is missing).</summary>
+    public List<BookPage> BookRows() => BookPage.Build(Story.Book, Tech, Story, plains: false);
 
     // ------------------------------------------------------------------ hits
 
@@ -395,7 +464,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     {
         if (swing != _lastSwing) { _lastSwing = swing; _hitThisSwing.Clear(); }
         bool thrust = Player.Current == Player.ActionKind.Thrust;
-        float r = thrust ? reach + 10 : reach + 14;
+        float r = reach + (thrust ? Player.ThrustSlack : Player.CutSlack);
         foreach (var f in Fighters.Values)
         {
             if (!f.Alive || _hitThisSwing.Contains(f.Id)) continue;
@@ -423,7 +492,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
                 Fx.AddRing(mid, new Color("#fff3c4"));
                 Sfx.Play(f.Type == ValeFighter.Kind.Statue ? "stone" : "parry"); Hitstop(0.045f);
                 if (melee) Player.Recoil(Player.GlobalPosition - f.GlobalPosition, Combat.ParryPush);
-                if (f.Type != ValeFighter.Kind.Statue && _parryCount == 3 && !Story.LearnedSide) { Say(f, "De frente, nada passa pela Guarda Fechada."); Hud.Toast("De frente, essa guarda não cai."); }
+                if (f.Type != ValeFighter.Kind.Statue && _parryCount == 3 && !Story.LearnedSide) { Say(f, "De frente, nada passa pela Guarda Fechada."); Hud.Toast("De frente, essa guarda não cai."); AddClue("frente", "De frente, essa guarda não cai: ela apara tudo o que vem pela frente.", f.GlobalPosition); }
                 return r;
             case "statue":
                 if (guarded)
@@ -469,6 +538,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
                 if (IsInstanceValid(_built.Gate)) _built.Gate.QueueFree();
                 _built.Ground.QueueRedraw();
                 Hud.Toast("O guardião cai. O portão do acampamento se abre.");
+                AddClue("portao", "O portão do acampamento se abriu. Além dele, o Espadachim Sênior espera.", f.GlobalPosition, new Vector2(29, 7) * ValeMap.TS);
                 DoneQuest("guarda"); TakeQuest("senior");
             }
         }
@@ -573,7 +643,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     {
         if (Story.HasManual) return;
         Say(who, "Fuja, então. Pela frente, ninguém passa por mim.");
-        if (Story.Once("valeHint")) Hud.Toast("Uma trilha desce para o vale, a leste.");
+        if (Story.Once("valeHint")) { Hud.Toast("Uma trilha desce para o vale, a leste."); AddClue("vale", "Uma trilha desce para o vale, a leste. (O discípulo da ponte: \"Pela frente, ninguém passa por mim.\")", Player.GlobalPosition, new Vector2(40, 30) * ValeMap.TS); }
     }
 
     /// <inheritdoc />
@@ -596,12 +666,16 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     private void TakeQuest(string id)
     {
         if (Story.Quests.ContainsKey(id)) return;
-        Story.Quests[id] = false; Hud.Toast($"Nova missão: {Quests[id].Name}");
+        Story.Quests[id] = false;
+        Vector2 at = id == "guarda" && Fighters.TryGetValue("dis_bridge", out var b) ? b.GlobalPosition : Player.GlobalPosition;
+        Story.QuestAt[id] = new[] { at.X, at.Y };
+        RebuildNotes();
+        Hud.Toast(Bindings.F($"Nova missão: {Quests[id].Name}  ([map]: mapa)"));
     }
 
     private void DoneQuest(string id)
     {
-        if (Story.Quests.TryGetValue(id, out bool done) && !done) { Story.Quests[id] = true; Hud.Toast($"Missão cumprida: {Quests[id].Name}"); }
+        if (Story.Quests.TryGetValue(id, out bool done) && !done) { Story.Quests[id] = true; RebuildNotes(); Hud.Toast($"Missão cumprida: {Quests[id].Name}"); }
     }
 
     /// <summary>The spot E would examine, or null.</summary>
@@ -631,6 +705,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
                     Panel("Metade de um manual", "“...a lâmina não vence a guarda: contorna-a. Entra pelo flanco, onde a guarda não olha.”", "A página que ensinava o passo foi arrancada.", "Na margem, à mão: “O resto ficou no túmulo da mestra, entre as pedras gêmeas.”");
                     Story.AddBook(new BookEntry { Name = "Metade de um manual", Kind = "fragmento", Where = "Corpo de um discípulo, no Vale de Bambus. Falta a página do passo." });
                     TakeQuest("manual");
+                    AddClue("manual", "A anotação na margem do manual: \"O resto ficou no túmulo da mestra, entre as pedras gêmeas.\"", ValeMap.Corpse, new Vector2(51, 26) * ValeMap.TS);
                 }
                 else Panel("O discípulo", "Ele não carrega mais nada.");
                 break;
@@ -646,10 +721,11 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
                 break;
             case "slab":
                 if (Story.LearnedSide) Panel("A marca na pedra", "Agora você entende onde ela pisava: fora da frente da guarda.");
-                else { Story.SlabRead = true; Panel("A marca na pedra", "Um corte curvo na pedra, como um golpe que contorna algo.", "Aos pés da estátua em guarda, pegadas gravadas no chão", "saem da frente dela e vão para o lado.", "Pise onde ela pisava."); }
+                else { Story.SlabRead = true; AddClue("pegadas", "Aos pés da estátua, pegadas saem da frente dela e vão para o lado. Pise onde ela pisava.", ValeMap.Slab, ValeMap.Statue); Panel("A marca na pedra", "Um corte curvo na pedra, como um golpe que contorna algo.", "Aos pés da estátua em guarda, pegadas gravadas no chão", "saem da frente dela e vão para o lado.", "Pise onde ela pisava."); }
                 break;
             case "stele":
                 Story.SteleRead = true;
+                AddClue("inscricao", "\"O qi caminha atrás da lâmina que segue o passo.\" (inscrição além da fenda)", ValeMap.Stele);
                 Panel("Inscrição", "“A lâmina que segue o passo não faz ruído.", "O qi caminha atrás dela.”");
                 Story.AddBook(new BookEntry { Name = "Inscrição da fenda", Kind = "fragmento", Where = "Além da Fenda: “O qi caminha atrás da lâmina que segue o passo.”" });
                 if (!Story.ComboFound) TakeQuest("lamina");
@@ -691,6 +767,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         var shortStep = Story.Book.FirstOrDefault(b => b.Name == "Passo curto"); if (shortStep != null) shortStep.Where = "Sua arte de origem: para frente ou para trás.";
         Tech.Set("side_step", TechniqueState.Full); Tech.Set("dash", TechniqueState.Full);
         Hud.Banner("Passo Lateral", 3.0f);
+        AddClue("flanco", "A guarda olha para onde você estava. Com o alvo travado, o passo lateral abre o flanco.", ValeMap.Statue, new Vector2(29, 16) * ValeMap.TS);
         Fx.Burst(ValeMap.Statue + new Vector2(0, -20), 24, ValeTerrain.Learn, 90, 0.9f, 2);
         DoneQuest("manual");
     }
@@ -719,7 +796,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         foreach (var f in Fighters.Values) f.ResetToHome();
         Player.GetNode<Camera2D>("Camera").ResetSmoothing();
         Hud.Toast(Respawn == ValeMap.Start ? "Você desperta no início da trilha. O que aprendeu, ficou." : "Você desperta na entrada do acampamento.");
-        if (!Story.HasManual && Story.Once("valeHint")) Hud.Toast("Uma trilha desce para o vale, a leste.");
+        if (!Story.HasManual && Story.Once("valeHint")) { Hud.Toast("Uma trilha desce para o vale, a leste."); AddClue("vale", "Uma trilha desce para o vale, a leste.", Player.GlobalPosition, new Vector2(40, 30) * ValeMap.TS); }
     }
 
     // ------------------------------------------------------------------ save

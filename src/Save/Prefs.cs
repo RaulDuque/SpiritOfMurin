@@ -7,8 +7,8 @@ namespace SpiritOfMurin.Save;
 
 /// <summary>
 /// The player's preferences, separate from the journey (<c>user://preferencias.json</c>): whether the
-/// prologue's ending was already seen (it can then be skipped), full screen, and the ground line under a
-/// charge. Tests point it elsewhere with <c>--prefs=user://file.json</c>.
+/// prologue's ending was already seen (it can then be skipped), full screen, the ground line under a
+/// charge, the assist mode and the controls. Tests point it elsewhere with <c>--prefs=user://file.json</c>.
 /// </summary>
 public sealed class Prefs
 {
@@ -20,11 +20,25 @@ public sealed class Prefs
     public bool Fullscreen { get; set; }
     /// <summary>Show the line on the ground along a fixed charge (an aid; can be reduced).</summary>
     public bool ChargeLine { get; set; } = true;
+    /// <summary>Assist mode: show the combat areas (guard arc, live blade, announced attacks).</summary>
+    public bool AssistAreas { get; set; }
+    /// <summary>Controls: action → [main input, second input] ("k:physical keycode", "m:mouse button" or "").</summary>
+    public System.Collections.Generic.Dictionary<string, string[]> Bindings { get; set; } = new();
     /// <summary>Quick-use bindings: slot (1-4) → item id.</summary>
     public System.Collections.Generic.Dictionary<string, string> QuickSlots { get; set; } = new();
 
     /// <summary>The path in use (command line or default).</summary>
-    public static string Path => OS.GetCmdlineUserArgs().Concat(OS.GetCmdlineArgs()).FirstOrDefault(a => a.StartsWith("--prefs="))?["--prefs=".Length..] ?? DefaultPath;
+    public static string Path
+    {
+        get
+        {
+            var args = OS.GetCmdlineUserArgs().Concat(OS.GetCmdlineArgs()).ToArray();
+            string? given = args.FirstOrDefault(a => a.StartsWith("--prefs="))?["--prefs=".Length..];
+            if (given != null) return given;
+            // a check scene never reads or writes the player's own preferences (controls, assist, full screen)
+            return args.Any(a => a.StartsWith("res://tests/")) ? "user://teste_padrao_prefs.json" : DefaultPath;
+        }
+    }
 
     /// <summary>Reads the preferences (defaults when absent or damaged).</summary>
     public static Prefs Load()

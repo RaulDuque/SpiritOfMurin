@@ -39,15 +39,50 @@ public partial class PlainsGame : Node2D, IMapSource
     /// <inheritdoc />
     public string MapTitle => $"Planície Verdejante · semente {SeedInUse}";
     /// <inheritdoc />
-    public string MapLegend => "verde relva · areia margem · azul água · marrom lamaçal · verde-escuro arbustos\nlaranja fogueira · ciano esteira · bege tocas · vermelho-escuro javalis · ✕ marcadores";
+    public string MapLegend => "relva · areia: margem · azul: água e vau · marrom: lamaçal · verde-escuro: arbustos\nlaranja: fogueira · ciano: esteira · bege: tocas · vermelho: javalis · ✕ marcadores";
+    /// <inheritdoc />
+    public string MapWhere
+    {
+        get
+        {
+            Vector2 p = Player.GlobalPosition, home = Gen.StartPixel;
+            int steps = Mathf.RoundToInt(p.DistanceTo(home) / Gen.Settings.TileSize);
+            string from = steps < 6 ? "Na clareira onde você acordou" : $"A {steps} passos a {Compass(p - home)} da clareira";
+            string ground = TileUnder(p) switch { TileKind.Water => "na água", TileKind.Ford => "no vau do riacho", TileKind.Bank => "na margem do riacho", TileKind.Mud => "no lamaçal", TileKind.BushGrass => "entre arbustos", _ => "na relva" };
+            return $"Planície Verdejante. {from}, {ground}, olhando para {Compass(Player.Facing)}.";
+        }
+    }
+    /// <inheritdoc />
+    public IReadOnlyList<MapNote> MapNotes => Clues.Select(c => new MapNote("Pista", c.Text, false,
+        c.At.Length == 2 ? new Vector2(c.At[0], c.At[1]) : null, c.Toward.Length == 2 ? new Vector2(c.Toward[0], c.Toward[1]) : null, true)).ToList();
+    /// <summary>Clues found in the Planície (saved with the journey).</summary>
+    public List<Clue> Clues { get; } = new();
+
+    /// <summary>Notes a clue in the map's notebook (one per id; an id seen again moves to the end with the new words).</summary>
+    public void AddClue(string id, string text, Vector2 at, Vector2? toward = null)
+    {
+        Clues.RemoveAll(c => c.Id == id);
+        Clues.Add(new Clue { Id = id, Text = text, At = new[] { at.X, at.Y }, Toward = toward is { } t ? new[] { t.X, t.Y } : System.Array.Empty<float>() });
+    }
+
+    private TileKind TileUnder(Vector2 p)
+    {
+        int n = Gen.Settings.ChunkTiles, ts = Gen.Settings.TileSize;
+        var c = Gen.ChunkOfPixel(p);
+        if (!_mapChunks.TryGetValue(c, out var data)) _mapChunks[c] = data = Gen.GenerateChunk(c);
+        int lx = Mathf.Clamp(Mathf.FloorToInt(p.X / ts) - c.X * n, 0, n - 1), ly = Mathf.Clamp(Mathf.FloorToInt(p.Y / ts) - c.Y * n, 0, n - 1);
+        return data[lx, ly];
+    }
+
+    private readonly Dictionary<Vector2I, ImageTexture> _mapTex = new();
     /// <summary>The pause menu and the map.</summary>
     public GamePanels Panels { get; private set; } = null!;
     private readonly Dictionary<Vector2I, ChunkData> _mapChunks = new();
 
     private static Color TileColor(TileKind k) => k switch
     {
-        TileKind.Water => new Color("#2f5560"), TileKind.Ford => new Color("#557f7c"), TileKind.Bank => new Color("#8f8466"),
-        TileKind.Mud => new Color("#4a3d2c"), TileKind.BushGrass => new Color("#3f4d34"), _ => new Color("#4c5a3e"),
+        TileKind.Water => new Color("#5f8a8a"), TileKind.Ford => new Color("#86a8a0"), TileKind.Bank => new Color("#c4b48a"),
+        TileKind.Mud => new Color("#8a6f4c"), TileKind.BushGrass => new Color("#6f8a55"), _ => new Color("#a8ae7e"),
     };
 
     /// <inheritdoc />
@@ -56,10 +91,14 @@ public partial class PlainsGame : Node2D, IMapSource
         int n = Gen.Settings.ChunkTiles, ts = Gen.Settings.TileSize;
         foreach (var c in Explored)
         {
-            if (!_mapChunks.TryGetValue(c, out var data)) _mapChunks[c] = data = Gen.GenerateChunk(c);
-            for (int ly = 0; ly < n; ly++)
-                for (int lx = 0; lx < n; lx++)
-                    v.WorldRect(new Vector2((c.X * n + lx) * ts, (c.Y * n + ly) * ts), new Vector2(ts, ts), TileColor(data[lx, ly]));
+            if (!_mapTex.TryGetValue(c, out var tex))
+            {
+                if (!_mapChunks.TryGetValue(c, out var data)) _mapChunks[c] = data = Gen.GenerateChunk(c);
+                var img = Image.CreateEmpty(n, n, false, Image.Format.Rgba8);
+                for (int ly = 0; ly < n; ly++) for (int lx = 0; lx < n; lx++) img.SetPixel(lx, ly, TileColor(data[lx, ly]));
+                _mapTex[c] = tex = ImageTexture.CreateFromImage(img);
+            }
+            v.WorldTexture(new Vector2(c.X * n * ts, c.Y * n * ts), new Vector2(n * ts, n * ts), tex);
         }
         foreach (var c in Explored)
             foreach (var f in _mapChunks[c].Features)
@@ -67,10 +106,10 @@ public partial class PlainsGame : Node2D, IMapSource
                 {
                     case FeatureKind.Campfire: v.WorldDot(f.Position, new Color("#e8a13a"), 3); break;
                     case FeatureKind.MeditationMat: v.WorldDot(f.Position, new Color("#6fd8d2"), 3); break;
-                    case FeatureKind.Burrow: v.WorldDot(f.Position, new Color("#d8ccb0"), 1.5f); break;
+                    case FeatureKind.Burrow: v.WorldDot(f.Position, new Color("#efe4c8"), 1.5f); break;
                     case FeatureKind.Boar: if (World.State.CarcassAt(PlainsGenerator.CreatureIdOf(f)) == null) v.WorldDot(f.Position, new Color("#7a3a32"), 2); break;
                 }
-        v.WorldLabel(Gen.StartPixel + new Vector2(0, -40), "clareira", new Color("#ece5d0"));
+        v.WorldLabel(Gen.StartPixel + new Vector2(0, -40), "clareira", MapView.Ink);
     }
 
     /// <summary>The map zoom when it opens.</summary>
@@ -253,7 +292,7 @@ public partial class PlainsGame : Node2D, IMapSource
         World.CreatureSpawned += OnCreatureSpawned;
         World.CreatureDied += OnCreatureDied;
         Player.BladeActive += OnBlade;
-        Player.EmptyHanded += () => Hud.Toast("Mãos vazias: fabrique uma ferramenta no inventário (I).");
+        Player.EmptyHanded += () => Hud.Toast(Bindings.F("Mãos vazias: fabrique uma ferramenta no inventário ([inventory])."));
         Player.OutOfBreath += () => Hud.Toast("Sem fôlego: espere o vigor voltar ou coma carne assada.");
         Player.TechniqueRefused += (_, m) => { Hud.Toast(m); Sfx?.Play("fizzle"); };
         Player.QiFired += OnQiShot;
@@ -274,6 +313,7 @@ public partial class PlainsGame : Node2D, IMapSource
             Book = d.Book ?? new();
             foreach (var e in d.Explored) if (e.Length == 2) Explored.Add(new Vector2I(e[0], e[1]));
             foreach (var mk in d.Markers) if (mk.Length == 2) MapMarkers.Add(new Vector2(mk[0], mk[1]));
+            Clues.Clear(); Clues.AddRange(d.Clues);
             LossApplied = d.LossApplied; TechniquesReturned = d.TechniquesReturned;
         }
         if (awaken != null)
@@ -299,6 +339,7 @@ public partial class PlainsGame : Node2D, IMapSource
         Player.Visible = true;
         Player.MaxQi = Stats.MaxQi; Player.QiRegen = Data.Base.QiRegen;
         Hud.SetSeed(SeedInUse);
+        Hud.SetMiniMap(this, 0.06f);
         World.UpdateAround(Player.GlobalPosition);
         _lastChunk = Gen.ChunkOfPixel(Player.GlobalPosition);
         Player.GetNode<Camera2D>("Camera").ResetSmoothing();
@@ -311,7 +352,8 @@ public partial class PlainsGame : Node2D, IMapSource
             Sfx?.FadeMaster(0, 0); Sfx?.FadeMaster(1, 3.5f); Sfx?.Ambient(0.45f, 0.6f); Sfx?.Play("breath");
             Player.Lying = 1; _riseHintAt = 2.5f; // he wakes on the ground, where the blast threw him
             Hud.Toast("Você desperta na Planície Verdejante. A espada, a bolsa, tudo se perdeu na explosão.");
-            Hud.Toast("Só o Livro de Técnicas ficou: as páginas do Vale estão seladas (B).");
+            Hud.Toast(Bindings.F("Só o Livro de Técnicas ficou: as páginas do Vale estão seladas ([book])."));
+            AddClue("despertar", "Você acordou na clareira, de mãos vazias. Só o Livro ficou: as técnicas do Vale estão seladas até o nível " + Tech.Data.UnlockLevel + ".", Player.GlobalPosition);
             SaveGame.Write(SavePath, Snapshot()); // the loss and the change of region happen once: from now on Continuar is here
         }
         else
@@ -377,7 +419,7 @@ public partial class PlainsGame : Node2D, IMapSource
         UpdateWaves(dt);
         UpdateFocus();
         UpdatePrompt();
-        Hud.SetQiKeyHint(QiKeyAction == "esfolar" ? "K esfolar com Qi" : $"K disparo de Qi{(Tech.State("qi_wave") == TechniqueState.Sealed ? " (selado)" : "")}");
+        Hud.SetQiKeyHint(QiKeyAction == "esfolar" ? "[qi] esfolar com Qi" : $"[qi] disparo de Qi{(Tech.State("qi_wave") == TechniqueState.Sealed ? " (selado)" : "")}");
     }
 
     /// <inheritdoc />
@@ -463,7 +505,8 @@ public partial class PlainsGame : Node2D, IMapSource
         TechniquesReturned = true;
         foreach (var b in Book.Where(b => b.State == "Selada")) { b.State = "Enfraquecida"; Tech.Set(b.Tech, TechniqueState.Weakened); }
         Hud.Banner("As técnicas do Vale voltam", 3.0f);
-        Hud.Toast($"Nível {Tech.Data.UnlockLevel}: as técnicas do Vale voltam, enfraquecidas. Custam Qi e vigor; veja o Livro (B).");
+        Hud.Toast(Bindings.F($"Nível {Tech.Data.UnlockLevel}: as técnicas do Vale voltam, enfraquecidas. Custam Qi e vigor; veja o Livro ([book])."));
+        AddClue("tecnicas", $"Nível {Tech.Data.UnlockLevel}: as técnicas do Vale voltaram, enfraquecidas. O Livro mostra o custo e o alcance.", Player.GlobalPosition);
         Sfx?.Play("learn");
         return true;
     }
@@ -516,20 +559,12 @@ public partial class PlainsGame : Node2D, IMapSource
         Hud.ShowBook(BookRows()); Player.InputLocked = true;
     }
 
-    /// <summary>The book's rows, with the state of each prologue technique and its command, cost and effect in force.</summary>
-    public List<PlainsHud.Row> BookRows()
+    /// <summary>The book's pages, with the state of each prologue technique and its command, cost and effect in force.</summary>
+    public List<BookPage> BookRows()
     {
-        var rows = new List<PlainsHud.Row>(); string last = "";
-        if (Book.Count == 0) rows.Add(new PlainsHud.Row(false, "", "(vazio)", "Esta jornada começou direto na Planície: o Livro não traz páginas do Vale.", false));
-        foreach (var b in Book.OrderBy(b => b.Kind == "técnica" ? 0 : b.Kind == "combinação" ? 1 : 2))
-        {
-            string group = b.Kind != last ? (b.Kind == "técnica" ? "Técnicas" : b.Kind == "combinação" ? "Combinações" : "Fragmentos") : "";
-            last = b.Kind;
-            string detail = $"{b.Name} · {b.Kind}\nComando: {(b.Key.Length > 0 ? b.Key : "—")}\n{b.Where}";
-            if (b.Tech.Length > 0) detail += "\n" + TechniqueLine(b.Tech);
-            rows.Add(new PlainsHud.Row(false, b.Name, b.Name + (b.State.Length > 0 ? $"  [{b.State}]" : ""), detail, b.State != "Selada", group));
-        }
-        return rows;
+        var pages = BookPage.Build(Book, Tech, null, plains: true);
+        if (pages.Count == 0) pages.Add(new BookPage { Id = "", Name = "(vazio)", Text = "(vazio)", Kind = "fragmento", Enabled = false, Origin = "Esta jornada começou direto na Planície: o Livro não traz páginas do Vale." });
+        return pages;
     }
 
     /// <summary>The state, cost and effect in force of a prologue technique (one line for the book).</summary>
@@ -560,7 +595,7 @@ public partial class PlainsGame : Node2D, IMapSource
         if (!quiet) Hud.Toast($"+{amount} XP ({reason})");
         if (levels > 0)
         {
-            Hud.Toast($"Nível {Stats.Level}! +{levels * Data.PointsPerLevel} pontos de atributo: abra a ficha (C).");
+            Hud.Toast(Bindings.F($"Nível {Stats.Level}! +{levels * Data.PointsPerLevel} pontos de atributo: abra a ficha ([sheet])."));
             RefreshSheet();
             ReturnTechniques();
         }
@@ -598,7 +633,7 @@ public partial class PlainsGame : Node2D, IMapSource
         if (Focused == who) Focused = null;
         int xp = HarvestRules.HuntXp(Data, who.Kind, who.Level, Stats.Level);
         string name = Data.Creatures.TryGetValue(who.Kind, out var c) ? c.Name : who.Kind;
-        Hud.Toast($"{name} (Nv {who.Level}) abatido. E na carcaça: pele e carne (K esfola com Qi).");
+        Hud.Toast(Bindings.F($"{name} (Nv {who.Level}) abatido. [use] na carcaça: pele e carne ([qi] esfola com Qi)."));
         GainXp(xp, $"caça Nv {who.Level}");
     }
 
@@ -667,11 +702,11 @@ public partial class PlainsGame : Node2D, IMapSource
         var t = Hud.AnyPanelOpen ? null : NearestInteractable();
         string? text = t switch
         {
-            Pickup p => $"E · pegar {Catalog.Get(p.ItemId == "grama_sangue" ? HarvestRules.HerbItem(Data, Skills.Grade("erboristeria")) : p.ItemId).Name}",
-            Carcass c => !Blade ? "precisa de uma lâmina na mão" : $"E · tirar {PartName(c.Parts[0])}" + (c.Parts[0] != "meat" ? " · K com Qi" : ""),
-            TrackPrint => "E · examinar a pegada",
-            Campfire => "E · assar carne",
-            MeditationMat => "E · meditar (grava a jornada)",
+            Pickup p => Bindings.F("[use]") + $" · pegar {Catalog.Get(p.ItemId == "grama_sangue" ? HarvestRules.HerbItem(Data, Skills.Grade("erboristeria")) : p.ItemId).Name}",
+            Carcass c => !Blade ? "precisa de uma lâmina na mão" : Bindings.F($"[use] · tirar {PartName(c.Parts[0])}" + (c.Parts[0] != "meat" ? " · [qi] com Qi" : "")),
+            TrackPrint => Bindings.F("[use] · examinar a pegada"),
+            Campfire => Bindings.F("[use] · assar carne"),
+            MeditationMat => Bindings.F("[use] · meditar (grava a jornada)"),
             _ => null,
         };
         Vector2 screen = t == null ? Vector2.Zero : GetViewport().GetCanvasTransform() * t.GlobalPosition;
@@ -696,7 +731,7 @@ public partial class PlainsGame : Node2D, IMapSource
             case Campfire when !withQi: return Cook();
             case MeditationMat m when !withQi: return Meditate(m);
         }
-        if (withQi) Hud.Toast("K: aplique Qi ao esfolar, junto a uma carcaça.");
+        if (withQi) Hud.Toast(Bindings.F("[qi]: aplique Qi ao esfolar, junto a uma carcaça."));
         return false;
     }
 
@@ -773,6 +808,7 @@ public partial class PlainsGame : Node2D, IMapSource
         if (g >= 2) text += $" Pela marca: {(boar ? "javali" : "coelho")} de Nv {World.LevelOf(boar ? "boar" : "rabbit", t.CreatureId)}.";
         if (World.State.CarcassAt(t.CreatureId) != null) text += " (O animal já foi caçado.)";
         Hud.Toast(text);
+        AddClue("rastro-" + t.TrailId, text, t.GlobalPosition, t.GlobalPosition + t.Dir * 200);
         // the next prints shine along the trail (from Iniciante)
         if (g >= 1)
             foreach (var p in World.Objects.GetChildren().OfType<TrackPrint>().Where(p => p.TrailId == t.TrailId && p.Index > t.Index && (g >= 3 || p.Index <= t.Index + 3)))
@@ -832,7 +868,7 @@ public partial class PlainsGame : Node2D, IMapSource
             Level = Stats.Level, Xp = Stats.Xp, Points = Stats.Points, TotalXp = Stats.TotalXp, Attributes = Stats.Attributes,
             Practice = practice, PracticeKeys = keys, Crafted = _crafted.ToList(),
             Region = "planicie", Phase = "planicie", Book = Book, LossApplied = LossApplied, TechniquesReturned = TechniquesReturned,
-            Explored = Explored.Select(c => new[] { c.X, c.Y }).ToList(), Markers = MapMarkers.Select(m => new[] { m.X, m.Y }).ToList(),
+            Explored = Explored.Select(c => new[] { c.X, c.Y }).ToList(), Markers = MapMarkers.Select(m => new[] { m.X, m.Y }).ToList(), Clues = Clues.ToList(),
         };
     }
 
@@ -854,7 +890,7 @@ public partial class PlainsGame : Node2D, IMapSource
         Player.Weapon.Knife => Catalog.Get("faca_pedra").Name,
         Player.Weapon.Sword => "espada",
         _ => "vazias",
-    } + (Inventory.Count("bolsa_simples") > 0 ? " · Bolsa Simples (H)" : ""));
+    } + (Inventory.Count("bolsa_simples") > 0 ? Bindings.F(" · Bolsa Simples ([heal])") : ""));
 
     /// <summary>What using an item does now, in words (shown in the inventory).</summary>
     public string Effect(ItemDef d)
@@ -873,7 +909,7 @@ public partial class PlainsGame : Node2D, IMapSource
         foreach (var (id, count) in Inventory.Entries)
         {
             var d = Catalog.Get(id);
-            string tag = d.Equip == "knife" ? (Player.Equipped == Player.Weapon.Knife ? "  [na mão]" : "  [E: equipar]") : d.Usable ? "  [E: usar]" : "";
+            string tag = d.Equip == "knife" ? (Player.Equipped == Player.Weapon.Knife ? "  [na mão]" : Bindings.F("  [[use]: equipar]")) : d.Usable ? Bindings.F("  [[use]: usar]") : "";
             rows.Add(new PlainsHud.Row(false, id, $"{d.Name} ×{count}{tag}", (d.Description + " " + Effect(d)).Trim(), true));
         }
         bool first = true;
@@ -920,7 +956,7 @@ public partial class PlainsGame : Node2D, IMapSource
             GainXp(Data.Xp.MeatCooked, "carne assada");
         }
         else if (_crafted.Add(r.Id)) GainXp(Data.Xp.FirstCraft, $"primeira {o.Name}");
-        if (r.Output == "bolsa_simples") Hud.Toast("A bolsa vai na cintura: H usa a melhor erva sem abrir o inventário.");
+        if (r.Output == "bolsa_simples") Hud.Toast(Bindings.F("A bolsa vai na cintura: [heal] usa a melhor erva sem abrir o inventário."));
         RefreshRows();
         return true;
     }
@@ -953,7 +989,7 @@ public partial class PlainsGame : Node2D, IMapSource
     /// <summary>H: with the Bolsa Simples, uses the best herb without opening the inventory.</summary>
     public bool QuickHeal()
     {
-        if (Inventory.Count("bolsa_simples") <= 0) { Hud.Toast("Sem bolsa, as ervas ficam no fundo do inventário (I). Fabrique uma Bolsa Simples."); return false; }
+        if (Inventory.Count("bolsa_simples") <= 0) { Hud.Toast(Bindings.F("Sem bolsa, as ervas ficam no fundo do inventário ([inventory]). Fabrique uma Bolsa Simples.")); return false; }
         var best = Inventory.Entries.Select(e => Catalog.Get(e.Id)).Where(d => d.QuickSlot).OrderByDescending(d => d.RegenAmount + d.HealNow).FirstOrDefault();
         if (best == null) { Hud.Toast("A bolsa está sem ervas."); return false; }
         return UseItem(best.Id);

@@ -93,6 +93,8 @@ public sealed class SaveData
     public List<int[]> Explored { get; set; } = new();
     /// <summary>Manual map markers (world px), as [x, y].</summary>
     public List<float[]> Markers { get; set; } = new();
+    /// <summary>Clues found in the Planície, oldest first (the map's "última pista").</summary>
+    public List<SpiritOfMurin.Vale.Clue> Clues { get; set; } = new();
 }
 
 /// <summary>What reading the save found.</summary>

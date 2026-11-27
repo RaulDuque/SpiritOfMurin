@@ -10,7 +10,7 @@ public static class ValeItems
     /// <summary>Name and description of an item.</summary>
     public static (string Name, string Desc) Of(string id) => id switch
     {
-        "balsamo" => ("Bálsamo de Ervas", "Recupera 4 de Vida. Use no inventário ou com H."),
+        "balsamo" => ("Bálsamo de Ervas", "Recupera 4 de Vida. Use no inventário ou com [heal]."),
         "pedra" => ("Pedra de Qi", "Uma pedra de jade cheia de qi. Devolve todo o Qi."),
         "erva" => ("Erva Espiritual", "Uma erva que guarda qi. Fica guardada para a fornalha."),
         "prata" => ("Taéis de Prata", "A moeda das seitas. Ainda não há onde gastar."),

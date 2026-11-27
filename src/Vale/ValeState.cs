@@ -21,6 +21,19 @@ public sealed class BookEntry
     public string State { get; set; } = "";
 }
 
+/// <summary>A clue the campaign gave: what it says, where it was found and where it points (world px; empty when nowhere).</summary>
+public sealed class Clue
+{
+    /// <summary>Stable id (one clue per id).</summary>
+    public string Id { get; set; } = "";
+    /// <summary>The words, as shown.</summary>
+    public string Text { get; set; } = "";
+    /// <summary>Where it was found, [x, y].</summary>
+    public float[] At { get; set; } = System.Array.Empty<float>();
+    /// <summary>Where it points, [x, y], or empty.</summary>
+    public float[] Toward { get; set; } = System.Array.Empty<float>();
+}
+
 /// <summary>
 /// The prologue's story state, saved with the journey: what was found, opened, read and learned, who
 /// was defeated, what was picked up, the missions and the Livro de Técnicas.
@@ -63,6 +76,10 @@ public sealed class ValeState
     public List<BookEntry> Book { get; set; } = new();
     /// <summary>Manual map markers (world px), as [x, y].</summary>
     public List<float[]> Markers { get; set; } = new();
+    /// <summary>Where each mission was taken (world px), as [x, y] — the seal on the map.</summary>
+    public Dictionary<string, float[]> QuestAt { get; set; } = new();
+    /// <summary>Clues found, oldest first (the map's "última pista").</summary>
+    public List<Clue> Clues { get; set; } = new();
 
     /// <summary>The book a new journey starts with: the swordsman's own art.</summary>
     public static List<BookEntry> StartingBook() => new()

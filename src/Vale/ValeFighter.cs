@@ -1,4 +1,5 @@
 using Godot;
+using SpiritOfMurin.Game;
 using SpiritOfMurin.Characters;
 using SpiritOfMurin.Combat;
 
@@ -25,6 +26,8 @@ public interface IValeHost
     void OnFlee(ValeFighter who);
     /// <summary>A strike's slash, for drawing.</summary>
     void EnemySlash(ValeFighter who, bool big);
+    /// <summary>The fighter the player has locked on (null when none).</summary>
+    ValeFighter? Lock { get; }
 }
 
 /// <summary>
@@ -102,7 +105,34 @@ public partial class ValeFighter : CharacterBody2D
     /// <summary>Brings it back for a cutscene: full health, standing, scripted pose.</summary>
     public void ScriptedRevive(FighterArt.Pose pose) { Hp = Max; State = St.Idle; Scripted = pose; Knock = Vector2.Zero; Stagger = 0; }
 
-    private float _cd = 0.8f, _wt, _rt, _stanceT, _walk, _lunge, _time;
+    private float _cd = 0.8f, _wt, _rt, _rtTotal, _stanceT, _walk, _lunge, _time;
+
+    /// <summary>True when the next or current strike is the Senior's third, wide one.</summary>
+    public bool BigStrike => Type == Kind.Senior && AttackStance && Combo == 2;
+
+    /// <summary>
+    /// The area the strike tests against the player: the radius (reach plus the body's slack) and the
+    /// half-angle each side of the facing, in radians. The ground warning and the assist mode draw it.
+    /// </summary>
+    public (float Reach, float Half) StrikeArea()
+    {
+        var c = Host.Combat;
+        bool big = BigStrike;
+        float reach = (Type == Kind.Senior ? c.SenReach : c.DisReach) + (big ? c.StrikeBigExtra : 0) + c.StrikeSlack;
+        return (reach, Mathf.DegToRad(big ? c.StrikeHalfBig : c.StrikeHalf));
+    }
+
+    /// <summary>The guard's half-angle in radians (hits from inside it are parried while <see cref="Guarding"/>).</summary>
+    public float GuardHalfRad => Mathf.DegToRad(Host.Combat.GuardHalf);
+
+    /// <summary>True when a hit coming from <paramref name="from"/> would be parried now (the same test as <see cref="Strike"/>).</summary>
+    public bool WouldParry(Vector2 from) => Guarding && Mathf.Abs(Mathf.Wrap(Face - (from - GlobalPosition).Angle(), -Mathf.Pi, Mathf.Pi)) <= GuardHalfRad;
+
+    /// <summary>0..1 through the warning (windup), 0 when not warning.</summary>
+    public float WarnProgress => State == St.Windup ? Mathf.Clamp(T / Mathf.Max(0.01f, _wt), 0, 1) : 0;
+
+    /// <summary>0..1 of the recovery still left (1 just after the strike), 0 when not recovering.</summary>
+    public float RecoverLeft => State == St.Recover && _rtTotal > 0 ? Mathf.Clamp(1 - T / _rtTotal, 0, 1) : 0;
     private bool _struck;
     private int _rolls;
     private readonly PixelPainter _paint = new();
@@ -212,21 +242,20 @@ public partial class ValeFighter : CharacterBody2D
                 break;
             case St.Strike:
             {
-                const float dur = 0.14f;
+                float dur = c.StrikeTime;
                 Move(new Vector2(Mathf.Cos(Face), Mathf.Sin(Face)) * _lunge / dur * dt);
-                if (!_struck && T >= 0.04f)
+                if (!_struck && T >= c.StrikeLiveAt)
                 {
                     _struck = true;
-                    bool big = Type == Kind.Senior && AttackStance && Combo == 2;
-                    float arc = big ? 75 : 40, reach = (Type == Kind.Senior ? 70 : c.DisReach) + (big ? 6 : 0);
-                    Host.EnemySlash(this, big);
+                    var (reach, half) = StrikeArea();
+                    Host.EnemySlash(this, BigStrike);
                     Vector2 toP = p.GlobalPosition - GlobalPosition;
-                    if (toP.Length() <= reach + 8 && Mathf.Abs(Mathf.Wrap(toP.Angle() - Face, -Mathf.Pi, Mathf.Pi)) <= Mathf.DegToRad(arc)) Host.HitPlayer(this);
+                    if (toP.Length() <= reach && Mathf.Abs(Mathf.Wrap(toP.Angle() - Face, -Mathf.Pi, Mathf.Pi)) <= half) Host.HitPlayer(this);
                 }
                 if (T >= dur)
                 {
                     if (Type == Kind.Senior && AttackStance && Combo < 2) { Combo++; StartWindup(c.SenWindup * (Combo == 1 ? 0.7f : 1.3f)); }
-                    else { Enter(St.Recover); _rt = Type == Kind.Senior && AttackStance ? c.SenComboRecover : c.DisRecover; }
+                    else { Enter(St.Recover); _rt = Type == Kind.Senior && AttackStance ? c.SenComboRecover : c.DisRecover; _rtTotal = _rt; }
                 }
                 break;
             }
@@ -251,8 +280,7 @@ public partial class ValeFighter : CharacterBody2D
     /// </summary>
     public string Strike(Vector2 from, int dmg, bool lamina, float stagger, bool heavy)
     {
-        float a = (from - GlobalPosition).Angle();
-        if (!lamina && Guarding && Mathf.Abs(Mathf.Wrap(Face - a, -Mathf.Pi, Mathf.Pi)) <= Mathf.DegToRad(Host.Combat.GuardHalf))
+        if (!lamina && WouldParry(from))
         {
             Parries++; GuardShow = 0.7f;
             return "parried";
@@ -265,6 +293,40 @@ public partial class ValeFighter : CharacterBody2D
         else if (!HyperArmor) Enter(St.Flinch);
         if (Hp <= 0) { Hp = 0; Enter(St.Dead); return "killed"; }
         return flank ? "flank" : "hit";
+    }
+
+    // the assist mode: the same numbers as the tests, three phases told apart by shape
+    private void DrawAssist()
+    {
+        Vector2 o = Vector2.Zero;
+        if (Guarding)
+        {
+            float pulse = 0.5f + 0.5f * Mathf.Sin(_time * 6);
+            Assist.Sector(this, o, Face, GuardHalfRad, 34, new Color(Assist.GuardC, 0.10f));
+            Assist.SectorEdge(this, o, Face, GuardHalfRad, 34, new Color(Assist.GuardC, 0.85f), 2);
+            // the flank: the rest of the circle, dashed jade; brighter (and thicker) while it is fooled
+            float open = Fooled > 0 ? 0.95f : 0.45f + 0.15f * pulse;
+            Assist.Arc(this, o, Face + Mathf.Pi, Mathf.Pi - GuardHalfRad, 34, new Color(Assist.OpenC, open), Fooled > 0 ? 2 : 1, 4);
+        }
+        else if (Alive) Assist.Arc(this, o, 0, Mathf.Pi, 34, new Color(Assist.OpenC, 0.9f), 2, 4); // no guard at all: open everywhere
+        var (reach, half) = StrikeArea();
+        if (State == St.Windup)
+        {
+            // aviso: dashed outline of the whole area, a fill growing from the body
+            Assist.SectorEdge(this, o, Face, half, reach, new Color(Assist.ThreatC, 0.9f), 1, 4);
+            Assist.Sector(this, o, Face, half, Mathf.Max(1, reach * WarnProgress), new Color(Assist.ThreatC, 0.22f));
+        }
+        else if (State == St.Strike)
+        {
+            // golpe ativo: solid, thick edge
+            Assist.Sector(this, o, Face, half, reach, new Color(Assist.ThreatC, 0.45f));
+            Assist.SectorEdge(this, o, Face, half, reach, Assist.ThreatC, 3);
+        }
+        else if (State == St.Recover)
+        {
+            // recuperação: a thin hollow outline that shrinks — the opening
+            Assist.SectorEdge(this, o, Face, half, reach * (0.35f + 0.65f * RecoverLeft), new Color(Assist.ThreatC, 0.55f), 1, 2);
+        }
     }
 
     /// <summary>Kills it outright (a saved defeat).</summary>
@@ -290,17 +352,28 @@ public partial class ValeFighter : CharacterBody2D
             FighterArt.Draw(this, _paint, look, Face, sp, _time, _walk, false, AuraPower > 0.05f, Flash > 0, Type == Kind.Senior);
             return;
         }
-        // the telegraph wedge on the ground
+        // the telegraph wedge on the ground: the strike's real area (StrikeArea), filling as the strike nears
         if (State == St.Windup)
         {
-            float k = Mathf.Clamp(T / Mathf.Max(0.01f, _wt), 0, 1);
+            float k = WarnProgress;
+            var (reach, half) = StrikeArea();
             var col = new Color("#c8502a", 0.18f + 0.25f * k);
-            float reach = Type == Kind.Senior ? 70 : Host.Combat.DisReach;
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 11; i++)
             {
-                float u = i / 9f, ang = Face + Mathf.DegToRad(-30 + 60 * u);
-                for (float r = 14; r < reach * k; r += 6) DrawRect(new Rect2(Mathf.Cos(ang) * r - 1, Mathf.Sin(ang) * r * 0.7f - 1, 2, 2), col);
+                float u = i / 10f, ang = Face - half + 2 * half * u;
+                for (float r = 14; r < reach * k; r += 6) DrawRect(new Rect2(Mathf.Cos(ang) * r - 1, Mathf.Sin(ang) * r - 1, 2, 2), col);
             }
+        }
+        if (Assist.Areas && Type != Kind.Statue) DrawAssist();
+        // the guard, as in the prototype: an arc in front while it is the locked target (or just parried);
+        // once the side step is known, the rest of the body shows as an open dashed arc while it is fooled
+        bool locked = Host.Lock == this;
+        if (Guarding && (locked || GuardShow > 0) && !(Assist.Areas && Type != Kind.Statue))
+        {
+            float lit = Mathf.Max(0, GuardShow);
+            Assist.Arc(this, new Vector2(0, -2), Face, GuardHalfRad, 30, new Color("#ece5d0", 0.22f + lit * 0.8f), lit > 0 ? 2 : 1);
+            if (locked && (Fooled > 0 || Type == Kind.Statue) && Host.Story.LearnedSide)
+                Assist.Arc(this, new Vector2(0, -2), Face + Mathf.Pi, Mathf.Pi - GuardHalfRad - 0.08f, 30, Type == Kind.Statue ? new Color("#6fd8d2", 0.35f) : Assist.OpenC, 1, 3);
         }
         DrawRect(new Rect2(-11, -2, 22, 4), new Color(8 / 255f, 10 / 255f, 8 / 255f, 0.38f));
         var pose = State switch

@@ -56,6 +56,26 @@ public partial class Player : CharacterBody2D
     /// <summary>Half angle, degrees, of the blade's arc for the current action (the thrust is narrow).</summary>
     public float BladeArcDegrees => _act is { Kind: ActionKind.Thrust } ? 20f : Tuning.HitArcDegrees;
 
+    /// <summary>Pixels a region adds to a cut's reach when it tests a hit (the prologue tests a little wider); the assist mode draws with it.</summary>
+    public float CutSlack { get; set; }
+    /// <summary>Pixels a region adds to a thrust's reach when it tests a hit.</summary>
+    public float ThrustSlack { get; set; }
+
+    /// <summary>
+    /// The blade's area now, as the hit test sees it: (origin, facing, radius, half-angle in degrees, phase)
+    /// with phase 0 = startup (warning), 1 = live, 2 = recovery; null when not cutting or thrusting.
+    /// </summary>
+    public (Vector2 Dir, float Radius, float HalfDeg, int Phase, float Progress)? BladeArea()
+    {
+        if (_act is not { Kind: ActionKind.Cut or ActionKind.Thrust } a) return null;
+        bool knife = Equipped == Weapon.Knife, thrust = a.Kind == ActionKind.Thrust;
+        float reach = thrust ? a.Reach : knife ? Tuning.KnifeReach : Tuning.SwordReach;
+        float r = reach + (thrust ? ThrustSlack : CutSlack);
+        int phase = a.T < a.Startup ? 0 : a.T < a.Startup + a.Active ? 1 : 2;
+        float prog = phase == 0 ? a.T / Mathf.Max(0.001f, a.Startup) : phase == 2 ? 1 - (a.T - a.Startup - a.Active) / Mathf.Max(0.001f, a.Recovery) : 1;
+        return (Facing, r, thrust ? 20f : Tuning.HitArcDegrees, phase, Mathf.Clamp(prog, 0, 1));
+    }
+
     /// <summary>True during the third cut of the chain (heavier hit).</summary>
     public bool HeavyCut => _act is { Kind: ActionKind.Cut, N: 3 };
 
@@ -586,6 +606,14 @@ public partial class Player : CharacterBody2D
         // ground shadow
         var sh = new Color(8 / 255f, 10 / 255f, 8 / 255f, 0.38f);
         DrawRect(new Rect2(-11, -2, 22, 4), sh); DrawRect(new Rect2(-8, -3, 16, 6), sh);
+        if (Game.Assist.Areas && BladeArea() is { } ba)
+        {
+            float half = Mathf.DegToRad(ba.HalfDeg), ang = ba.Dir.Angle();
+            var c = Game.Assist.BladeC;
+            if (ba.Phase == 0) { Game.Assist.SectorEdge(this, Vector2.Zero, ang, half, ba.Radius, new Color(c, 0.8f), 1, 4); Game.Assist.Sector(this, Vector2.Zero, ang, half, Mathf.Max(1, ba.Radius * ba.Progress), new Color(c, 0.15f)); }
+            else if (ba.Phase == 1) { Game.Assist.Sector(this, Vector2.Zero, ang, half, ba.Radius, new Color(c, 0.4f)); Game.Assist.SectorEdge(this, Vector2.Zero, ang, half, ba.Radius, c, 3); }
+            else Game.Assist.SectorEdge(this, Vector2.Zero, ang, half, ba.Radius * (0.35f + 0.65f * ba.Progress), new Color(c, 0.45f), 1, 2);
+        }
         if (Lying >= 0.99f) { DrawLying(); return; }
         if (Lying > 0) { DrawKneeling(); return; }
         if (TumbleAngle != 0 || Airborne > 0)

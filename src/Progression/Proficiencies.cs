@@ -69,7 +69,7 @@ public sealed class Proficiencies
     public static string Benefit(string skill, int grade) => (skill, Math.Clamp(grade, 0, 3)) switch
     {
         ("esfolar", 0) => "Bruto: a pele sai rasgada (só serve para tiras).",
-        ("esfolar", 1) => "Iniciante: pele comum. Com Qi (K na carcaça), preserva um grau acima.",
+        ("esfolar", 1) => "Iniciante: pele comum. Com Qi ([qi] na carcaça), preserva um grau acima.",
         ("esfolar", 2) => "Adepto: couro intacto (Pele Fina, Couro Grosso).",
         ("esfolar", _) => "Mestre: extração espiritual com Qi (Presa Espiritual do javali).",
         ("preparo", 0) => "Bruto: uma carne por caça; a carne assada recupera o vigor base.",
