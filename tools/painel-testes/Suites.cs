@@ -59,6 +59,13 @@ public static class Suites
             l.Add(new("Tela e mapa", ph, disp, new[] { $"--phase={ph}", "--prefs=user://teste_tela_prefs.json" }, WindowOnly: ph is "measure" or "click", About: about));
         l.Add(new("Controles", "Teclado e mouse", "res://tests/integration/ControlsCheck.tscn", Array.Empty<string>(), About: "Andar, corte, passo, mouse."));
         foreach (int s in seeds)
+            foreach (var (ph, about) in new[] {
+                ("work", "Entrega 5: fabricar machado e picareta; cortar pinheiro (entalhes, queda, toco); recusa da faca; rocha com veio (rachaduras, cascalho) e pedra sem veio; bambu cedendo à faca; sair do bloco e voltar; machado lapidado; meditar."),
+                ("resume", "Entrega 5: Continuar traz toco, pinheiro meio cortado, rocha quebrada e inventário, sem materiais em dobro."),
+                ("bush", "Entrega 5: coelho e personagem atravessando o arbusto (folhas inclinam e voltam), também na rajada.") })
+                l.Add(new("Recursos (Entrega 5)", $"{ph}, semente {s}", "res://tests/integration/RecursosCheck.tscn", new[] { $"--phase={ph}", $"--seed={s}", "--prefs=user://teste_rec5_prefs.json" }, About: about));
+        l.Add(new("Recursos (Entrega 5)", "save antigo", "res://tests/integration/RecursosCheck.tscn", new[] { "--phase=oldsave", "--prefs=user://teste_rec5_prefs.json" }, About: "Jornada de antes da Entrega 5: tudo em pé, faca na mão corta bambu."));
+        foreach (int s in seeds)
         {
             l.Add(new("Planície", $"semente {s}", "res://tests/integration/PlainsCheck.tscn", new[] { $"--seed={s}" }, About: "Mundo da semente, faca, coelho, javali, ervas."));
             l.Add(new("Jornada", $"nova, semente {s}", "res://tests/integration/JourneyCheck.tscn", new[] { "--phase=new", $"--seed={s}" }, About: "Jornada nova até meditar."));

@@ -34,6 +34,13 @@ foreach ($phase in 'aim', 'charge', 'charge-plains', 'reinforce', 'bag', 'money'
 foreach ($phase in 'plains', 'vale', 'oldsave') {
   & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/AtributosCheck.tscn -- "--phase=$phase" '--prefs=user://teste_atr_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
 }
+# pedido 14, campaign delivery 5: trees, rocks, bamboo, bushes (both seeds, then a journey from before)
+foreach ($sd in 20261126, 777) {
+  foreach ($phase in 'work', 'resume', 'bush') {
+    & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/RecursosCheck.tscn -- "--phase=$phase" "--seed=$sd" '--prefs=user://teste_rec5_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+  }
+}
+& $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/RecursosCheck.tscn -- '--phase=oldsave' '--prefs=user://teste_rec5_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
 if ($SoPrologo) { if ($fail -eq 0) { Write-Host "Prologo: todos os testes passaram." } else { Write-Host "$fail execucao(oes) com falha." }; exit $fail }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/unit/UnitRunner.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ControlsCheck.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
