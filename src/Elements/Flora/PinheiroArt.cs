@@ -70,7 +70,7 @@ public sealed class PinheiroArt : ElementArt
             for (int i = 0; i < tiers; i++)
             {
                 int sway = Mathf.RoundToInt(Mathf.Sin(p.Time * 1.2f + hv) * 0.6f + windPush * (i + 1) / tiers + lean * i);
-                float w = (17 - i * 3 + hv % 3) * scale, top = by - extra - (24 + i * 11) * scale; int rows = (int)(15 * scale);
+                float w = (17 - i * 3 + hv % 3) * scale, top = Mathf.Round(by - extra - (24 + i * 11) * scale); int rows = (int)(15 * scale); // top rounded once (no doubled rows at ,5)
                 for (int r = 0; r < rows; r++)
                 {
                     float rw = Mathf.Max(1, Mathf.Round(w * (r + 1) / rows)), xx = ox - rw + (i > 0 ? sway : 0), yy = top + r;

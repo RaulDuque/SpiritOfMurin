@@ -46,7 +46,7 @@ public sealed class RochaArt : ElementArt
             for (int r = 0; r < ht; r++)
             {
                 float k = (r - ht * 0.55f) / (ht * 0.55f), w = Mathf.Round(hw * Mathf.Sqrt(Mathf.Max(0, 1 - k * k * (k < 0 ? 1 : 0.35f))));
-                float yy = by - ht + r;
+                float yy = Mathf.Round(by - ht) + r; // round the top once: rounding each row put two rows on one pixel when ht ended in ,5 (striped slabs)
                 if (pass == 0) { Fill(c, -w - 1, yy - 1, w * 2 + 2, 3, Outline); continue; }
                 Fill(c, -w, yy, w * 2, 1, r < ht * 0.25f ? Greys[0] : r < ht * 0.65f ? Greys[1] : Greys[2]);
                 Fill(c, w - 3, yy, 3, 1, r < ht * 0.65f ? Greys[2] : Greys[3]);
@@ -63,8 +63,9 @@ public sealed class RochaArt : ElementArt
             for (int r = 0; r < ht; r++)
             {
                 float k = (r - ht * 0.5f) / (ht * 0.5f), w = Mathf.Round(hw * Mathf.Sqrt(Mathf.Max(0, 1 - k * k * 0.6f)));
-                if (pass == 0) { Fill(c, ox - w - 1, by - ht + r - 1, w * 2 + 2, 3, Outline); continue; }
-                Fill(c, ox - w, by - ht + r, w * 2, 1, r < ht * 0.3f ? Greys[0] : r < ht * 0.7f ? Greys[1] : Greys[2]);
+                float yy = Mathf.Round(by - ht) + r;
+                if (pass == 0) { Fill(c, ox - w - 1, yy - 1, w * 2 + 2, 3, Outline); continue; }
+                Fill(c, ox - w, yy, w * 2, 1, r < ht * 0.3f ? Greys[0] : r < ht * 0.7f ? Greys[1] : Greys[2]);
             }
     }
 
