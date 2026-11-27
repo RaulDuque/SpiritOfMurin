@@ -1,0 +1,18 @@
+{
+  "id": "rocha_ferro",
+  "name": "Rocha enferrujada",
+  "family": "rocha",
+  "art": "rocha",
+  "habitats": { "mud": 0.6, "grass": 0.3, "bank": 0.2 },
+  "base_half_width": 12, "base_height": 13,
+  "depleted_half_width": 0, "depleted_height": 0,
+  "toughness": 7,
+  "tools": ["picareta"],
+  "refusal": "O ferro deixa a rocha dura demais para isso: precisa de uma picareta.",
+  "leaves": "cascalho",
+  "veined": true,
+  "drops": [ { "item": "pedra_bruta", "min": 1, "max": 2 }, { "item": "minerio_ferro", "min": 1, "max": 2 } ],
+  "bonus": [],
+  "xp": 4,
+  "look": { "vein": "#c0642e", "rust": "#8a4a2a" }
+}

@@ -95,6 +95,8 @@ public static class ItemIcons
                 O(-5, -4, 10, 8); R(-5, -2, 10, 6, "#8a877a"); R(-3, -4, 6, 2, "#a3a091"); R(-5, 2, 10, 2, "#5d5b51"); R(2, -1, 2, 1, "#3b3a34"); break;
             case "quartzo": // a pale crystal
                 O(-3, -6, 6, 11); R(-2, -6, 4, 2, "#f4fbff"); R(-3, -4, 6, 7, "#cfe6ee"); R(1, -4, 2, 7, "#9fc4d2"); R(-2, 3, 4, 2, "#8a877a"); R(-1, -3, 1, 3, "#ffffff"); break;
+            case "minerio_ferro": // a heavy dark lump with rust stains (/create rocha, pedido 14)
+                O(-5, -4, 10, 8); R(-5, -2, 10, 6, "#4a4642"); R(-3, -4, 6, 2, "#5e5852"); R(-2, -1, 3, 2, "#b5562a"); R(2, 1, 2, 2, "#8a4a2a"); R(-4, 2, 2, 1, "#c0642e"); break;
             case "vara_bambu": // a straight green rod with its rings
                 O(-7, -1, 14, 2); R(-7, -1, 14, 2, "#5f8f4a"); R(-7, -1, 14, 1, "#7fae5d"); R(-3, -1, 1, 2, "#3b6332"); R(2, -1, 1, 2, "#3b6332"); R(6, -1, 1, 2, "#d8d29a"); break;
             case "casca_salgueiro": // a curled strip of grey bark

@@ -8,7 +8,7 @@ namespace SpiritOfMurin.Elements;
 /// The pickaxe opens <b>cracks</b> that grow with the work; used up, it leaves rubble.
 /// <b>Where to change it:</b> the shapes in <see cref="Boulder"/>, the greys in <see cref="Greys"/>, the vein in
 /// <see cref="Vein"/> (colour <c>look.vein</c> in the data), the cracks in <see cref="Cracks"/>, the rubble in
-/// <see cref="Rubble"/>. Data: <c>assets/data/elements/rochas/*.json</c>.
+/// <see cref="Rubble"/>, the rust stains in <see cref="Rust"/> (<c>look.rust</c>). Data: <c>assets/data/elements/rochas/*.json</c>.
 /// </summary>
 public sealed class RochaArt : ElementArt
 {
@@ -30,6 +30,7 @@ public sealed class RochaArt : ElementArt
             return;
         }
         var (top, hw) = Boulder(c, hv, 1);
+        if (def != null && def.Look.ContainsKey("rust")) Rust(c, hv, top, hw, def.LookC("rust", "#8a4a2a")); // stains of a rusty rock (look.rust)
         if (def is { Veined: true }) Vein(c, hv, top, hw, def.LookC("vein", "#e6efe8"), p.Time);
         if (p.Progress > 0) Cracks(c, hv, top, hw, p.Progress);
         if (p.Flash > 0) Fill(c, -hw, top, hw * 2, -top - 2, new Color(1, 1, 1, 0.35f * p.Flash));
@@ -83,6 +84,16 @@ public sealed class RochaArt : ElementArt
         {
             float on = Mathf.Sin(time * 2.2f + g * 2.1f + hv);
             if (on > 0.55f) Fill(c, -hw * 0.5f + g * hw * 0.5f, y0 + 2 + g, 1, 1, Colors.White);
+        }
+    }
+
+    /// <summary>Rust stains on the face (<c>look.rust</c> in the data): a few blotches, lower and darker than the vein.</summary>
+    private static void Rust(CanvasItem c, int hv, float top, float hw, Color rust)
+    {
+        for (int k = 0; k < 4; k++)
+        {
+            float x = -hw * 0.6f + (k * 7 + hv) % (int)(hw * 1.2f), y = top + 10 + (k * 5 + hv) % 9;
+            Fill(c, x, y, 3, 2, rust); Fill(c, x + 1, y + 2, 2, 1, new Color(rust, 0.7f));
         }
     }
 
