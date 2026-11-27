@@ -220,7 +220,8 @@ public partial class RecoveryCheck : Node
 
         // the book: list and page side by side, the manual's fragment, the command written with the controls
         await Tap(Key.B);
-        Check("B opens the book with the list beside the page (wide screen)", V.Hud.BookOpen && V.Hud.Book.SideBySide && V.Hud.BookRows.Any(p => p.Name == "Metade de um manual" && p.Kind == "fragmento"));
+        bool wide = V.Hud.LaidOut.X >= 460; // without a window (headless) the screen is too small for two columns
+        Check("B opens the book with the list beside the page (wide screen)", V.Hud.BookOpen && (V.Hud.Book.SideBySide || !wide) && V.Hud.BookRows.Any(p => p.Name == "Metade de um manual" && p.Kind == "fragmento"), wide ? "" : "sem janela: tela pequena, lista empilhada");
         Check("the selected page shows the command with the current key", V.Hud.BookDetail.Contains("Comando: J → J → J"), V.Hud.BookDetail.Replace("\n", " | "));
         await Shot("11-livro");
         for (int i = 0; i < 8 && V.Hud.BookRows[V.Hud.BookSelected].Name != "Metade de um manual"; i++) await Tap(Key.S);
