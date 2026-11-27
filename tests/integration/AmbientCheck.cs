@@ -193,10 +193,15 @@ public partial class AmbientCheck : Node
         int fringe = _g.World.GetChildren().SelectMany(n => n.GetChildren()).OfType<ChunkGround>().Sum(c => c.FringePixels);
         Check("terrain borders are blended (dithered fringes), not hard 32 px edges", fringe > 500, $"{fringe} pixels de transição");
         // variety: pines and rocks of different shapes
-        var obs = _g.World.Objects.GetChildren().OfType<Obstacle>().ToList();
-        int Hv(Obstacle o) => (int)((((uint)o.Variation * 2654435761u) >> 7) % 97u);
-        int pineShapes = obs.Where(o => o.Type == Obstacle.Kind.Pine).Select(o => Hv(o) % 3).Distinct().Count();
-        int rockShapes = obs.Where(o => o.Type == Obstacle.Kind.Boulder).Select(o => Hv(o) % 3).Distinct().Count();
+        // the decor of the clearing (Obstacle) and the world's elements (pedido 14: pines and rocks are WorldElements)
+        var kids = _g.World.Objects.GetChildren();
+        var pines = kids.OfType<Obstacle>().Where(o => o.Type == Obstacle.Kind.Pine).Select(o => o.Variation)
+            .Concat(kids.OfType<SpiritOfMurin.Elements.WorldElement>().Where(e => e.Def.Art == "pinheiro").Select(e => e.Variation));
+        var rocks = kids.OfType<Obstacle>().Where(o => o.Type == Obstacle.Kind.Boulder).Select(o => o.Variation)
+            .Concat(kids.OfType<SpiritOfMurin.Elements.WorldElement>().Where(e => e.Def.Art == "rocha").Select(e => e.Variation));
+        int Hv(int variation) => SpiritOfMurin.Elements.ElementArt.Hv(variation);
+        int pineShapes = pines.Select(v => Hv(v) % 3).Distinct().Count();
+        int rockShapes = rocks.Select(v => Hv(v) % 3).Distinct().Count();
         Check("pines of 3–5 tiers and rocks round, flat or in groups (at least two shapes each)", pineShapes >= 2 && rockShapes >= 2, $"pinheiros {pineShapes} formas, pedras {rockShapes} formas");
         // the layers: objects y-sorted, the grass under them, the birds and the leaves over
         var objects = _g.World.Objects;
