@@ -28,6 +28,8 @@ public partial class PlainsWorld : Node2D
 
     /// <summary>The player animals react to.</summary>
     public Player? Player { get; set; }
+    /// <summary>The ambience numbers (tall grass per chunk).</summary>
+    public AmbientSettings Ambient { get; set; } = new();
 
     /// <summary>Rabbit tuning.</summary>
     public RabbitTuning RabbitTuning { get; set; } = new();
@@ -106,6 +108,9 @@ public partial class PlainsWorld : Node2D
         var ground = new ChunkGround { Data = data, Gen = Gen, Position = new Vector2(k.X * px, k.Y * px), Name = $"Ground_{k.X}_{k.Y}" };
         _groundLayer.AddChild(ground);
         ch.Nodes.Add(ground);
+        var grass = new GrassSway { Data = data, Gen = Gen, Settings = Ambient, Player = Player, Position = ground.Position, Name = $"Grass_{k.X}_{k.Y}" };
+        _groundLayer.AddChild(grass);
+        ch.Nodes.Add(grass);
         var water = BuildWater(data, k);
         if (water != null) { AddChild(water); ch.Nodes.Add(water); }
         foreach (var f in data.Features)

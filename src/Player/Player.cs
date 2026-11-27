@@ -551,7 +551,7 @@ public partial class Player : CharacterBody2D
         if (_charge == ChargeState.Charging) { Velocity = Vector2.Zero; }
         else if (_act == null)
         {
-            Velocity = move * Tuning.MoveSpeed * MoveSpeedMultiplier * (sneaking ? Tuning.SneakFactor : 1f);
+            Velocity = move * Tuning.MoveSpeed * MoveSpeedMultiplier * TerrainSpeed * (sneaking ? Tuning.SneakFactor : 1f);
             if (move != Vector2.Zero) { Facing = move.Normalized(); _moving = true; _walk += dt * (sneaking ? 4.5f : 8f); }
         }
         else if (_act.Kind is ActionKind.Step or ActionKind.Recoil) Velocity = _act.StepVelocity;
@@ -618,6 +618,9 @@ public partial class Player : CharacterBody2D
 
     private string _lastRefusal = "";
     private float _lastRefusalAt = -10;
+
+    /// <summary>Speed factor of the ground under the feet (shallow water slows; set by the region every frame).</summary>
+    public float TerrainSpeed { get; set; } = 1f;
 
     /// <summary>When true the long step needs Shift held (the Planície: L + direction stays the plain step).</summary>
     public bool DashNeedsShift { get; set; }

@@ -345,6 +345,44 @@ public partial class PlainsHud : CanvasLayer
     }
 
     private int _reinforce;
+    private Label? _clock;
+    private float _hour = 8;
+
+    /// <summary>Shows the time under the minimap: a small sun or moon on its arc, the part of the day and the hour.</summary>
+    public void SetTime(string phase, string clock, float hour)
+    {
+        if (_clock == null)
+        {
+            _clock = MakeLabel(8, Text); _clock.HorizontalAlignment = HorizontalAlignment.Right; _clock.Size = new Vector2(150, 12);
+            _root.AddChild(_clock);
+            _clockDial = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, Size = new Vector2(30, 12) };
+            _clockDial.Draw += DrawDial; _root.AddChild(_clockDial);
+        }
+        _hour = hour;
+        string t = $"{phase} · {clock}";
+        if (_clock.Text != t) { _clock.Text = t; _clockDial!.QueueRedraw(); }
+        _clock.Position = new Vector2(MiniMap.Position.X + MiniMap.Size.X - 150, MiniMap.Position.Y + MiniMap.Size.Y + 1);
+        _clockDial!.Position = new Vector2(MiniMap.Position.X, MiniMap.Position.Y + MiniMap.Size.Y + 1);
+        _clock.Visible = _clockDial.Visible = MiniMap.Visible;
+    }
+
+    private Control? _clockDial;
+
+    /// <summary>The time line (checks).</summary>
+    public string TimeText => _clock?.Text ?? "";
+
+    // a half dial: the sun by day, the moon by night, moving along it
+    private void DrawDial()
+    {
+        var c = _clockDial!;
+        c.DrawArc(new Vector2(15, 12), 11, Mathf.Pi, Mathf.Tau, 12, new Color(Dim, 0.6f), 1);
+        bool day = _hour >= 6 && _hour < 19.5f;
+        float k = day ? (_hour - 6) / 13.5f : ((_hour + 24 - 19.5f) % 24) / 10.5f;
+        float a = Mathf.Pi + Mathf.Pi * Mathf.Clamp(k, 0, 1);
+        Vector2 p = new Vector2(15, 12) + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 11;
+        c.DrawCircle(p, 3, day ? new Color("#f4d27a") : new Color("#dfe6ff"));
+        if (!day) c.DrawCircle(p + new Vector2(1.5f, -1), 2.2f, new Color(0.07f, 0.075f, 0.06f));
+    }
 
     /// <summary>Shows the Reforço de Qi charges left next to the Qi line (0 hides them).</summary>
     public void SetReinforce(int charges)

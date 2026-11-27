@@ -93,6 +93,8 @@ public sealed class SaveData
     public List<int[]> Explored { get; set; } = new();
     /// <summary>Manual map markers (world px), as [x, y].</summary>
     public List<float[]> Markers { get; set; } = new();
+    /// <summary>The hour of the day (0-24) when the journey was written; -1 (older journeys) starts at the data's start hour.</summary>
+    public float Hour { get; set; } = -1;
     /// <summary>The journey's money (Moedas). Journeys saved before it load with 0.</summary>
     public int Coins { get; set; }
     /// <summary>Clues found in the Planície, oldest first (the map's "última pista").</summary>

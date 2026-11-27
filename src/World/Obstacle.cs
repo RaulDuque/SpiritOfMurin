@@ -59,25 +59,45 @@ public partial class Obstacle : StaticBody2D
         float by = -3;
         Fill(-15, by - 3, 30, 6, Shadow); Fill(-11, by - 5, 22, 9, Shadow);
         Fill(-3, by - 12, 6, 13, Outline); Fill(-2, by - 12, 4, 12, new Color("#5a3e28")); Fill(1, by - 12, 1, 12, new Color("#3e2a1a"));
-        int sway = Mathf.RoundToInt(Mathf.Sin(_time * 1.2f + hv));
+        // variety by the seed: 3 to 5 tiers, three greens, sometimes a smaller twin beside it
+        int tiers = 3 + hv % 3;
+        var (g0, g1, g2, g3) = (hv / 3 % 3) switch
+        {
+            0 => (new Color("#2f5a3a"), new Color("#23462d"), new Color("#4c7c4a"), new Color("#1d3a25")),
+            1 => (new Color("#365f34"), new Color("#284a28"), new Color("#5a8a48"), new Color("#1f3a20")),
+            _ => (new Color("#2a5440"), new Color("#1f4232"), new Color("#447a5a"), new Color("#18342a")),
+        };
+        if (hv % 7 == 0) DrawPineAt(-14, by + 2, 3, 0.7f, g0, g1, g2, g3, hv + 3);
+        DrawPineAt(0, by, tiers, 1f, g0, g1, g2, g3, hv);
+    }
+
+    // one pine: the trunk and its tiers, the upper ones bending with the wind (the gust running over the ground)
+    private void DrawPineAt(float ox, float by, int tiers, float scale, Color g0, Color g1, Color g2, Color g3, int hv)
+    {
+        float windPush = Mathf.Clamp(Plains.Wind.At(GlobalPosition) * Plains.Wind.Dir.X, -1.5f, 2.5f);
+        Fill(ox - 3, by - 12, 6, 13, Outline); Fill(ox - 2, by - 12, 4, 12, new Color("#5a3e28")); Fill(ox + 1, by - 12, 1, 12, new Color("#3e2a1a"));
         for (int pass = 0; pass < 2; pass++)
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < tiers; i++)
             {
-                float w = 17 - i * 3 + hv % 3, top = by - 24 - i * 11; const int rows = 15;
+                int sway = Mathf.RoundToInt(Mathf.Sin(_time * 1.2f + hv) * 0.6f + windPush * (i + 1) / tiers);
+                float w = (17 - i * 3 + hv % 3) * scale, top = by - (24 + i * 11) * scale; int rows = (int)(15 * scale);
                 for (int r = 0; r < rows; r++)
                 {
-                    float rw = Mathf.Max(1, Mathf.Round(w * (r + 1) / rows)), xx = -rw + (i > 1 ? sway : 0), yy = top + r;
+                    float rw = Mathf.Max(1, Mathf.Round(w * (r + 1) / rows)), xx = ox - rw + (i > 0 ? sway : 0), yy = top + r;
                     if (pass == 0) { Fill(xx - 1, yy - 1, rw * 2 + 2, 3, Outline); continue; }
-                    Fill(xx, yy, rw * 2, 1, new Color("#2f5a3a")); Fill(xx + rw, yy, rw, 1, new Color("#23462d"));
-                    Fill(xx + 1, yy, Mathf.Max(1, Mathf.Floor(rw / 3)), 1, new Color("#4c7c4a"));
-                    if (r == rows - 1) Fill(xx, yy, rw * 2, 1, new Color("#1d3a25"));
+                    Fill(xx, yy, rw * 2, 1, g0); Fill(xx + rw, yy, rw, 1, g1);
+                    Fill(xx + 1, yy, Mathf.Max(1, Mathf.Floor(rw / 3)), 1, g2);
+                    if (r == rows - 1) Fill(xx, yy, rw * 2, 1, g3);
                 }
             }
     }
 
     private void DrawBoulder(int hv)
     {
-        float by = -2, ht = 24 + hv % 6, hw = 13 + hv % 4;
+        // variety: a round boulder, a flat slab, or a rock with smaller stones gathered around it
+        int shape = hv % 3;
+        if (shape == 2) { DrawRock(-14, 1, 8, 6, hv + 1); DrawRock(13, 2, 6, 5, hv + 2); }
+        float by = -2, ht = (24 + hv % 6) * (shape == 1 ? 0.62f : shape == 2 ? 0.85f : 1f), hw = (13 + hv % 4) * (shape == 1 ? 1.3f : 1f);
         Color hi = new("#a3a091"), top = new("#8a877a"), face = new("#5d5b51"), dark = new("#3b3a34");
         Fill(-hw - 2, by - 3, hw * 2 + 4, 5, new Color(8 / 255f, 10 / 255f, 8 / 255f, 0.35f));
         for (int pass = 0; pass < 2; pass++)
@@ -90,6 +110,20 @@ public partial class Obstacle : StaticBody2D
                 Fill(w - 3, yy, 3, 1, r < ht * 0.65f ? face : dark);
             }
         Fill(-4 + hv % 5, by - ht + 8, 1, 6, dark); Fill(-3 + hv % 5, by - ht + 13, 4, 1, dark); Fill(-7, by - ht + 4, 5, 1, hi);
+    }
+
+    // a small stone of a group
+    private void DrawRock(float ox, float by, float hw, float ht, int hv)
+    {
+        Color hi = new("#a3a091"), top = new("#8a877a"), face = new("#5d5b51");
+        Fill(ox - hw - 1, by - 2, hw * 2 + 2, 3, new Color(8 / 255f, 10 / 255f, 8 / 255f, 0.3f));
+        for (int pass = 0; pass < 2; pass++)
+            for (int r = 0; r < ht; r++)
+            {
+                float k = (r - ht * 0.5f) / (ht * 0.5f), w = Mathf.Round(hw * Mathf.Sqrt(Mathf.Max(0, 1 - k * k * 0.6f)));
+                if (pass == 0) { Fill(ox - w - 1, by - ht + r - 1, w * 2 + 2, 3, Outline); continue; }
+                Fill(ox - w, by - ht + r, w * 2, 1, r < ht * 0.3f ? hi : r < ht * 0.7f ? top : face);
+            }
     }
 
     private void DrawBamboo(int hv)
@@ -111,7 +145,7 @@ public partial class Obstacle : StaticBody2D
     {
         Color dark = new("#2f4a2c"), mid = new("#456a3a"), hi = new("#5f8a4a"), berry = new("#7a3a32");
         Fill(-13, -4, 26, 5, Shadow);
-        int sway = Mathf.RoundToInt(Mathf.Sin(_time * 1.1f + hv) * 0.6f);
+        int sway = Mathf.RoundToInt(Mathf.Sin(_time * 1.1f + hv) * 0.6f + Mathf.Clamp(Plains.Wind.At(GlobalPosition) * Plains.Wind.Dir.X, -1, 1.5f));
         // three overlapping leafy lobes, outline first
         (float X, float Y, float R)[] lobes = { (-6, -9, 7), (6, -9, 7), (0 + sway, -14, 8) };
         for (int pass = 0; pass < 2; pass++)
@@ -123,5 +157,6 @@ public partial class Obstacle : StaticBody2D
                     Fill(lx - w, ly + yy, w * 2, 1, yy < -r / 3 ? hi : yy < r / 3 ? mid : dark);
                 }
         if (hv % 3 == 0) { Fill(-3, -10, 2, 2, berry); Fill(4, -13, 2, 2, berry); }
+        else if (hv % 4 == 1) { Fill(-5, -12, 1, 1, new Color("#efe4c8")); Fill(2, -16, 1, 1, new Color("#efe4c8")); Fill(6, -8, 1, 1, new Color("#efe4c8")); } // small white flowers
     }
 }

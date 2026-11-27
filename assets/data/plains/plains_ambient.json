@@ -1,0 +1,36 @@
+{
+  "_doc": {
+    "about": "Ambientação da Planície (pedido 13 = entrega 4 da campanha): dia e noite, luz da fogueira, vento, folhas, pássaros, água rasa. Lido por src/Plains/Ambient.cs.",
+    "day_seconds": "segundos reais de um dia inteiro (24 h do jogo)",
+    "start_hour": "hora em que uma jornada nova e o despertar começam",
+    "palette": "cor que tinge o mundo em cada hora (interpolada entre as horas da lista); a noite fica azulada mas legível",
+    "night_light": "força das luzes à noite: fogueira (raio em px, energia) e a luz fraca em volta do personagem, para ler o combate",
+    "wind": "vento: força de base, força das rajadas, período da rajada (s), direção (graus; 0 = leste), comprimento da onda no chão (px)",
+    "leaves": "folhas soltas nas rajadas: quantas por segundo no pico, vida (s)",
+    "birds": "bandos de pássaros de dia: intervalo médio entre bandos (s), mínimo e máximo de pássaros, velocidade (px/s), altura do voo (px)",
+    "shallow_speed": "fator de velocidade na água rasa (vau)",
+    "ripple_interval": "segundos entre ondinhas enquanto anda na água rasa",
+    "tall_grass": "capim alto: tufos por tile de relva e de arbusto, raio em que se abre quando o personagem passa (px)"
+  },
+  "day_seconds": 480,
+  "start_hour": 8,
+  "palette": [
+    { "hour": 0, "color": "#5a6690" },
+    { "hour": 4.5, "color": "#5f6a94" },
+    { "hour": 6, "color": "#c99a8a" },
+    { "hour": 7.5, "color": "#f2e6d0" },
+    { "hour": 12, "color": "#ffffff" },
+    { "hour": 16.5, "color": "#fff4e2" },
+    { "hour": 18.2, "color": "#e8a07a" },
+    { "hour": 19.5, "color": "#8a7aa0" },
+    { "hour": 21, "color": "#5a6690" },
+    { "hour": 24, "color": "#5a6690" }
+  ],
+  "night_light": { "campfire_radius": 150, "campfire_energy": 1.25, "player_radius": 90, "player_energy": 0.55 },
+  "wind": { "base": 0.25, "gust": 1.0, "gust_period": 7.0, "direction": 15, "wavelength": 260 },
+  "leaves": { "per_second": 9, "life": 3.2 },
+  "birds": { "interval": 22, "min": 3, "max": 6, "speed": 70, "height": 70 },
+  "shallow_speed": 0.6,
+  "ripple_interval": 0.32,
+  "tall_grass": { "per_grass_tile": 0.5, "per_bush_tile": 2.5, "part_radius": 18 }
+}

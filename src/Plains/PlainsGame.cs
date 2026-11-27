@@ -55,6 +55,55 @@ public partial class PlainsGame : Node2D, IMapSource
     /// <inheritdoc />
     public IReadOnlyList<MapNote> MapNotes => Clues.Select(c => new MapNote("Pista", c.Text, false,
         c.At.Length == 2 ? new Vector2(c.At[0], c.At[1]) : null, c.Toward.Length == 2 ? new Vector2(c.Toward[0], c.Toward[1]) : null, true)).ToList();
+    // ------------------------------------------------------------------ ambience (pedido 13 = campaign delivery 4)
+
+    /// <summary>The ambience numbers.</summary>
+    public AmbientSettings Ambient { get; private set; } = new();
+    /// <summary>Day and night (tints the world, not the HUD).</summary>
+    public DayNight Sky { get; private set; } = null!;
+    /// <summary>The leaves in the gusts.</summary>
+    public LeafFx Leaves { get; private set; } = null!;
+    /// <summary>The flocks of birds.</summary>
+    public Birds Flocks { get; private set; } = null!;
+    /// <summary>The ripples in shallow water.</summary>
+    public Ripples Ripples { get; private set; } = null!;
+    /// <summary>The faint light around the swordsman at night.</summary>
+    public PointLight2D PlayerLight { get; private set; } = null!;
+    private float _rippleT;
+
+    private void SetupAmbience(SaveData? d, SaveData? awaken)
+    {
+        Sky = new DayNight { Settings = Ambient, Name = "DiaNoite", Hour = d != null && awaken == null && d.Hour >= 0 ? d.Hour : Ambient.StartHour };
+        AddChild(Sky);
+        Leaves = new LeafFx { Settings = Ambient, Around = Player, ZIndex = 15, Name = "Folhas" };
+        Flocks = new Birds { Settings = Ambient, Around = Player, Sky = Sky, ZIndex = 30, Name = "Passaros" };
+        Ripples = new Ripples { ZIndex = -4, Name = "Ondinhas" };
+        foreach (var n in new Node[] { Leaves, Flocks, Ripples }) GetNode<Node2D>("World").AddChild(n);
+        PlayerLight = SoftLight.Make(Ambient.NightLight.PlayerRadius, new Color("#e8ecff"));
+        PlayerLight.Position = new Vector2(0, -14);
+        Player.AddChild(PlayerLight);
+        Sky.Advance(0);
+    }
+
+    // the hour, the lights by it, the wind's clock, the slow and rippling shallow water, the HUD's clock
+    private void UpdateAmbience(float dt)
+    {
+        Sky.Advance(dt);
+        Wind.T += dt;
+        float dark = Sky.Darkness;
+        PlayerLight.Energy = Ambient.NightLight.PlayerEnergy * dark;
+        foreach (var f in World.Objects.GetChildren().OfType<Campfire>()) f.SetNight(dark, Ambient.NightLight.CampfireRadius, Ambient.NightLight.CampfireEnergy);
+        var under = TileUnder(Player.GlobalPosition);
+        bool shallow = under == TileKind.Ford;
+        Player.TerrainSpeed = shallow ? Ambient.ShallowSpeed : 1f;
+        if (shallow && Player.Velocity.LengthSquared() > 1)
+        {
+            _rippleT -= dt;
+            if (_rippleT <= 0) { _rippleT = Ambient.RippleInterval; Ripples.Add(Player.GlobalPosition); }
+        }
+        Hud.SetTime(Sky.Phase, Sky.Clock, Sky.Hour);
+    }
+
     /// <summary>The journey's money (Moedas), saved with it.</summary>
     public Wallet Wallet { get; } = new();
 
@@ -306,7 +355,11 @@ public partial class PlainsGame : Node2D, IMapSource
         World.RabbitTuning = RabbitTuning ?? new RabbitTuning();
         World.BoarTuning = BoarTuning ?? new BoarTuning();
         World.Progression = Data;
+        Ambient = AmbientSettings.Load();
+        Wind.Def = Ambient.Wind;
+        World.Ambient = Ambient;
         World.Setup(Gen, state);
+        SetupAmbience(d, awaken);
         World.CreatureSpawned += OnCreatureSpawned;
         World.CreatureDied += OnCreatureDied;
         Player.BladeActive += OnBlade;
@@ -416,6 +469,7 @@ public partial class PlainsGame : Node2D, IMapSource
         if (c != _lastChunk) { _lastChunk = c; World.UpdateAround(Player.GlobalPosition); }
         Explored.Add(c);
         Panels.Process(dt);
+        UpdateAmbience(dt);
         if (_faintTimer > 0)
         {
             _faintTimer -= dt;
@@ -917,7 +971,7 @@ public partial class PlainsGame : Node2D, IMapSource
         var (practice, keys) = Skills.Snapshot();
         return new SaveData
         {
-            Seed = SeedInUse, Spot = new[] { Spot.X, Spot.Y },
+            Seed = SeedInUse, Spot = new[] { Spot.X, Spot.Y }, Hour = Sky.Hour,
             Collected = collected, Dead = dead.ToDictionary(kv => kv.Key, kv => new[] { kv.Value.X, kv.Value.Y }), PartsTaken = parts, Trails = trails,
             Inventory = Inventory.Entries.Select(e => new SavedItem { Id = e.Id, Count = e.Count }).ToList(),
             Equipped = Player.Equipped switch { Player.Weapon.Knife => "knife", Player.Weapon.Sword => "sword", _ => "none" },

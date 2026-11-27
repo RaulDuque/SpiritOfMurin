@@ -70,6 +70,18 @@ public partial class Campfire : StaticBody2D
     /// <inheritdoc />
     public override void _Ready() => AddChild(new CollisionShape2D { Shape = new RectangleShape2D { Size = new Vector2(16, 6) }, Position = new Vector2(0, -3) });
 
+    private PointLight2D? _light;
+
+    /// <summary>The fire's warm light, by the night's darkness (0 day … 1 night), flickering.</summary>
+    public void SetNight(float darkness, float radius, float energy)
+    {
+        if (_light == null) { _light = SoftLight.Make(radius, new Color("#ffb060")); _light.Position = new Vector2(0, -10); AddChild(_light); }
+        _light.Energy = energy * darkness * (0.9f + 0.1f * Mathf.Sin(_time * 11));
+    }
+
+    /// <summary>The light's strength now (checks).</summary>
+    public float LightEnergy => _light?.Energy ?? 0;
+
     /// <inheritdoc />
     public override void _Process(double delta) { _time += (float)delta; QueueRedraw(); }
 

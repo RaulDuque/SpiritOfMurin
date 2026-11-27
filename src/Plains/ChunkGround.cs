@@ -18,7 +18,7 @@ public partial class ChunkGround : Node2D
 
     private static readonly Color Ground = new("#4c5a3e"), Ground2 = new("#526142"), Tuft = new("#65774c"), TuftDark = new("#3d4a33"),
         Bloom = new("#8e9a6c"), Sand = new("#8f8466"), Sand2 = new("#7f755a"), Pebble = new("#a3a091"), Water = new("#2f5560"),
-        Water2 = new("#3b6a73"), WaterHi = new("#8fb3b0"), Shallow = new("#557f7c"), Stone = new("#8a877a"), BushGround = new("#3f4d34"),
+        Water2 = new("#3b6a73"), WaterHi = new("#8fb3b0"), Deep = new("#22434e"), DeepDark = new("#183540"), Shallow = new("#557f7c"), Stone = new("#8a877a"), BushGround = new("#3f4d34"),
         BushGround2 = new("#46553a"), Mud = new("#4a3d2c"), Mud2 = new("#463a2a"), MudWet = new("#5a4b37"), Rooted = new("#5e4630"),
         RootedDark = new("#33271b"), Hole = new("#16140f"), Mound = new("#6b5a3e");
 
@@ -32,6 +32,9 @@ public partial class ChunkGround : Node2D
                 int tx = Data.Coord.X * n + lx, ty = Data.Coord.Y * n + ly;
                 DrawTile(Data[lx, ly], tx, ty, lx * ts, ly * ts, ts);
             }
+        for (int ly = 0; ly < n; ly++)
+            for (int lx = 0; lx < n; lx++)
+                Fringe(Data[lx, ly], Data.Coord.X * n + lx, Data.Coord.Y * n + ly, lx * ts, ly * ts, ts);
         // ground marks of objects
         Vector2 origin = new(Data.Coord.X * n * ts, Data.Coord.Y * n * ts);
         foreach (var f in Data.Features)
@@ -54,7 +57,13 @@ public partial class ChunkGround : Node2D
             case TileKind.Ford:
             {
                 bool ford = k == TileKind.Ford;
-                R(X, Y, ts, ts, ford ? Shallow : Water);
+                R(X, Y, ts, ts, ford ? Shallow : Deep);
+                if (!ford)
+                {
+                    // deep water: a darker body with long wave marks, unlike the pale, stony ford
+                    R(X + h % 10, Y + 6 + (h >> 4) % 6, 14, 1, Water2); R(X + 14 + (h >> 7) % 8, Y + 18 + (h >> 9) % 6, 12, 1, Water2);
+                    R(X + (h >> 12) % 20, Y + 27, 9, 1, DeepDark);
+                }
                 R(X + h % 22, Y + (h >> 5) % 28, 8, 1, ford ? WaterHi : Water2);
                 R(X + (h >> 10) % 24, Y + (h >> 15) % 28, 5, 1, WaterHi);
                 if (ford) for (int i = 0; i < 3; i++) { uint g = PlainsGenerator.Hash(Gen.Seed, tx * 3 + i, ty, 901); R(X + g % 26, Y + (g >> 8) % 26, 5, 3, Stone); }
@@ -82,6 +91,39 @@ public partial class ChunkGround : Node2D
                 Tufts(tx, ty, X, Y, 3);
                 if (h % 23 == 0) R(X + 12, Y + 14, 2, 2, Bloom);
                 return;
+        }
+    }
+
+    // which ground creeps over which at a border: grass over bushes over mud over sand over the ford over deep water
+    private static int Rank(TileKind k) => k switch { TileKind.Water => 0, TileKind.Ford => 1, TileKind.Bank => 2, TileKind.Mud => 3, TileKind.BushGrass => 4, _ => 5 };
+    private static Color BaseOf(TileKind k) => k switch { TileKind.Water => Deep, TileKind.Ford => Shallow, TileKind.Bank => Sand, TileKind.Mud => Mud, TileKind.BushGrass => BushGround, _ => Ground };
+
+    /// <summary>Fringe pixels drawn so far (checks: the borders are blended, not hard).</summary>
+    public int FringePixels { get; private set; }
+
+    /// <summary>
+    /// A soft border: where a neighbour of a higher rank touches this tile, its colour creeps 6 px in, thinner
+    /// the deeper it goes, in a dither fixed by the seed. The neighbour is read through the generator, so the
+    /// border is the same on both sides of a chunk edge.
+    /// </summary>
+    private void Fringe(TileKind k, int tx, int ty, float X, float Y, int ts)
+    {
+        var dirs = new (int Dx, int Dy)[] { (-1, 0), (1, 0), (0, -1), (0, 1) };
+        foreach (var (dx, dy) in dirs)
+        {
+            var nk = Gen.TileAt(tx + dx, ty + dy);
+            if (Rank(nk) <= Rank(k)) continue;
+            var col = BaseOf(nk);
+            for (int d = 0; d < 6; d++)
+                for (int i = 0; i < ts; i += 2)
+                {
+                    uint g = PlainsGenerator.Hash(Gen.Seed, tx * 31 + dx * 7 + i, ty * 17 + dy * 5 + d, 960);
+                    if ((int)(g % 7) <= d) continue;
+                    float px = dx < 0 ? X + d : dx > 0 ? X + ts - 1 - d : X + i, py = dy < 0 ? Y + d : dy > 0 ? Y + ts - 1 - d : Y + i;
+                    if (dx != 0) py = Y + i; else px = X + i;
+                    R(px, py, dx != 0 ? 1 : 2, dx != 0 ? 2 : 1, col);
+                    FringePixels++;
+                }
         }
     }
 
