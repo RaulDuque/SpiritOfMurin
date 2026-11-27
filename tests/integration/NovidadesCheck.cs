@@ -31,6 +31,10 @@ namespace SpiritOfMurin.Tests;
 /// strikes (+10%, fractional: the knife's 1 → 1.1) and the fourth normal; a miss and each cut of a combo spend
 /// a charge; one break roll per strike and guard, with fixed rolls for the success and the failure; Shift
 /// alone sneaks, the step still works; a remapped cut and modifier; the discovery kept by meditating.</item>
+/// <item><c>--phase=bag</c>: the bag with pictures in the Planície — every item has its picture and its stack;
+/// the knife is crafted by keyboard (the flint and the branch go down, the knife appears in the same bag),
+/// equipped by a click (marked in use), a herb is found and used by keyboard and another by the action
+/// button; window and full screen.</item>
 /// </list>
 /// Teleports place the swordsman (named in the checks). Files: <c>user://teste_nov*.json</c>; preferences in
 /// <c>user://teste_nov_prefs.json</c> (pass <c>--prefs=user://teste_nov_prefs.json</c>).
@@ -60,6 +64,7 @@ public partial class NovidadesCheck : Node
             case "charge": Fresh(); Launch("new"); _ = ChargePhase(); break;
             case "charge-plains": Fresh(); _ = ChargePlains(); break;
             case "reinforce": Fresh(); Launch("new"); _ = ReinforcePhase(); break;
+            case "bag": Fresh(); _ = BagPhase(); break;
         }
     }
 
@@ -491,6 +496,85 @@ public partial class NovidadesCheck : Node
         await Teleport(ValeMap.Meditate + new Vector2(0, 8), Vector2.Up);
         await Tap(Key.E); await Frames(3);
         Check("meditating keeps the Reforço in the book", SaveGame.Read(SavePath).Data?.Vale?.Book.Any(b => b.Tech == "qi_reinforce") == true);
+        Finish();
+    }
+
+    // ------------------------------------------------------------------ 10. the bag with pictures
+    private PlainsGame StartPlains(StartModeArg how)
+    {
+        var g = GD.Load<PackedScene>("res://src/Plains/Plains.tscn").Instantiate<PlainsGame>();
+        g.Seed = 20261126; g.SavePath = SavePath; g.ShowIntro = false; g.Start = how == StartModeArg.New ? PlainsGame.StartMode.New : PlainsGame.StartMode.Continue;
+        AddChild(g);
+        return g;
+    }
+
+    private enum StartModeArg { New, Continue }
+
+    private async Task ClickWin(Vector2 at)
+    {
+        Input.ParseInputEvent(new InputEventMouseMotion { Position = at, GlobalPosition = at }); await Flush(); await Frames(2);
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = at, GlobalPosition = at }); await Flush(); await Frames(2);
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = at, GlobalPosition = at }); await Flush(); await Frames(4);
+    }
+
+    private async Task BagPhase()
+    {
+        _pg = StartPlains(StartModeArg.New);
+        await Frames(30);
+        var g = _pg; var hud = g.Hud;
+        // what the swordsman carries after a little gathering (controlled: given at once)
+        g.Inventory.Add("silex", 2); g.Inventory.Add("galho_rijo", 2); g.Inventory.Add("grama_sangue_q1", 2);
+        g.Inventory.Add("carne_macia", 1); g.Inventory.Add("carne_macia_assada", 1); g.Inventory.Add("pele_comum", 2);
+        await Tap(Key.I);
+        Check("I opens the bag (the picture panel)", hud.InventoryOpen && hud.Bag.Visible);
+        var items = hud.Rows.Where(r => !r.IsRecipe).ToList();
+        Check("every item has its picture and its stack count (flint 2, branch 2, herb 2, meat 1, hide 2)",
+            items.All(r => r.Icon.Length > 0) && items.First(r => r.Id == "silex").Count == 2 && items.First(r => r.Id == "carne_macia").Count == 1 && hud.Bag.SlotRects.Count == hud.Rows.Count,
+            string.Join(", ", items.Select(r => $"{r.Id}×{r.Count}")));
+        await Shot("10-bolsa-preenchida");
+        // the knife by keyboard: walk the selection to the recipe and press E
+        for (int k = 0; k <= hud.Rows.Count && !(hud.Rows[hud.Selected].IsRecipe && hud.Rows[hud.Selected].Id == "faca_pedra"); k++) await Tap(Key.D);
+        string detail = hud.Rows[hud.Selected].Detail;
+        Check("the knife's recipe shows what it needs and that it can be made (Fabricar)", hud.Rows[hud.Selected].Action == "Fabricar" && hud.Rows[hud.Selected].Enabled && detail.Contains("Sílex 2/1"), detail);
+        await Tap(Key.E); await Frames(3);
+        Check("crafting by keyboard: flint and branch go down, the knife appears in the same bag", g.Inventory.Count("silex") == 1 && g.Inventory.Count("galho_rijo") == 1 && hud.Rows.Any(r => !r.IsRecipe && r.Id == "faca_pedra" && r.Icon == "faca_pedra"),
+            $"sílex {g.Inventory.Count("silex")}, galho {g.Inventory.Count("galho_rijo")}");
+        await Shot("11-bolsa-faca-fabricada");
+        // equip the knife by a click on its slot
+        int knife = hud.Rows.FindIndex(r => !r.IsRecipe && r.Id == "faca_pedra");
+        await Frames(2);
+        var rect = hud.RowScreenRect("inv", knife);
+        if (rect is { } rr) await ClickWin(rr.GetCenter());
+        knife = hud.Rows.FindIndex(r => !r.IsRecipe && r.Id == "faca_pedra");
+        Check("a click on the knife equips it, and the bag marks it in use", g.Player.Equipped == Player.Weapon.Knife && hud.Rows[knife].Equipped, $"{g.Player.Equipped}");
+        // a herb by keyboard: find it and use it
+        g.Player.Heal(-6); await Frames(2);
+        float hp = g.Player.Health;
+        for (int k = 0; k <= hud.Rows.Count && hud.Rows[hud.Selected].Id != "grama_sangue_q1"; k++) await Tap(Key.D);
+        Check("the herb's slot offers 'Usar'", hud.Rows[hud.Selected].Action == "Usar", hud.Rows[hud.Selected].Action);
+        await Tap(Key.E); await Frames(3);
+        Check("using the herb by keyboard: one herb fewer, the healing starts", g.Inventory.Count("grama_sangue_q1") == 1 && (g.Player.PendingRegen > 0 || g.Player.Health > hp), $"ervas {g.Inventory.Count("grama_sangue_q1")}");
+        // and the other by the action button
+        await Frames(2);
+        int herb = hud.Rows.FindIndex(r => r.Id == "grama_sangue_q1");
+        if (herb >= 0)
+        {
+            var hr = hud.RowScreenRect("inv", herb);
+            if (hr is { } h) { Input.ParseInputEvent(new InputEventMouseMotion { Position = h.GetCenter(), GlobalPosition = h.GetCenter() }); await Flush(); await Frames(3); }
+            var ft = GetViewport().GetFinalTransform(); var gt = hud.Bag.GetGlobalTransformWithCanvas();
+            Vector2 btn = ft * (gt * hud.Bag.ActionRect.GetCenter());
+            await ClickWin(btn);
+        }
+        Check("the action button (mouse) uses the other herb", g.Inventory.Count("grama_sangue_q1") == 0, $"ervas {g.Inventory.Count("grama_sangue_q1")}");
+        Check("the roasted meat offers 'Comer', the raw one says to roast it, a hide is a material", hud.Rows.First(r => r.Id == "carne_macia_assada").Action == "Comer" && hud.Rows.First(r => r.Id == "carne_macia").Detail.Contains("asse na fogueira") && hud.Rows.First(r => r.Id == "pele_comum").Detail.Contains("fabricar"));
+        // full screen: the bag still fits the screen
+        DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen); await Frames(40);
+        var bagRect = new Rect2(hud.Bag.Position, hud.Bag.Size);
+        Check("full screen: the bag fits the screen with its slots and detail", bagRect.End.X <= hud.LaidOut.X && bagRect.End.Y <= hud.LaidOut.Y && hud.Bag.SlotRects.Count == hud.Rows.Count, $"bolsa {bagRect}, tela {hud.LaidOut}");
+        await Shot("12-bolsa-tela-cheia");
+        DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed); DisplayServer.WindowSetSize(new Vector2I(1280, 720)); await Frames(20);
+        await Tap(Key.I);
+        Check("I closes the bag", !hud.InventoryOpen);
         Finish();
     }
 }
