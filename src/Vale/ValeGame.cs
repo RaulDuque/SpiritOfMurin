@@ -402,8 +402,10 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         }
         if (Hud.InventoryOpen)
         {
-            if (e.IsActionPressed("move_up")) Hud.MoveSelection(-1);
-            else if (e.IsActionPressed("move_down")) Hud.MoveSelection(1);
+            if (e.IsActionPressed("move_up") || e.IsActionPressed("ui_up")) Hud.MoveSelection(-1);
+            else if (e.IsActionPressed("move_down") || e.IsActionPressed("ui_down")) Hud.MoveSelection(1);
+            else if (e.IsActionPressed("move_left") || e.IsActionPressed("ui_left")) Hud.MoveSelectionSide(-1);
+            else if (e.IsActionPressed("move_right") || e.IsActionPressed("ui_right")) Hud.MoveSelectionSide(1);
             else if (e.IsActionPressed("use") || e.IsActionPressed("ui_accept")) { if (Hud.Rows.Count > 0) UseItem(Hud.Rows[Hud.Selected].Id); RefreshInventory(); }
             else if (e.IsActionPressed("inventory") || e.IsActionPressed("ui_cancel")) { Hud.ShowInventory(false); Player.InputLocked = false; Player.ReleaseGuard(); }
             else return;
@@ -442,8 +444,8 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     {
         var (name, desc) = ValeItems.Of(e.Id);
         bool use = e.Id is "balsamo" or "pedra";
-        return new PlainsHud.Row(false, e.Id, $"{name} ×{e.Count}{(use ? Bindings.F("  [[use]: usar]") : "")}", Bindings.F(desc), true);
-    }).Prepend(new PlainsHud.Row(false, "espada", "Espada  [na mão]", ValeItems.Of("espada").Desc, true, "Equipamento")).ToList());
+        return new PlainsHud.Row(false, e.Id, $"{name} ×{e.Count}{(use ? Bindings.F("  [[use]: usar]") : "")}", Bindings.F(desc), true, Icon: e.Id, Count: e.Count, Action: use ? "Usar" : "", Name: name);
+    }).Prepend(new PlainsHud.Row(false, "espada", "Espada  [na mão]", ValeItems.Of("espada").Desc, false, "Equipamento", Icon: "espada", Count: 1, Equipped: true, Action: "Na mão", Name: "Espada")).ToList());
 
     /// <summary>Uses a prologue item (the balm heals, the qi stone fills the Qi). Returns true when used.</summary>
     public bool UseItem(string id)

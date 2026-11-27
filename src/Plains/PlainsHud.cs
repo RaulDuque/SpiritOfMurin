@@ -19,7 +19,14 @@ namespace SpiritOfMurin.Plains;
 public partial class PlainsHud : CanvasLayer
 {
     /// <summary>One selectable line of a panel. <paramref name="Group"/> starts a titled block before it.</summary>
-    public readonly record struct Row(bool IsRecipe, string Id, string Text, string Detail, bool Enabled, string Group = "");
+    /// <param name="Icon">The item id whose picture the bag draws (empty: none).</param>
+    /// <param name="Count">The stack count shown on the slot.</param>
+    /// <param name="Equipped">The equipment in use (marked).</param>
+    /// <param name="Action">The main action now ("Equipar", "Usar", "Comer", "Fabricar"; empty: none).</param>
+    /// <param name="Name">The item's name (without counts or tags).</param>
+    /// <param name="Need">Why the action cannot be done now (what is missing).</param>
+    public readonly record struct Row(bool IsRecipe, string Id, string Text, string Detail, bool Enabled, string Group = "",
+        string Icon = "", int Count = 0, bool Equipped = false, string Action = "", string Name = "", string Need = "");
 
     private static readonly Color Text = new("#ece5d0"), Dim = new("#a39e8c"), OutlineC = new("#16140f"), Life = new("#7a3a32"), LifeHi = new("#b0574a"),
         LifeBack = new("#2b1f1a"), RegenC = new("#4c7c4a"), Panel = new(0.07f, 0.075f, 0.06f, 0.94f), Select = new("#c9a14a"), Disabled = new("#6b675c"),
@@ -49,6 +56,8 @@ public partial class PlainsHud : CanvasLayer
     public MapView MiniMap { get; private set; } = null!;
     /// <summary>The Controles screen (Esc → Controles).</summary>
     public ControlsPanel Controls { get; private set; } = null!;
+    /// <summary>The bag (inventory) panel, with pictures.</summary>
+    public BagPanel Bag { get; private set; } = null!;
     /// <summary>The Livro de Técnicas panel.</summary>
     public BookPanel Book { get; private set; } = null!;
     /// <summary>The HUD's root control (panels added by the game hang from it).</summary>
@@ -69,6 +78,13 @@ public partial class PlainsHud : CanvasLayer
     /// <summary>The screen rectangle (in window coordinates) of a row of a panel, for mouse checks; null when not shown.</summary>
     public Rect2? RowScreenRect(string panel, int index)
     {
+        if (panel == "inv")
+        {
+            if (!Bag.Visible || !Bag.SlotRects.TryGetValue(index, out var sr)) return null;
+            var ft = GetViewport().GetFinalTransform(); var gt = Bag.GetGlobalTransformWithCanvas();
+            Vector2 a = ft * (gt * sr.Position), b = ft * (gt * sr.End);
+            return new Rect2(a, b - a);
+        }
         var m = MenuOf(panel);
         if (m == null || !m.Box.Visible) return null;
         foreach (var c in m.List.GetChildren())
@@ -91,7 +107,7 @@ public partial class PlainsHud : CanvasLayer
     private readonly List<(Label L, float T)> _toastLabels = new();
 
     /// <summary>True while the inventory is open.</summary>
-    public bool InventoryOpen => _inv.Box.Visible;
+    public bool InventoryOpen => Bag.Visible;
     /// <summary>True while the character sheet is open.</summary>
     public bool SheetOpen => _sheet.Box.Visible;
     /// <summary>True while the title menu is shown.</summary>
@@ -184,6 +200,7 @@ public partial class PlainsHud : CanvasLayer
         foreach (var m in new[] { _inv, _sheet, _title, _story, _pause })
             m.Box.Position = new Vector2(Mathf.Round((W - m.Box.Size.X) / 2), Mathf.Round(Mathf.Max(18, (H - m.Box.Size.Y) / 2 - 6)));
         Map.Size = new Vector2(Mathf.Min(W - 40, 900), H - 46); Map.Position = new Vector2(Mathf.Round((W - Map.Size.X) / 2), 22);
+        Bag.Size = new Vector2(Mathf.Min(W - 40, 560), Mathf.Min(H - 46, 330)); Bag.Position = new Vector2(Mathf.Round((W - Bag.Size.X) / 2), Mathf.Round(Mathf.Max(22, (H - Bag.Size.Y) / 2)));
         Book.Size = new Vector2(Mathf.Min(W - 40, 820), H - 46); Book.Position = new Vector2(Mathf.Round((W - Book.Size.X) / 2), 22);
         Controls.Size = new Vector2(Mathf.Min(W - 24, 560), H - 34); Controls.Position = new Vector2(Mathf.Round((W - Controls.Size.X) / 2), 14);
     }
@@ -261,6 +278,10 @@ public partial class PlainsHud : CanvasLayer
         Book.Clicked += i => RowClicked?.Invoke("book", i);
         _root.AddChild(Book);
         _pause = MakeMenu("Pausa", "W/S ou mouse escolher · E, Enter ou clique confirmar · Esc voltar", new Vector2(200, 90), new Vector2(240, 160));
+        Bag = new BagPanel { Visible = false, Name = "Bolsa", Rows = _inv.Rows, GetSelected = () => _inv.Selected, Empty = _inv.Empty };
+        Bag.Hovered += i => { _inv.Selected = i; };
+        Bag.Clicked += i => { _inv.Selected = i; RowClicked?.Invoke("inv", i); };
+        _root.AddChild(Bag);
         Map = new MapView { Visible = false, Position = new Vector2(20, 20), Size = new Vector2(600, 320), MouseFilter = Control.MouseFilterEnum.Stop, TextureFilter = CanvasItem.TextureFilterEnum.Nearest };
         _root.AddChild(Map);
         Controls = new ControlsPanel { Visible = false, Name = "Controles" };
@@ -275,7 +296,7 @@ public partial class PlainsHud : CanvasLayer
         _overlayText = Add(MakeLabel(12, Text), new Vector2(0, 160)); _overlayText.HorizontalAlignment = HorizontalAlignment.Center; _overlayText.Size = new Vector2(640, 20);
         _overlayText.Modulate = new Color(1, 1, 1, 0);
         // the panels sit above the world's words (speech, area banner, messages) and under the fade overlay
-        foreach (Control c in new Control[] { _inv.Box, _sheet.Box, _story.Box, _pause.Box, Map, Book, Controls })
+        foreach (Control c in new Control[] { _inv.Box, Bag, _sheet.Box, _story.Box, _pause.Box, Map, Book, Controls })
             _root.MoveChild(c, _overlay.GetIndex());
         _root.MoveChild(_title.Box, -1);
         RefreshTexts();
@@ -544,11 +565,15 @@ public partial class PlainsHud : CanvasLayer
     }
 
     /// <summary>Opens or closes the inventory.</summary>
-    public void ShowInventory(bool open) { _inv.Box.Visible = open; if (open) Refresh(_inv); }
+    public void ShowInventory(bool open) { _inv.Box.Visible = false; Bag.Visible = open; Bag.Empty = _inv.Empty; if (open) Bag.QueueRedraw(); }
     /// <summary>Moves the inventory selection.</summary>
-    public void MoveSelection(int d) { Move(_inv, d); Refresh(_inv); }
+    public void MoveSelection(int d) { if (_inv.Rows.Count > 0) _inv.Selected = Bag.Vertical(_inv.Selected, d); }
+    /// <summary>Moves the bag selection one slot left or right.</summary>
+    public void MoveSelectionSide(int d) { if (_inv.Rows.Count > 0) _inv.Selected = Mathf.PosMod(_inv.Selected + d, _inv.Rows.Count); }
+    /// <summary>The money shown in the bag (null hides it).</summary>
+    public void SetMoney(int? coins) => Bag.Money = coins;
     /// <summary>Rebuilds the inventory list.</summary>
-    public void SetRows(List<Row> rows) => Fill(_inv, rows);
+    public void SetRows(List<Row> rows) { _inv.Rows.Clear(); _inv.Rows.AddRange(rows); _inv.Selected = Mathf.Clamp(_inv.Selected, 0, Mathf.Max(0, rows.Count - 1)); }
 
     /// <summary>Opens or closes the character sheet.</summary>
     public void ShowSheet(bool open) { _sheet.Box.Visible = open; if (open) Refresh(_sheet); }

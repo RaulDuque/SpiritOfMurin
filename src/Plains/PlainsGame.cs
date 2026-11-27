@@ -454,8 +454,10 @@ public partial class PlainsGame : Node2D, IMapSource
         if (e.IsActionPressed("sheet") || (Hud.SheetOpen && e.IsActionPressed("ui_cancel"))) { ToggleSheet(); Handled(); return; }
         if (Hud.InventoryOpen)
         {
-            if (e.IsActionPressed("move_up")) Hud.MoveSelection(-1);
-            else if (e.IsActionPressed("move_down")) Hud.MoveSelection(1);
+            if (e.IsActionPressed("move_up") || e.IsActionPressed("ui_up")) Hud.MoveSelection(-1);
+            else if (e.IsActionPressed("move_down") || e.IsActionPressed("ui_down")) Hud.MoveSelection(1);
+            else if (e.IsActionPressed("move_left") || e.IsActionPressed("ui_left")) Hud.MoveSelectionSide(-1);
+            else if (e.IsActionPressed("move_right") || e.IsActionPressed("ui_right")) Hud.MoveSelectionSide(1);
             else if (e.IsActionPressed("use") || e.IsActionPressed("ui_accept")) ActOnSelection();
             else return;
             Handled(); return;
@@ -943,8 +945,12 @@ public partial class PlainsGame : Node2D, IMapSource
         foreach (var (id, count) in Inventory.Entries)
         {
             var d = Catalog.Get(id);
-            string tag = d.Equip == "knife" ? (Player.Equipped == Player.Weapon.Knife ? "  [na mão]" : Bindings.F("  [[use]: equipar]")) : d.Usable ? Bindings.F("  [[use]: usar]") : "";
-            rows.Add(new PlainsHud.Row(false, id, $"{d.Name} ×{count}{tag}", (d.Description + " " + Effect(d)).Trim(), true));
+            bool inHand = d.Equip == "knife" && Player.Equipped == Player.Weapon.Knife;
+            string tag = d.Equip == "knife" ? (inHand ? "  [na mão]" : Bindings.F("  [[use]: equipar]")) : d.Usable ? Bindings.F("  [[use]: usar]") : "";
+            // the main action now: equip a tool, eat meat, use a herb; nothing for materials
+            string action = d.Equip == "knife" ? (inHand ? "Na mão" : "Equipar") : d.Usable ? (id.StartsWith("carne") ? "Comer" : "Usar") : "";
+            string detail = (d.Description + " " + Effect(d)).Trim() + (action.Length > 0 ? "" : id.StartsWith("carne") ? " Crua: asse na fogueira (Fabricar) para poder comer." : " Material: serve para fabricar.");
+            rows.Add(new PlainsHud.Row(false, id, $"{d.Name} ×{count}{tag}", detail, !inHand, Icon: id, Count: count, Equipped: inHand, Action: action, Name: d.Name));
         }
         bool first = true;
         foreach (var r in Catalog.Recipes)
@@ -953,7 +959,10 @@ public partial class PlainsGame : Node2D, IMapSource
             var o = Catalog.Get(r.Output);
             string where = r.Station == "fogueira" ? " · na fogueira" : "";
             string detail = $"Ingredientes: {string.Join(", ", r.Inputs.Select(kv => $"{kv.Value} {Catalog.Get(kv.Key).Name}"))}{where}. Resultado: {r.Count} {o.Name}. {o.Description} {Effect(o)}".Trim();
-            rows.Add(new PlainsHud.Row(true, r.Id, $"{(r.Count > 1 ? r.Count + "× " : "")}{o.Name}  ({inputs}){where}", detail, Inventory.CanCraft(r) && NearStation(r.Station), first ? "Fabricar" : ""));
+            bool can = Inventory.CanCraft(r) && NearStation(r.Station);
+            string need = !Inventory.CanCraft(r) ? "Falta: " + string.Join(", ", r.Inputs.Where(kv => Inventory.Count(kv.Key) < kv.Value).Select(kv => $"{kv.Value - Inventory.Count(kv.Key)} {Catalog.Get(kv.Key).Name}")) : !NearStation(r.Station) ? "Só junto à fogueira." : "";
+            rows.Add(new PlainsHud.Row(true, r.Id, $"{(r.Count > 1 ? r.Count + "× " : "")}{o.Name}  ({inputs}){where}", $"Fabricar {o.Name}: {inputs}{where}. {o.Description} {Effect(o)}".Trim(), can, first ? "Fabricar" : "",
+                Icon: r.Output, Count: r.Count, Action: "Fabricar", Name: $"Fabricar {o.Name}", Need: need));
             first = false;
         }
         Hud.SetRows(rows);
