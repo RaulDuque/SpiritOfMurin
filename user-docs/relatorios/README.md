@@ -44,6 +44,7 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-26 | [2026-11-26-disparo-concentrado.md](2026-11-26-disparo-concentrado.md) | Pedido 13, entrega 2: técnica secreta Disparo de Qi Concentrado (carga parcial e completa de 100, ruptura da guarda, cancelamento devolve o Qi, Planície selada/enfraquecida); spoiler no fim |
 | 2026-11-26 | [2026-11-26-reforco-qi.md](2026-11-26-reforco-qi.md) | Pedido 13, entrega 3: Reforço de Qi (modificador + corte, 75 Qi, 3 golpes +10% com vida fracionária, 5% de ruptura com uma rolagem por golpe, modificador configurável); spoiler no fim |
 | 2026-11-26 | [2026-11-26-bolsa-visual.md](2026-11-26-bolsa-visual.md) | Pedido 13, entrega 4: bolsa com figuras inspirada no protótipo (ícone, pilha, marca de equipado, ações do item, fabricar), comparação com o inventário antigo |
+| 2026-11-26 | [2026-11-26-moedas.md](2026-11-26-moedas.md) | Pedido 13, entrega 5: Moedas (saldo na bolsa, despertar com 0, bolsinha de +25 na clareira a leste da esteira, receber/gastar com recusa, saves antigos com 0) |
 
 ## Prompts de imagem do criador
 
