@@ -1,6 +1,6 @@
 # GDD: Tela cheia, imagem e mapa do mundo
 
-*Criado: 2026-11-26 · Status: Implementado (campanha, entrega 3)*
+*Criado: 2026-11-26 · Status: Implementado (campanha, entrega 3; F5 e minimapa no pedido 11 — `prototype-recovery.md`)*
 *Pilar: 3 "O mundo se lembra, e você também" (o mapa guarda o que você explorou)*
 
 ## 1. Overview
@@ -47,6 +47,8 @@ Voltar ao jogo · Mapa (M) · Tela cheia (F11) · Controles (a lista completa) �
 - Janela maximizada com barra de tarefas (1600×877): 2×, 800×438, sobra de 1 px.
 - Desligar a tela cheia volta à janela; se ela ficar pequena demais, volta a 1280×720.
 - `--estica-antiga`: a regra antiga (640×360 fixo, bordas), só para comparação.
+- **F5 no editor (Godot 4.7):** o jogo roda incorporado à aba Jogo. Em "Tamanho Fixo", a janela fica em 1280×720 e o editor desenha margens em volta dela quando a janela flutuante é maximizada. Incorporado, a tela cheia não existe (`Engine.IsEmbeddedInEditor`): o F11 avisa e o menu mostra "indisponível dentro do editor". Para tela cheia pelo F5, desmarque "Integrar Jogo na Próxima Execução" no menu ⋮ da aba Jogo (pedido 11; relatório `2026-11-26-recuperacao-prototipo.md`).
+- **Diagnóstico:** a cada início e redimensionamento, o jogo escreve em `user://diagnostico_tela.txt` o modo (incorporado ou janela própria), a janela, o monitor, a área desenhada e as margens.
 
 ## 6. Dependencies
 `src/Game/DisplayManager.cs` (autoload "Display"), `src/Game/GamePanels.cs`, `src/Game/MapView.cs`, `PlainsHud` (layout, linhas clicáveis), `PlainsGame` e `ValeGame` (`IMapSource`), `SaveData` (`Explored`, `Markers`), `Prefs`.

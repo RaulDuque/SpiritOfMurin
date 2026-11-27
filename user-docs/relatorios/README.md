@@ -36,6 +36,7 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-26 | [prompts/10-campanha-inicial.md](prompts/10-campanha-inicial.md) | Pedido do criador para a campanha inicial e a próxima evolução da Planície, entregas 0 a 8 (texto integral) |
 | 2026-11-26 | [2026-11-26-tecnicas-seladas.md](2026-11-26-tecnicas-seladas.md) | Campanha, entrega 2: técnicas do Vale seladas no despertar, recusadas em toda entrada; voltam enfraquecidas no nível 3 (uma mensagem por jornada, também para saves já no nível 3+); comparação plena × enfraquecida com os números medidos; K conforme o contexto |
 | 2026-11-26 | [2026-11-26-tela-cheia-mapa.md](2026-11-26-tela-cheia-mapa.md) | Campanha, entrega 3: causa das bordas pretas (escala inteira sobre 640×360 fixo) e a correção medida no monitor 2; tela cheia (F11, menu, preferência); menu de pausa; mouse nos painéis; mapa do Vale e da Planície com zoom, marcadores e exploração salvos |
+| 2026-11-26 | [2026-11-26-recuperacao-prototipo.md](2026-11-26-recuperacao-prototipo.md) | Recuperação do protótipo (pedido 11): causa das bordas no F5 (jogo incorporado ao editor, Tamanho Fixo) e a opção a desmarcar; ponte desenhada de novo; arco da guarda e flanco; pistas reais no mapa (Onde estou? / Última pista); minimapa; Livro em duas colunas com números reais; Esc → Controles com troca de teclas; Modo de assistência |
 
 ## Prompts de imagem do criador
 
