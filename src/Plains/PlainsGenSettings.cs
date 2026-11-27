@@ -34,6 +34,9 @@ public sealed class PlainsGenSettings
     /// <summary>Default path of the data file.</summary>
     public const string DefaultPath = "res://assets/data/plains/plains_worldgen.json";
 
+    /// <summary>Coins in the pouch by the meditation mat (pedido 13).</summary>
+    public int CoinPouchAmount { get; set; } = 25;
+
     /// <summary>Side of a chunk in tiles.</summary>
     public int ChunkTiles { get; set; } = 16;
     /// <summary>Tile size in pixels.</summary>

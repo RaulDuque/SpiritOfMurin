@@ -11,7 +11,7 @@ public enum TileKind { Grass, Bank, Water, Ford, BushGrass, Mud }
 public enum Habitat { Grass, Bank, Water, Bushes, Mud }
 
 /// <summary>The kinds of generated objects.</summary>
-public enum FeatureKind { Flint, Branch, Pine, Boulder, Bush, Burrow, Rooted, Herb, Root, Boar, Track, Campfire, MeditationMat }
+public enum FeatureKind { Flint, Branch, Pine, Boulder, Bush, Burrow, Rooted, Herb, Root, Boar, Track, Campfire, MeditationMat, CoinPouch }
 
 /// <summary>
 /// One generated object. <see cref="Id"/> is stable for a seed: the same kind on the same tile
@@ -199,6 +199,7 @@ public sealed class PlainsGenerator
         Vector2 mid = new(16, 20);
         Force(2, 1, FeatureKind.Campfire, mid); // east side of the clearing: the guaranteed trails leave to the west
         Force(1, -2, FeatureKind.MeditationMat, mid);
+        Force(3, -2, FeatureKind.CoinPouch, mid); // the coin pouch (pedido 13): two steps east of the meditation mat
         Force(BankTile(-1), -1, FeatureKind.Flint, mid);
         Force(BankTile(-4), -4, FeatureKind.Flint, mid);
         Force(BankTile(2), 2, FeatureKind.Branch, mid);

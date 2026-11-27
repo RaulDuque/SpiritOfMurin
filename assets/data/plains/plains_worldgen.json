@@ -1,7 +1,9 @@
 {
   "_doc": {
+    "coin_pouch_amount": "moedas da bolsinha na clareira, dois passos a leste da esteira de meditação (pedido 13: dinheiro da jornada)",
     "about": "Planície Verdejante: regras de geração por semente. Distâncias em tiles de 32 px; probabilidades por tile (0-1). Lido por src/Plains/PlainsGenSettings.cs. Esquema documentado em design/gdd/plains-first-stretch.md.",
-    "chunk_tiles": "lado de um bloco (chunk) em tiles",
+    "coin_pouch_amount": 25,
+  "chunk_tiles": "lado de um bloco (chunk) em tiles",
     "load_radius / unload_radius": "blocos carregados / descarregados ao redor do bloco do jogador (distância de Chebyshev)",
     "clearing_radius": "raio da clareira do despertar, sem objetos",
     "creek_*": "riacho: deslocamento a leste do início, meia largura da água, largura da margem, amplitude e frequência de dois senos de meandro",

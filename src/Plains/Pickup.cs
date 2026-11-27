@@ -30,7 +30,7 @@ public partial class Pickup : Node2D
     public override void _Process(double delta)
     {
         _time += (float)delta;
-        if (Kind is FeatureKind.Herb or FeatureKind.Flint) QueueRedraw(); // herb sways, flint glints
+        if (Kind is FeatureKind.Herb or FeatureKind.Flint or FeatureKind.CoinPouch) QueueRedraw(); // herb sways, flint and coins glint
     }
 
     private void R(float x, float y, float w, float h, Color c) => DrawRect(new Rect2(Mathf.Round(x), Mathf.Round(y), w, h), c);
@@ -46,6 +46,12 @@ public partial class Pickup : Node2D
                 O(-5, -4, 10, 4); O(-2, -6, 5, 2);
                 R(-5, -4, 10, 4, FlintMid); R(-2, -6, 5, 2, FlintLight); R(-4, -2, 4, 1, FlintDark); R(2, -3, 3, 1, FlintLight);
                 if (Mathf.PosMod(_time + Variation * 0.37f, 2.4f) < 0.15f) R(0, -6, 1, 1, Glint);
+                break;
+            case FeatureKind.CoinPouch: // a small tied leather pouch with a coin peeking out
+                O(-5, -7, 10, 7); O(-2, -9, 4, 2);
+                R(-5, -7, 10, 7, new Color("#8f6f4a")); R(-4, -7, 8, 1, new Color("#a8845a")); R(-2, -9, 4, 2, new Color("#a8845a")); R(-3, -6, 6, 1, new Color("#5a3a24"));
+                R(3, -3, 3, 2, new Color("#f0d27a")); R(3, -3, 3, 1, new Color("#fff2c0"));
+                if (Mathf.PosMod(_time + Variation * 0.29f, 2.0f) < 0.15f) R(4, -4, 1, 1, Glint);
                 break;
             case FeatureKind.Branch:
                 O(-9, -3, 18, 2); O(3, -6, 2, 3);

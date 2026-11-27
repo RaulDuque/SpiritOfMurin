@@ -55,6 +55,24 @@ public partial class PlainsGame : Node2D, IMapSource
     /// <inheritdoc />
     public IReadOnlyList<MapNote> MapNotes => Clues.Select(c => new MapNote("Pista", c.Text, false,
         c.At.Length == 2 ? new Vector2(c.At[0], c.At[1]) : null, c.Toward.Length == 2 ? new Vector2(c.Toward[0], c.Toward[1]) : null, true)).ToList();
+    /// <summary>The journey's money (Moedas), saved with it.</summary>
+    public Wallet Wallet { get; } = new();
+
+    /// <summary>Receives coins (the base for merchants later); shows "+N moedas".</summary>
+    public int ReceiveCoins(int amount, string why = "")
+    {
+        int total = Wallet.Receive(amount);
+        if (amount > 0) Hud.Toast($"+{amount} moedas{(why.Length > 0 ? " (" + why + ")" : "")}   (tem {total})");
+        return total;
+    }
+
+    /// <summary>Spends coins; refuses (and says so) when the balance is short. Returns true when paid.</summary>
+    public bool SpendCoins(int amount, string what = "")
+    {
+        if (Wallet.Spend(amount, out string why)) { Hud.Toast($"−{amount} moedas{(what.Length > 0 ? " (" + what + ")" : "")}   (tem {Wallet.Coins})"); return true; }
+        Hud.Toast(why); return false;
+    }
+
     /// <summary>Clues found in the Planície (saved with the journey).</summary>
     public List<Clue> Clues { get; } = new();
 
@@ -317,6 +335,7 @@ public partial class PlainsGame : Node2D, IMapSource
             foreach (var e in d.Explored) if (e.Length == 2) Explored.Add(new Vector2I(e[0], e[1]));
             foreach (var mk in d.Markers) if (mk.Length == 2) MapMarkers.Add(new Vector2(mk[0], mk[1]));
             Clues.Clear(); Clues.AddRange(d.Clues);
+            Wallet.Set(d.Coins);
             LossApplied = d.LossApplied; TechniquesReturned = d.TechniquesReturned;
         }
         if (awaken != null)
@@ -738,6 +757,7 @@ public partial class PlainsGame : Node2D, IMapSource
         var t = Hud.AnyPanelOpen ? null : NearestInteractable();
         string? text = t switch
         {
+            Pickup { ItemId: "moedas" } => Bindings.F("[use] · pegar a bolsinha de moedas"),
             Pickup p => Bindings.F("[use]") + $" · pegar {Catalog.Get(p.ItemId == "grama_sangue" ? HarvestRules.HerbItem(Data, Skills.Grade("erboristeria")) : p.ItemId).Name}",
             Carcass c => !Blade ? "precisa de uma lâmina na mão" : Bindings.F($"[use] · tirar {PartName(c.Parts[0])}" + (c.Parts[0] != "meat" ? " · [qi] com Qi" : "")),
             TrackPrint => Bindings.F("[use] · examinar a pegada"),
@@ -775,6 +795,7 @@ public partial class PlainsGame : Node2D, IMapSource
     {
         if (!World.State.MarkCollected(p.FeatureId)) return false;
         World.Remove(p);
+        if (p.ItemId == "moedas") { ReceiveCoins(Gen.Settings.CoinPouchAmount); Sfx?.Play("pickup"); return true; }
         bool plant = p.ItemId is "grama_sangue" or "raiz_amarga";
         string item = p.ItemId == "grama_sangue" ? HarvestRules.HerbItem(Data, Skills.Grade("erboristeria")) : p.ItemId;
         AddItem(item);
@@ -904,7 +925,7 @@ public partial class PlainsGame : Node2D, IMapSource
             Level = Stats.Level, Xp = Stats.Xp, Points = Stats.Points, TotalXp = Stats.TotalXp, Attributes = Stats.Attributes,
             Practice = practice, PracticeKeys = keys, Crafted = _crafted.ToList(),
             Region = "planicie", Phase = "planicie", Book = Book, LossApplied = LossApplied, TechniquesReturned = TechniquesReturned,
-            Explored = Explored.Select(c => new[] { c.X, c.Y }).ToList(), Markers = MapMarkers.Select(m => new[] { m.X, m.Y }).ToList(), Clues = Clues.ToList(),
+            Explored = Explored.Select(c => new[] { c.X, c.Y }).ToList(), Markers = MapMarkers.Select(m => new[] { m.X, m.Y }).ToList(), Clues = Clues.ToList(), Coins = Wallet.Coins,
         };
     }
 
@@ -966,6 +987,7 @@ public partial class PlainsGame : Node2D, IMapSource
             first = false;
         }
         Hud.SetRows(rows);
+        Hud.SetMoney(Wallet.Coins);
         RefreshHands();
     }
 

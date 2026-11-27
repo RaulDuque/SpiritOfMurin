@@ -148,6 +148,7 @@ public partial class PlainsWorld : Node2D
         FeatureKind.Branch => "galho_rijo",
         FeatureKind.Herb => "grama_sangue",
         FeatureKind.Root => "raiz_amarga",
+        FeatureKind.CoinPouch => "moedas",
         _ => null,
     };
 
@@ -161,7 +162,7 @@ public partial class PlainsWorld : Node2D
     {
         switch (f.Kind)
         {
-            case FeatureKind.Flint or FeatureKind.Branch or FeatureKind.Herb or FeatureKind.Root:
+            case FeatureKind.Flint or FeatureKind.Branch or FeatureKind.Herb or FeatureKind.Root or FeatureKind.CoinPouch:
                 if (State.IsCollected(f.Id)) return null;
                 return new Pickup { FeatureId = f.Id, ItemId = ItemOf(f.Kind)!, Kind = f.Kind, Variation = f.Variation, Position = f.Position, Name = f.Id.Replace('@', '_').Replace(',', '_') };
             case FeatureKind.Pine:
