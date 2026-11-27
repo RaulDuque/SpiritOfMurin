@@ -141,7 +141,7 @@ public partial class NovidadesCheck : Node
         await Frames(4);
         await Shot("01-mira-anda-esquerda-corta-direita");
         Press(Key.A, false); await Flush(); await Frames(12);
-        Check("walking left with the cursor to the right, J cuts to the right", walkedLeft && cuts == 1 && AngleBetween(P.LastCutAngle, 0) < 0.6f, $"andou para a esquerda {walkedLeft}, ângulo do corte {Mathf.RadToDeg(P.LastCutAngle):0}°");
+        Check("walking left with the cursor to the right, J cuts to the right", walkedLeft && cuts == 1 && AngleBetween(P.LastCutAngle, 0) < 0.6f, $"andou para a esquerda {walkedLeft}, cortes {cuts}, ângulo do corte {Mathf.RadToDeg(P.LastCutAngle):0}°");
         Check("the cut's hit area agrees: the pot on the right breaks", V.Story.PotsBroken.Contains(3), $"potes quebrados [{string.Join(",", V.Story.PotsBroken)}]");
 
         // the Qi shot: walking left, cursor to the right, K
@@ -275,12 +275,15 @@ public partial class NovidadesCheck : Node
         await Teleport(dis.GlobalPosition + new Vector2(0, 70), Vector2.Up);
         await Frames(20);
         for (int i = 0; i < 3 && V.Lock != dis; i++) await Tap(Key.Space);
-        dis.Face = Mathf.Pi / 2;
+        dis.ResetToHome(); await Frames(3);
+        await Teleport(dis.GlobalPosition + new Vector2(0, 45), Vector2.Up);
+        dis.Face = Mathf.Pi / 2; dis.State = ValeFighter.St.Guard; // controlled: standing in guard, facing the swordsman
         P.Qi = 50; int words = V.Fx.WordsShown.Count; float hp = dis.Hp;
         await HoldQi(Key.K, 60); await Frames(25);
         Check("a partial charge against the Closed Guard is parried (no break)", dis.Hp == hp && dis.Stagger <= 0 && V.Fx.WordsShown.Skip(words).Contains("aparado"), $"vida {hp}→{dis.Hp}");
         await Frames(40);
-        await Teleport(dis.GlobalPosition + new Vector2(0, 70), Vector2.Up); dis.Face = Mathf.Pi / 2;
+        dis.ResetToHome(); await Frames(3);
+        await Teleport(dis.GlobalPosition + new Vector2(0, 45), Vector2.Up); dis.Face = Mathf.Pi / 2; dis.State = ValeFighter.St.Guard;
         P.Qi = 100; P.Revive(); words = V.Fx.WordsShown.Count; hp = dis.Hp;
         await HoldQi(Key.K, 120); await Frames(18);
         Check("the full charge breaks the Closed Guard: damage and an open window (stagger)", dis.Hp < hp && dis.Stagger > 0.5f && V.Fx.WordsShown.Skip(words).Contains("guarda rompida"), $"vida {hp}→{dis.Hp}, aberta {dis.Stagger:0.0} s");
