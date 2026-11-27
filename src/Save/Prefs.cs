@@ -24,6 +24,8 @@ public sealed class Prefs
     public bool AimMouse { get; set; } = true;
     /// <summary>Assist mode: show the combat areas (guard arc, live blade, announced attacks).</summary>
     public bool AssistAreas { get; set; }
+    /// <summary>Assist mode: show the damage numbers of each hit, dealt and taken.</summary>
+    public bool AssistNumbers { get; set; }
     /// <summary>Controls: action → [main input, second input] ("k:physical keycode", "m:mouse button" or "").</summary>
     public System.Collections.Generic.Dictionary<string, string[]> Bindings { get; set; } = new();
     /// <summary>Quick-use bindings: slot (1-4) → item id.</summary>

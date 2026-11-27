@@ -60,25 +60,26 @@ public static class ProgressionTests
     {
         var expect = new Dictionary<string, string[]>
         {
+            ["for"] = new[] { "Dano corpo a corpo: 100% → 106%" },
             ["vit"] = new[] { "Vida máxima: 10 → 12" },
             ["int"] = new[] { "Potência dos preparos medicinais: 100% → 112%", "Grama Sangue-de-Coelho comum: 4,0 → 4,5 de Vida" },
-            ["con"] = new[] { "Vigor máximo: 50 → 60", "Recuperação do vigor: 14,0/s → 15,4/s" },
+            ["con"] = new[] { "Vigor máximo: 50 → 60", "Recuperação do vigor: 14,0/s → 15,4/s", "Dano recebido: 100% → 97%" },
             ["agi"] = new[] { "Velocidade ao andar: 100% → 104%", "Distância do passo: 100% → 105%", "Tempo de recuperação do corte e do passo: 100% → 95%" },
-            ["sor"] = new[] { "Chance de material secundário (tendão na caça, uma planta ou lasca a mais na coleta): 10% → 15%" },
+            ["sor"] = new[] { "Chance de material secundário (tendão na caça, uma planta ou lasca a mais na coleta): 10% → 15%", "Chance de crítico (×1,5 de dano): 5% → 6%" },
             ["ki"] = new[] { "Ki máximo: 100 → 115", "Esfolas com Ki seguidas (custo 15): 6 → 7" },
         };
         foreach (var attr in PlayerStats.AttributeIds)
         {
             // Arrange
             var s = new PlayerStats(Data(), 10); s.AddXp(20);
-            var before = (s.MaxHealth, s.MedicinePotency, s.MaxVigor, s.MoveSpeedMultiplier, s.SecondaryChance, s.MaxKi);
+            var before = (s.MaxHealth, s.MedicinePotency, s.MaxVigor, s.MoveSpeedMultiplier, s.SecondaryChance, s.MaxKi, s.MeleeDamageMultiplier);
             // Act
             var preview = s.Preview(attr, 4).Select(l => l.Replace('.', ',')).ToList();
             bool spent = s.Spend(attr);
             // Assert
             Assert.True(spent, $"{attr}: spent");
             for (int i = 0; i < expect[attr].Length; i++) Assert.Equal(expect[attr][i], preview[i], $"{attr} preview {i}");
-            var after = (s.MaxHealth, s.MedicinePotency, s.MaxVigor, s.MoveSpeedMultiplier, s.SecondaryChance, s.MaxKi);
+            var after = (s.MaxHealth, s.MedicinePotency, s.MaxVigor, s.MoveSpeedMultiplier, s.SecondaryChance, s.MaxKi, s.MeleeDamageMultiplier);
             Assert.True(!before.Equals(after), $"{attr}: something changed");
             Assert.Equal(1, s.Points, $"{attr}: one point left");
         }

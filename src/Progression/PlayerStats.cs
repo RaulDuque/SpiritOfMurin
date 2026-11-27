@@ -5,18 +5,18 @@ using Godot;
 namespace SpiritOfMurin.Progression;
 
 /// <summary>
-/// The character's level, XP, unspent points and the six attributes (VIT, INT, CON, AGI, SOR, KI),
+/// The character's level, XP, unspent points and the seven attributes (FOR, VIT, INT, CON, AGI, SOR, KI),
 /// with every derived number. Pure logic (no nodes), fed by <see cref="ProgressionData"/>.
 /// </summary>
 public sealed class PlayerStats
 {
     /// <summary>Attribute ids in sheet order.</summary>
-    public static readonly string[] AttributeIds = { "vit", "int", "con", "agi", "sor", "ki" };
+    public static readonly string[] AttributeIds = { "for", "vit", "int", "con", "agi", "sor", "ki" };
 
     /// <summary>Short and long names of each attribute.</summary>
     public static readonly Dictionary<string, (string Short, string Long)> Names = new()
     {
-        ["vit"] = ("VIT", "Vitalidade"), ["int"] = ("INT", "Inteligência"), ["con"] = ("CON", "Constituição"),
+        ["for"] = ("FOR", "Força"), ["vit"] = ("VIT", "Vitalidade"), ["int"] = ("INT", "Inteligência"), ["con"] = ("CON", "Constituição"),
         ["agi"] = ("AGI", "Agilidade"), ["sor"] = ("SOR", "Sorte"), ["ki"] = ("KI", "Energia espiritual"),
     };
 
@@ -99,6 +99,14 @@ public sealed class PlayerStats
     public float SecondaryChance => Mathf.Min(0.9f, _d.Base.SecondaryChance + Get("sor") * _d.PerPoint.SorSecondaryChance);
     /// <summary>Maximum Ki.</summary>
     public float MaxKi => _d.Base.MaxKi + Get("ki") * _d.PerPoint.KiMaxKi;
+    /// <summary>FOR: multiplier of melee damage (sword, knife, cuts and thrusts; not the Ki shots).</summary>
+    public float MeleeDamageMultiplier => 1 + Get("for") * _d.PerPoint.ForMeleeDamage;
+    /// <summary>CON: fraction of a hit's damage that is still taken (1 = all of it).</summary>
+    public float DamageTakenMultiplier => 1 - Mathf.Min(_d.PerPoint.ConReductionCap, Get("con") * _d.PerPoint.ConDamageReduction);
+    /// <summary>Chance that one of the character's hits is critical (base + SOR, capped).</summary>
+    public float CritChance => Mathf.Min(_d.PerPoint.CritCap, _d.Base.CritChance + Get("sor") * _d.PerPoint.SorCritChance);
+    /// <summary>Damage multiplier of a critical hit.</summary>
+    public float CritMultiplier => _d.Base.CritMultiplier;
 
     /// <summary>
     /// What one more point in <paramref name="attr"/> changes, as lines "label: now → after", computed by
@@ -110,11 +118,12 @@ public sealed class PlayerStats
         static string P(float v) => $"{v * 100:0}%";
         return attr switch
         {
+            "for" => new() { $"Dano corpo a corpo: {P(MeleeDamageMultiplier)} → {P(after.MeleeDamageMultiplier)}" },
             "vit" => new() { $"Vida máxima: {MaxHealth} → {after.MaxHealth}" },
             "int" => new() { $"Potência dos preparos medicinais: {P(MedicinePotency)} → {P(after.MedicinePotency)}", $"Grama Sangue-de-Coelho comum: {herbRegen * MedicinePotency:0.0} → {herbRegen * after.MedicinePotency:0.0} de Vida" },
-            "con" => new() { $"Vigor máximo: {MaxVigor:0} → {after.MaxVigor:0}", $"Recuperação do vigor: {VigorRegen:0.0}/s → {after.VigorRegen:0.0}/s" },
+            "con" => new() { $"Vigor máximo: {MaxVigor:0} → {after.MaxVigor:0}", $"Recuperação do vigor: {VigorRegen:0.0}/s → {after.VigorRegen:0.0}/s", $"Dano recebido: {P(DamageTakenMultiplier)} → {P(after.DamageTakenMultiplier)}" },
             "agi" => new() { $"Velocidade ao andar: {P(MoveSpeedMultiplier)} → {P(after.MoveSpeedMultiplier)}", $"Distância do passo: {P(StepDistanceMultiplier)} → {P(after.StepDistanceMultiplier)}", $"Tempo de recuperação do corte e do passo: {P(RecoveryMultiplier)} → {P(after.RecoveryMultiplier)}" },
-            "sor" => new() { $"Chance de material secundário (tendão na caça, uma planta ou lasca a mais na coleta): {P(SecondaryChance)} → {P(after.SecondaryChance)}" },
+            "sor" => new() { $"Chance de material secundário (tendão na caça, uma planta ou lasca a mais na coleta): {P(SecondaryChance)} → {P(after.SecondaryChance)}", $"Chance de crítico (×{CritMultiplier:0.0#} de dano): {P(CritChance)} → {P(after.CritChance)}" },
             "ki" => new() { $"Ki máximo: {MaxKi:0} → {after.MaxKi:0}", $"Esfolas com Ki seguidas (custo {_d.Base.KiPreserveCost:0}): {Mathf.FloorToInt(MaxKi / _d.Base.KiPreserveCost)} → {Mathf.FloorToInt(after.MaxKi / _d.Base.KiPreserveCost)}" },
             _ => new(),
         };

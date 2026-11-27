@@ -4,7 +4,7 @@ using SpiritOfMurin.Save;
 namespace SpiritOfMurin.Game;
 
 /// <summary>
-/// The assist mode (Esc → Modo de assistência → Mostrar áreas de combate). When on, the fights draw what
+/// The assist mode (Esc → Modo de assistência → Mostrar áreas de combate / Mostrar números de dano). With the areas on, the fights draw what
 /// the combat code tests: the arc a guard parries, the area a blade covers while it is live, and the
 /// direction of an announced attack. Every drawing reads the same numbers the hit tests use, so what is
 /// seen is what happens. Three phases are told apart by shape and motion, not only colour:
@@ -27,8 +27,26 @@ public static class Assist
         set { _areas = value; var p = Prefs.Load(); p.AssistAreas = value; p.Save(); }
     }
 
-    /// <summary>Forgets the cached value (tests that switch preference files).</summary>
-    public static void Reload() => _areas = null;
+    private static bool? _numbers;
+
+    /// <summary>True when the damage numbers are shown (dealt and taken, saved in the preferences). See <see cref="CombatText"/>.</summary>
+    public static bool Numbers
+    {
+        get => _numbers ??= Prefs.Load().AssistNumbers;
+        set { _numbers = value; var p = Prefs.Load(); p.AssistNumbers = value; p.Save(); }
+    }
+
+    /// <summary>A short summary for the pause menu: what the assist mode shows now.</summary>
+    public static string Summary => (Areas, Numbers) switch
+    {
+        (true, true) => "áreas e números de dano visíveis",
+        (true, false) => "áreas de combate visíveis",
+        (false, true) => "números de dano visíveis",
+        _ => "desligado",
+    };
+
+    /// <summary>Forgets the cached values (tests that switch preference files).</summary>
+    public static void Reload() { _areas = null; _numbers = null; }
 
     /// <summary>Colours: guard (bone), opening (jade), threat (red-ochre), the player's blade (pale jade).</summary>
     public static readonly Color GuardC = new("#ece5d0"), OpenC = new("#6fd8d2"), ThreatC = new("#e0503a"), BladeC = new("#a6f2e2");

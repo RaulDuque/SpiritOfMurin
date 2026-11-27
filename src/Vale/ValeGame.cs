@@ -147,6 +147,8 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     public Sfx Sfx { get; private set; } = null!;
     /// <summary>Effects.</summary>
     public ValeFx Fx { get; private set; } = null!;
+    /// <summary>The damage numbers of the assist mode.</summary>
+    public CombatText Numbers { get; private set; } = null!;
     /// <summary>The prologue's items.</summary>
     public Inventory Inventory { get; } = new();
     /// <summary>Enemies and the statue by id.</summary>
@@ -193,6 +195,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         Hud = GetNode<PlainsHud>("Hud");
         Sfx = GetNode<Sfx>("Sfx");
         Fx = new ValeFx { ZIndex = 20, Name = "Fx" }; AddChild(Fx);
+        Numbers = new CombatText { Name = "NumerosDeDano" }; AddChild(Numbers);
         _decals = new ValeDecals { Story = Story, ZIndex = -5, Name = "Decals" }; _ground.AddChild(_decals);
         _built = ValeTerrain.Build(Map, _ground, _world, _bodies, Story);
         for (int i = 0; i < ValeMap.Pots.Length; i++) { var p = new ValePot { Index = i, Position = ValeMap.Pots[i], Name = $"Pot{i}" }; _world.AddChild(p); _pots.Add(p); }
@@ -218,6 +221,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         Player.CutSlack = Combat.CutSlack; Player.ThrustSlack = Combat.ThrustSlack; // the prototype's hit test is a little wider than the blade
         Player.LockTarget = () => Lock;
         Player.BladeActive += OnBlade;
+        Player.Hurt += a => Numbers.Taken(Player.GlobalPosition + new Vector2(8, -44), a);
         Player.KiFired += OnKi;
         Player.SideStepped += t => { if (t is ValeFighter f && f.Type != ValeFighter.Kind.Statue) f.Fooled = f.Type == ValeFighter.Kind.Senior ? Combat.SenFooled : Combat.DisFooled; Sfx.Play("side"); };
         Player.MoveEnded += Settle;
@@ -305,7 +309,8 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
             string name = Lock.Type switch { ValeFighter.Kind.Senior => "Espadachim Sênior", ValeFighter.Kind.Statue => "Estátua da Mestra", _ => "Discípulo da Guarda Fechada" };
             string stance = Lock.Type == ValeFighter.Kind.Statue ? "pedra em guarda" : Lock.Stagger > 0 ? "guarda quebrada" : Lock.Type == ValeFighter.Kind.Senior && Lock.AttackStance ? "postura de ataque"
                 : Lock.Fooled > 0 ? "flanco aberto" : Lock.State == ValeFighter.St.Recover ? "recuperando" : "guarda fechada";
-            Hud.SetFocus($"{name} · {stance}", Lock.Type == ValeFighter.Kind.Statue ? 1 : (float)Lock.Hp / Mathf.Max(1, Lock.Max));
+            if (Lock.Type == ValeFighter.Kind.Statue) Hud.SetFocus($"{name} · {stance}", 1);
+            else Hud.SetFocus($"{name} · {stance}", Lock.Hp, Lock.Max);
         }
         else Hud.SetFocus(null, 0);
         var cam = Player.GetNode<Camera2D>("Camera");
@@ -478,9 +483,10 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
             if (!Player.InBladeArc(origin, dir, r, Player.BladeArcDegrees, f.GlobalPosition, f.Radius)) continue;
             _hitThisSwing.Add(f.Id);
             // the Reforço de Ki: +10% damage (fractional, no rounding) and one break roll against the guard met
-            float dmg = damage * Player.StrikeScale;
+            var hit = Player.ResolveStrike(damage, melee: true); // the Reforço (the prologue has no sheet: no FOR, no critical)
+            float dmg = hit.Amount;
             bool breaks = f.Type != ValeFighter.Kind.Statue && f.WouldParry(origin) && Player.RollReinforceBreak();
-            string res = StrikeFighter(f, origin, dmg, breaks, breaks ? Tech.Data.KiReinforce.Full.Stagger : 0, Player.HeavyCut, melee: true);
+            string res = StrikeFighter(f, origin, dmg, breaks, breaks ? Tech.Data.KiReinforce.Full.Stagger : 0, Player.HeavyCut, melee: true, crit: hit.Critical);
             if (breaks && res is "hit" or "killed") Fx.Say(f.GlobalPosition + new Vector2(0, -58), "guarda rompida", ValeTerrain.Learn, 1.2f);
             if (Player.Current == Player.ActionKind.Recoil) return; // parried: the recoil replaced the cut
         }
@@ -489,7 +495,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
     }
 
     /// <summary>A blade or a wave reached a fighter: parry, flank, hit, kill.</summary>
-    public string StrikeFighter(ValeFighter f, Vector2 from, float dmg, bool lamina, float stagger, bool heavy, bool melee)
+    public string StrikeFighter(ValeFighter f, Vector2 from, float dmg, bool lamina, float stagger, bool heavy, bool melee, bool crit = false)
     {
         Vector2 mid = (f.GlobalPosition + from) / 2 + new Vector2(0, -18);
         bool guarded = f.Guarding;
@@ -514,6 +520,7 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
                 }
                 return r;
         }
+        if (f.Type != ValeFighter.Kind.Statue && r is "hit" or "flank" or "killed") Numbers.Dealt(f.GlobalPosition + new Vector2(0, -46), new StrikeResult(dmg, crit));
         if (r == "flank")
         {
             _flankHits++;

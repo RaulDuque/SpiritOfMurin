@@ -44,11 +44,17 @@ public sealed class BaseStats
     public float SecondaryChance { get; set; } = 0.10f;
     /// <summary>Base potency multiplier of medicinal preparations.</summary>
     public float MedicinePotency { get; set; } = 1.0f;
+    /// <summary>Base chance that one of the character's hits is critical (0-1).</summary>
+    public float CritChance { get; set; } = 0.05f;
+    /// <summary>Damage multiplier of a critical hit.</summary>
+    public float CritMultiplier { get; set; } = 1.5f;
 }
 
 /// <summary>Effect of each attribute point.</summary>
 public sealed class PerPoint
 {
+    /// <summary>FOR: melee damage per point (fraction; the Ki shots are not affected).</summary>
+    public float ForMeleeDamage { get; set; } = 0.06f;
     /// <summary>VIT: maximum Vida per point.</summary>
     public float VitMaxHealth { get; set; } = 2;
     /// <summary>INT: medicinal potency per point.</summary>
@@ -57,6 +63,10 @@ public sealed class PerPoint
     public float ConMaxVigor { get; set; } = 10;
     /// <summary>CON: vigor regeneration per point (fraction).</summary>
     public float ConVigorRegen { get; set; } = 0.10f;
+    /// <summary>CON: less damage taken per point (fraction).</summary>
+    public float ConDamageReduction { get; set; } = 0.03f;
+    /// <summary>CON: the most damage CON can take away (fraction).</summary>
+    public float ConReductionCap { get; set; } = 0.45f;
     /// <summary>AGI: walking speed per point (fraction).</summary>
     public float AgiMoveSpeed { get; set; } = 0.04f;
     /// <summary>AGI: step distance per point (fraction).</summary>
@@ -67,6 +77,10 @@ public sealed class PerPoint
     public float AgiCap { get; set; } = 0.40f;
     /// <summary>SOR: secondary material chance per point.</summary>
     public float SorSecondaryChance { get; set; } = 0.05f;
+    /// <summary>SOR: critical chance per point.</summary>
+    public float SorCritChance { get; set; } = 0.01f;
+    /// <summary>The highest critical chance (base + SOR).</summary>
+    public float CritCap { get; set; } = 0.40f;
     /// <summary>KI: maximum Ki per point.</summary>
     public float KiMaxKi { get; set; } = 15;
 }

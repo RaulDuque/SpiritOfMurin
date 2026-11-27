@@ -40,15 +40,20 @@ Os valores de base são os do personagem de nível 1 atual: Vida 10, velocidade 
 
 | Atributo | Efeito de 1 ponto |
 |---|---|
+| FOR | +6% no dano corpo a corpo (espada, faca, cortes e estocada). Os disparos de Ki não usam FOR. *Entrou em 2026-11-27 (pedido 14), substituindo a decisão anterior de ficha sem FOR.* |
 | VIT | +2 de Vida máxima. A Vida atual sobe junto. O HUD continua com "Vida N%" e a cura pendente em verde |
 | INT | +12% na potência dos preparos medicinais (Grama Sangue-de-Coelho e Raiz Amarga) |
-| CON | +10 de vigor máximo e +10% na recuperação do vigor |
+| CON | +10 de vigor máximo, +10% na recuperação do vigor e −3% no dano recebido (teto de 45%) |
 | AGI | +4% de velocidade ao andar, +5% de distância do passo e −5% no tempo de recuperação do corte e do passo. Cada bônus tem teto de 40% |
-| SOR | +5 pontos percentuais na chance de material secundário. Base 10%: tendão na caça, uma planta ou uma lasca a mais na coleta |
+| SOR | +5 pontos percentuais na chance de material secundário (base 10%: tendão na caça, uma planta ou uma lasca a mais na coleta) e +1 ponto percentual na chance de crítico (base 5%, teto 40%) |
 | KI | +15 de Ki máximo (base 100) |
 
 - **Ficha (C):** W/S escolhe o atributo. Antes de gastar, a ficha mostra a mudança concreta, por exemplo "Vida máxima: 10 → 12". E gasta 1 ponto.
 - A prévia é calculada aplicando o ponto a uma cópia da ficha. Por isso nunca diverge do efeito real.
+
+- **Dano, defesa e crítico (pedido 14):** cada golpe do personagem que acerta passa por FOR (só corpo a corpo), pelo Reforço de Ki (quando ativo) e por uma rolagem de crítico. O crítico multiplica o dano por 1,5. Cada golpe recebido perde a fração de CON. O prólogo não tem ficha: lá não há FOR, crítico nem defesa de CON. O código é `src/Combat/DamageRules.cs`.
+- **Vida do inimigo em números:** a barra do animal focado (Espaço) e a do lutador travado no Vale mostram "atual/máximo" dentro da barra, por exemplo "6/6", "4,7/6". Barra e números descem juntos.
+- **Números de dano (Modo de assistência):** em Esc → Modo de assistência → "Mostrar números de dano" (desligado por padrão, salvo nas preferências), cada golpe que tira Vida mostra o valor subindo do alvo. O crítico aparece maior e dourado, com "!", e a primeira vez com a palavra "crítico". O dano recebido aparece em vermelho com sinal de menos sobre o personagem. O código é `src/Game/CombatText.cs`.
 
 ### 3.3 Vigor e Ki
 - **Vigor** (barra ocre): o passo gasta 12, o corte gasta 3. Sem vigor, a ação não sai e aparece "Sem fôlego".
@@ -130,6 +135,10 @@ Os valores de base são os do personagem de nível 1 atual: Vida 10, velocidade 
 | Vida máxima | `10 + 2·VIT` | VIT 1 → 12 |
 | Potência medicinal | `1 + 0,12·INT` | INT 1: erva comum 4 → 4,48 |
 | Vigor máximo / recuperação | `50 + 10·CON` / `14·(1 + 0,1·CON)` por s | CON 1 → 60 e 15,4/s |
+| Dano corpo a corpo dado | `base · reforço · (1 + 0,06·FOR) · (crítico ? 1,5 : 1)`; `reforço` = 1,1 durante o Reforço de Ki | Faca (1) com FOR 5: 1,3; crítico: 1,95 |
+| Dano de Ki dado | `base · (crítico ? 1,5 : 1)` | Disparo pleno (3): 3; crítico: 4,5 |
+| Chance de crítico | `min(0,40, 0,05 + 0,01·SOR)`; crítico quando a rolagem em [0, 1) é menor | SOR 5 → 10% |
+| Dano recebido | `dano · (1 − min(0,45, 0,03·CON))` | Golpe de 4 com CON 5: 3,4 |
 | AGI | `1 + min(0,4, 0,04·AGI)` velocidade; `1 + min(0,4, 0,05·AGI)` passo; `1 − min(0,4, 0,05·AGI)` recuperação | AGI 1 → 109,2 px/s |
 | Chance secundária | `min(0,9, 0,10 + 0,05·SOR)`; o sorteio é fixo por (semente, id) | SOR 1 → 15%. Mais SOR só acrescenta objetos que dão o secundário |
 | Ki máximo | `100 + 15·KI` | KI 1 → 115 |
@@ -171,6 +180,10 @@ Tudo está em `assets/data/plains/plains_progression.json`, com o esquema no blo
 | `xp_base` | 15–30 | Ritmo do primeiro nível. Com 20, o percurso normal (faca, pista, coelho, carne assada, tiras) chega ao nível 2 |
 | `xp_growth` | 1,3–1,7 | Ritmo dos níveis seguintes |
 | `per_point.*` | metade a dobro dos valores atuais | Força de cada atributo. AGI tem teto em `agi_cap` |
+| `per_point.for_melee_damage` | 0,03–0,10 | Quanto cada FOR soma ao dano corpo a corpo |
+| `per_point.con_damage_reduction` / `con_reduction_cap` | 0,01–0,05 / 0,30–0,60 | Defesa de CON e o seu teto (acima de 0,6 os golpes quase não doem) |
+| `base.crit_chance` / `per_point.sor_crit_chance` / `crit_cap` | 0–0,10 / 0,005–0,02 / 0,25–0,50 | Frequência do crítico |
+| `base.crit_multiplier` | 1,25–2,0 | Força do crítico |
 | `base.step_vigor_cost` | 8–18 | Com 50 de vigor, cerca de 4 passos seguidos |
 | `base.ki_preserve_cost` | 10–30 | Quantas esfolas com Ki por meditação |
 | `skills.*.thresholds` | crescentes | Quantas práticas por grau |
@@ -185,4 +198,5 @@ Tudo está em `assets/data/plains/plains_progression.json`, com o esquema no blo
 5. O javali dá couro (pelo grau de Esfolar), Carne Rija e presas, cada um uma vez.
 6. A carne assada na fogueira recupera o vigor gasto nos passos. As tiras e a bolsa consomem os materiais uma vez. H usa a erva da bolsa.
 7. O primeiro nível dá 2 pontos. A ficha mostra a mudança antes de gastar, e cada atributo muda o número prometido; AGI é medida na velocidade real.
+8a. FOR, CON e crítico (pedido 14): com FOR 5 o corte da faca tira 1,3; com a rolagem de crítico fixa em 0 tira 1,95 e o número aparece com "!"; com CON 5 um golpe de 4 tira 3,4. A barra do animal focado mostra "atual/máximo" e desce junto com o número. Com "Mostrar números de dano" desligado nenhum número aparece. Uma jornada de antes do FOR carrega com FOR 0. (`tests/integration/AtributosCheck.cs`, `tests/unit/Plains/DamageRulesTests.cs`)
 8. Meditar grava. Depois de fechar e abrir: Continuar no título restaura a semente, o lugar, o inventário, o nível, os pontos, os atributos, as proficiências, a Vida, o Ki e o vigor. Carcaças usadas não voltam, coletas não voltam e gravar de novo não multiplica nada.

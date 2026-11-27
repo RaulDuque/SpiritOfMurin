@@ -246,6 +246,27 @@ public partial class Player : CharacterBody2D
 
     private TechniqueParams? ReinforceParams => Tech?.Data.KiReinforce.Full;
 
+    // ---- the sheet's combat numbers (pedido 14). The region with a sheet (the Planície) sets them from
+    // PlayerStats; without one (the prologue) they stay neutral: no FOR bonus, no critical, all damage taken.
+
+    /// <summary>FOR: multiplier of melee damage (1 = none).</summary>
+    public float MeleeMultiplier { get; set; } = 1;
+    /// <summary>Chance (0-1) that a hit of the character is critical.</summary>
+    public float CritChance { get; set; }
+    /// <summary>Damage multiplier of a critical hit.</summary>
+    public float CritMultiplier { get; set; } = 1.5f;
+    /// <summary>CON: fraction of incoming damage still taken (1 = all).</summary>
+    public float DamageTaken { get; set; } = 1;
+    /// <summary>The critical roll (0-1). Tests inject fixed values; the game uses a random draw.</summary>
+    public Func<float> CritRoll { get; set; } = () => (float)Random.Shared.NextDouble();
+
+    /// <summary>
+    /// Resolves one hit of the character on one target: the base damage × the Reforço (melee) × FOR (melee),
+    /// then the critical roll. Regions call it once per target hit, never per frame of contact.
+    /// </summary>
+    public StrikeResult ResolveStrike(float baseDamage, bool melee) =>
+        DamageRules.Outgoing(baseDamage, melee ? StrikeScale : 1, melee ? MeleeMultiplier : 1, CritChance, CritMultiplier, CritChance > 0 ? CritRoll() : 1);
+
     /// <summary>
     /// One break roll for a reinforced strike that meets a guard: true with the data's chance. Regions call it
     /// once per strike and guard (their per-swing hit set makes sure of it), never once per frame of contact.
@@ -391,8 +412,8 @@ public partial class Player : CharacterBody2D
     /// <summary>Raised when the cut button is pressed with nothing in hand.</summary>
     public event Action? EmptyHanded;
 
-    /// <summary>Raised when hurt: damage taken.</summary>
-    public event Action<int>? Hurt;
+    /// <summary>Raised when hurt: the damage actually taken (after CON).</summary>
+    public event Action<float>? Hurt;
 
     /// <summary>Raised when the Vida reaches zero.</summary>
     public event Action? Fainted;
@@ -470,11 +491,12 @@ public partial class Player : CharacterBody2D
         AddChild(new KiPalm { Name = "KiPalm" });
     }
 
-    /// <summary>Takes damage from a hit coming from <paramref name="from"/>. Ignored while invulnerable. Returns true when it landed.</summary>
-    public bool TakeDamage(int amount, Vector2 from)
+    /// <summary>Takes damage from a hit coming from <paramref name="from"/>, less what CON (<see cref="DamageTaken"/>) holds back. Ignored while invulnerable. Returns true when it landed.</summary>
+    public bool TakeDamage(float amount, Vector2 from)
     {
         if (_evade > 0 && Health > 0) { Evaded?.Invoke(); return false; }
         if (_invulnerable > 0 || Health <= 0 || amount <= 0) return false;
+        amount = DamageRules.Incoming(amount, DamageTaken); // CON
         Health = Mathf.Max(0, Health - amount);
         _invulnerable = Tuning.HurtInvulnerability;
         _hurtFlash = 0.3f;

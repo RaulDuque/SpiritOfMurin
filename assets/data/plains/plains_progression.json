@@ -6,7 +6,7 @@
     "xp": "XP por ação: caça por nível da criatura, primeira fabricação de cada receita, primeira pista de cada trilha, cada planta nova, cada carne assada, cada prática nova de proficiência",
     "level_diff_step / level_diff_min / level_diff_max": "multiplicador de XP da caça = clamp(1 + level_diff_step * (nível da criatura - nível do personagem), min, max)",
     "base": "valores do personagem de nível 1 (a Vida e a velocidade vêm do PlayerTuning.tres)",
-    "per_point": "efeito de cada ponto investido em cada atributo",
+    "per_point": "efeito de cada ponto investido em cada atributo. FOR: dano corpo a corpo (fração por ponto; o Ki não entra). CON: vigor e menos dano recebido (fração por ponto, até con_reduction_cap). SOR: material secundário e chance de crítico (crit_chance da base + sor_crit_chance por ponto, até crit_cap; o crítico multiplica o dano por crit_multiplier)",
     "skills.<id>.thresholds": "prática acumulada para chegar aos graus 1, 2 e 3",
     "creatures.<id>": "faixa de nível e o efeito de cada nível acima do mínimo"
   },
@@ -34,18 +34,25 @@
     "ki_regen": 0.5,
     "ki_preserve_cost": 15,
     "secondary_chance": 0.10,
-    "medicine_potency": 1.0
+    "medicine_potency": 1.0,
+    "crit_chance": 0.05,
+    "crit_multiplier": 1.5
   },
   "per_point": {
+    "for_melee_damage": 0.06,
     "vit_max_health": 2,
     "int_medicine_potency": 0.12,
     "con_max_vigor": 10,
     "con_vigor_regen": 0.10,
+    "con_damage_reduction": 0.03,
+    "con_reduction_cap": 0.45,
     "agi_move_speed": 0.04,
     "agi_step_distance": 0.05,
     "agi_recovery": 0.05,
     "agi_cap": 0.40,
     "sor_secondary_chance": 0.05,
+    "sor_crit_chance": 0.01,
+    "crit_cap": 0.40,
     "ki_max_ki": 15
   },
   "skills": {

@@ -27,6 +27,8 @@ public interface IHittable
     int HealthLeft { get; }
     /// <summary>Hits it had at full health.</summary>
     int HealthMax { get; }
+    /// <summary>Health left, exact (damage can be fractional: FOR, the Reforço, a critical).</summary>
+    float HealthExact { get; }
 }
 
 /// <summary>

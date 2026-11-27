@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using SpiritOfMurin.Combat;
 using SpiritOfMurin.Game;
 
 namespace SpiritOfMurin.Plains;
@@ -186,7 +187,7 @@ public partial class PlainsHud : CanvasLayer
     {
         _laidOut = sz;
         float W = sz.X, H = sz.Y;
-        _focus.Position = new Vector2(W / 2 - 150, 3); _focusBar.Position = new Vector2(W / 2 - 61, 17);
+        _focus.Position = new Vector2(W / 2 - 150, 3); _focusBar.Position = new Vector2(W / 2 - FocusBarW / 2 - 1, 16);
         _seed.Position = new Vector2(W - 156, 3);
         // the minimap sits under the seed, in the top-right corner, a little bigger on a bigger screen
         var mm = new Vector2(Mathf.Round(Mathf.Clamp(W * 0.18f, 104, 170)), Mathf.Round(Mathf.Clamp(H * 0.2f, 66, 110)));
@@ -238,12 +239,8 @@ public partial class PlainsHud : CanvasLayer
         _hands = Add(MakeLabel(8, Dim), new Vector2(9, 41));
 
         _focus = Add(MakeLabel(9, Text), new Vector2(170, 3)); _focus.Size = new Vector2(300, 12); _focus.HorizontalAlignment = HorizontalAlignment.Center; _focus.Visible = false;
-        _focusBar = new Control { Position = new Vector2(259, 17), Size = new Vector2(122, 6), Visible = false, MouseFilter = Control.MouseFilterEnum.Ignore };
-        _focusBar.Draw += () =>
-        {
-            _focusBar.DrawRect(new Rect2(0, 0, 122, 6), OutlineC); _focusBar.DrawRect(new Rect2(1, 1, 120, 4), LifeBack);
-            _focusBar.DrawRect(new Rect2(1, 1, Mathf.Round(120 * _focusFrac), 4), Threat);
-        };
+        _focusBar = new Control { Position = new Vector2(259, 16), Size = new Vector2(FocusBarW + 2, FocusBarH + 2), Visible = false, MouseFilter = Control.MouseFilterEnum.Ignore };
+        _focusBar.Draw += DrawFocusBar;
         _root.AddChild(_focusBar);
 
         _seed = Add(MakeLabel(8, new Color(Dim, 0.75f)), new Vector2(640 - 156, 3));
@@ -473,8 +470,39 @@ public partial class PlainsHud : CanvasLayer
     public void SetFocus(string? text, float healthFraction)
     {
         _focus.Visible = _focusBar.Visible = text != null;
+        _focusNumbers = "";
         if (text == null) return;
         _focus.Text = text; _focusFrac = Mathf.Clamp(healthFraction, 0, 1); _focusBar.QueueRedraw();
+    }
+
+    /// <summary>
+    /// The focused enemy or animal with its Vida as numbers inside the bar ("5/5", "3,9/5"; pedido 14).
+    /// The bar and the numbers drop together when it is hit.
+    /// </summary>
+    public void SetFocus(string text, float health, float max)
+    {
+        SetFocus(text, max <= 0 ? 0 : health / max);
+        _focusNumbers = $"{DamageRules.Format(Mathf.Max(0, health))}/{DamageRules.Format(max)}";
+    }
+
+    /// <summary>The numbers shown inside the focus bar ("" when the focus has none).</summary>
+    public string FocusNumbers => _focusBar.Visible ? _focusNumbers : "";
+
+    /// <summary>Size of the focus bar (base pixels), tall enough for the numbers inside.</summary>
+    public const int FocusBarW = 120, FocusBarH = 9;
+    private string _focusNumbers = "";
+
+    // the focused enemy's bar: dark frame, red fill, "current/max" centred inside with an outline
+    private void DrawFocusBar()
+    {
+        _focusBar.DrawRect(new Rect2(0, 0, FocusBarW + 2, FocusBarH + 2), OutlineC); _focusBar.DrawRect(new Rect2(1, 1, FocusBarW, FocusBarH), LifeBack);
+        _focusBar.DrawRect(new Rect2(1, 1, Mathf.Round(FocusBarW * _focusFrac), FocusBarH), Threat);
+        if (_focusNumbers.Length == 0) return;
+        var font = ThemeDB.FallbackFont; const int px = 8;
+        float w = font.GetStringSize(_focusNumbers, HorizontalAlignment.Left, -1, px).X;
+        var at = new Vector2((FocusBarW + 2 - w) / 2, FocusBarH - 0.5f);
+        _focusBar.DrawStringOutline(font, at, _focusNumbers, HorizontalAlignment.Left, -1, px, 2, OutlineC);
+        _focusBar.DrawString(font, at, _focusNumbers, HorizontalAlignment.Left, -1, px, Text);
     }
 
     private void Bar(float x, float y, float w, float h, float frac, Color back, Color fill, Color hi)

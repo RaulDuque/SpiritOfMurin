@@ -47,6 +47,7 @@ public sealed class GamePanels
     private List<PlainsHud.Row> PauseRows() => _pauseMode == "assist" ? new()
     {
         new(false, "assist_areas", $"Mostrar áreas de combate: {(Assist.Areas ? "ligado" : "desligado")}", "", true),
+        new(false, "assist_numbers", $"Mostrar números de dano (causado e recebido): {(Assist.Numbers ? "ligado" : "desligado")}", "", true),
         new(false, "assist_back", "Voltar", "", true),
     } : new()
     {
@@ -54,7 +55,7 @@ public sealed class GamePanels
         new(false, "map", Bindings.F("Mapa ([map])"), "", true),
         new(false, "fullscreen", DisplayManager.Embedded ? "Tela cheia: indisponível dentro do editor" : Bindings.F($"Tela cheia: {(DisplayManager.Instance?.Fullscreen == true ? "ligada" : "desligada")} ([fullscreen])"), "", true),
         new(false, "controls", "Controles (trocar teclas e mouse)", "", true),
-        new(false, "assist", $"Modo de assistência ({(Assist.Areas ? "áreas de combate visíveis" : "desligado")})", "", true),
+        new(false, "assist", $"Modo de assistência ({Assist.Summary})", "", true),
         new(false, "commands", "Lista de comandos", "", true),
         new(false, "quit", "Sair do jogo", "", true),
     };
@@ -92,6 +93,7 @@ public sealed class GamePanels
             case "commands": _hud.ShowPause(null); _hud.ShowStory("Lista de comandos", Controls); _listFrom = "pause"; break;
             case "assist": _pauseMode = "assist"; _hud.ShowPause(PauseRows()); break;
             case "assist_areas": Assist.Areas = !Assist.Areas; _hud.ShowPause(PauseRows()); break;
+            case "assist_numbers": Assist.Numbers = !Assist.Numbers; _hud.ShowPause(PauseRows()); break;
             case "assist_back": _pauseMode = "main"; _hud.ShowPause(PauseRows()); break;
             case "quit": Bindings.Save(); _player.GetTree().Quit(); break;
         }

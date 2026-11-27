@@ -239,6 +239,8 @@ public partial class PlainsGame : Node2D, IMapSource
     public ProgressionData Data { get; private set; } = null!;
     /// <summary>Level, XP, points, attributes.</summary>
     public PlayerStats Stats { get; private set; } = null!;
+    /// <summary>The damage numbers of the assist mode.</summary>
+    public CombatText Numbers { get; private set; } = null!;
     /// <summary>Proficiencies.</summary>
     public Proficiencies Skills { get; private set; } = null!;
     /// <summary>The screen layer.</summary>
@@ -363,6 +365,8 @@ public partial class PlainsGame : Node2D, IMapSource
         World.CreatureSpawned += OnCreatureSpawned;
         World.CreatureDied += OnCreatureDied;
         Player.BladeActive += OnBlade;
+        Numbers = new CombatText { Name = "NumerosDeDano" }; GetNode<Node2D>("World").AddChild(Numbers);
+        Player.Hurt += a => Numbers.Taken(Player.GlobalPosition + new Vector2(8, -44), a);
         Player.EmptyHanded += () => Hud.Toast(Bindings.F("Mãos vazias: fabrique uma ferramenta no inventário ([inventory])."));
         Player.OutOfBreath += () => Hud.Toast("Sem fôlego: espere o vigor voltar ou coma carne assada.");
         Player.TechniqueRefused += (_, m) => { Hud.Toast(m); Sfx?.Play("fizzle"); };
@@ -456,6 +460,10 @@ public partial class PlainsGame : Node2D, IMapSource
         else if (Player.MaxVigor > oldMax && oldMax > 0) Player.Vigor += Player.MaxVigor - oldMax;
         Player.MaxKi = Stats.MaxKi; Player.KiRegen = Data.Base.KiRegen;
         if (fill) Ki = Stats.MaxKi;
+        // FOR, CON and the critical (pedido 14)
+        Player.MeleeMultiplier = Stats.MeleeDamageMultiplier;
+        Player.DamageTaken = Stats.DamageTakenMultiplier;
+        Player.CritChance = Stats.CritChance; Player.CritMultiplier = Stats.CritMultiplier;
     }
 
     // ------------------------------------------------------------------ loop and input
@@ -644,7 +652,8 @@ public partial class PlainsGame : Node2D, IMapSource
                     Hud.Toast("O Ki concentrado rompe a investida: o javali fica aberto!");
                     Sfx?.Play("hit");
                 }
-                h.ReceiveHit(w.Shot.Damage);
+                var r = Player.ResolveStrike(w.Shot.Damage, melee: false); // the Ki: critical, no FOR
+                if (h.ReceiveHit(r.Amount) is HitResult.Damaged or HitResult.Killed) Numbers.Dealt(h.GlobalPosition + new Vector2(0, -h.BodyRadius - 14), r);
                 hit = true;
                 if (!w.Shot.Lamina) { w.Stop(); break; }
             }
@@ -756,7 +765,8 @@ public partial class PlainsGame : Node2D, IMapSource
             // the Reforço de Ki: +10% damage (fractional, no rounding) and one break roll against a boar's defence
             if (h is Boar bb && !bb.Brain.Vulnerable && Player.RollReinforceBreak() && bb.BreakGuard(Tech.Data.KiReinforce.Full.Stagger))
                 Hud.Toast("O golpe reforçado rompe a defesa do javali!");
-            h.ReceiveHit(damage * Player.StrikeScale);
+            var r = Player.ResolveStrike(damage, melee: true); // Reforço, FOR, critical
+            if (h.ReceiveHit(r.Amount) is HitResult.Damaged or HitResult.Killed) Numbers.Dealt(h.GlobalPosition + new Vector2(0, -h.BodyRadius - 14), r);
         }
     }
 
@@ -779,7 +789,8 @@ public partial class PlainsGame : Node2D, IMapSource
     private void UpdateFocus()
     {
         if (Focused != null && (!IsInstanceValid((Node)Focused) || !Focused.CanBeHit || Focused.GlobalPosition.DistanceTo(Player.GlobalPosition) > FocusRadius * 1.4f)) Focused = null;
-        Hud.SetFocus(Focused == null ? null : Describe(Focused), Focused == null ? 0 : (float)Focused.HealthLeft / Mathf.Max(1, Focused.HealthMax));
+        if (Focused == null) Hud.SetFocus(null, 0);
+        else Hud.SetFocus(Describe(Focused), Focused.HealthExact, Focused.HealthMax);
     }
 
     // ------------------------------------------------------------------ interaction
@@ -1131,7 +1142,7 @@ public partial class PlainsGame : Node2D, IMapSource
     {
         var rows = PlayerStats.AttributeIds.Select(a =>
             new PlainsHud.Row(false, a, $"{PlayerStats.Names[a].Short} {Stats.Get(a),2}   {PlayerStats.Names[a].Long}", "", Stats.Points > 0)).ToList();
-        string sel = PlayerStats.AttributeIds[Mathf.Clamp(Hud.SheetSelected, 0, 5)];
+        string sel = PlayerStats.AttributeIds[Mathf.Clamp(Hud.SheetSelected, 0, PlayerStats.AttributeIds.Length - 1)];
         float herb = Catalog.Get(HarvestRules.HerbItem(Data, 1)).RegenAmount;
         var detail = new List<string> { Stats.Points > 0 ? $"Ao gastar 1 ponto em {PlayerStats.Names[sel].Short}:" : $"Sem pontos. Com 1 ponto em {PlayerStats.Names[sel].Short}:" };
         detail.AddRange(Stats.Preview(sel, herb).Select(l => "  " + l));
