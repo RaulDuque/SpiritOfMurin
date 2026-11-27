@@ -48,6 +48,7 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-27 | [2026-11-27-ambientacao.md](2026-11-27-ambientacao.md) | Pedido 13, entrega 6 (= entrega 4 da campanha): dia e noite com luz da fogueira e relógio, vento em rajadas (capim, copas, folhas), pássaros com sombra, terreno variado com transições suaves, vau lento com ondinhas, água funda distinta |
 | 2026-11-27 | [2026-11-27-pedido13-final.md](2026-11-27-pedido13-final.md) | Pedido 13, fechamento: validação com janela pelo próprio Painel (494/494 na 3ª rodada), roteiro curto pelo Painel → Jogar e roteiro das técnicas secretas em seção separada |
 | 2026-11-27 | [2026-11-27-continuar-com-outras-contas.md](2026-11-27-continuar-com-outras-contas.md) | Como continuar com a outra conta do Claude ou com o Cursor: resumo do contexto em `docs/contexto-para-assistentes.md` e regra do Cursor em `.cursor/rules/` |
+| 2026-11-27 | [2026-11-27-guia-para-agentes.md](2026-11-27-guia-para-agentes.md) | `GUIA.md` na raiz: o arquivo único para qualquer agente de IA saber o que estudar e em que ordem |
 
 ## Prompts de imagem do criador
 

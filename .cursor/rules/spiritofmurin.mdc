@@ -7,7 +7,7 @@ alwaysApply: true
 
 Este projeto foi conduzido no Claude Code. As regras dele valem aqui também.
 
-Antes de qualquer tarefa, leia nesta ordem:
+Antes de qualquer tarefa, leia `GUIA.md` (raiz). Ele diz o que estudar e em que ordem. No mínimo:
 1. `docs/contexto-para-assistentes.md` — decisões, preferências do criador, tecnologia e testes (resumo feito para outras ferramentas).
 2. `CLAUDE.md` — protocolo de colaboração e o "Fluxo de trabalho: fechamento de cada entrega".
 3. `.claude/rules/commits-atomicos.md` — uma mudança lógica por commit.
