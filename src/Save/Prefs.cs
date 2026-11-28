@@ -26,6 +26,8 @@ public sealed class Prefs
     public bool AssistAreas { get; set; }
     /// <summary>Assist mode: show the damage numbers of each hit, dealt and taken.</summary>
     public bool AssistNumbers { get; set; }
+    /// <summary>The boar's charge strip (T07): 0 full (default), 1 short, 2 off.</summary>
+    public int ChargeStrip { get; set; }
     /// <summary>Controls: action → [main input, second input] ("k:physical keycode", "m:mouse button" or "").</summary>
     public System.Collections.Generic.Dictionary<string, string[]> Bindings { get; set; } = new();
     /// <summary>Quick-use bindings: slot (1-4) → item id.</summary>

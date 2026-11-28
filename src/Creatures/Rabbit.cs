@@ -66,7 +66,17 @@ public partial class Rabbit : CharacterBody2D, IHittable
     /// <inheritdoc />
     public event Action<IHittable, Vector2>? Died;
 
-    private float _time, _hitFlash;
+    private float _time, _hitFlash, _dive;
+    private bool _wasVisible = true;
+
+    /// <summary>Seconds running (the art's animations).</summary>
+    public float AnimTime => _time;
+    /// <summary>0-0.2: the white flash of a hit.</summary>
+    public float HitFlash => _hitFlash;
+    /// <summary>Seconds left of the dive into the burrow (0 = not diving).</summary>
+    public float DiveLeft => _dive;
+    /// <summary>True from the moment it starts diving into the burrow until it is out again (checks).</summary>
+    public bool Dived { get; private set; }
 
     /// <inheritdoc />
     public override void _Ready()
@@ -90,12 +100,16 @@ public partial class Rabbit : CharacterBody2D, IHittable
     public override void _PhysicsProcess(double delta)
     {
         float dt = (float)delta;
-        _time += dt; _hitFlash = Mathf.Max(0, _hitFlash - dt);
+        _time += dt; _hitFlash = Mathf.Max(0, _hitFlash - dt); _dive = Mathf.Max(0, _dive - dt);
         if (Brain.State == RabbitState.Dead) return;
         Vector2 player = Target?.GlobalPosition ?? new Vector2(1e6f, 1e6f);
         Velocity = Brain.Update(dt, GlobalPosition, player, HearRadius);
         MoveAndSlide();
-        Visible = Brain.Visible;
+        // into the burrow: a short dive instead of vanishing (T07)
+        if (_wasVisible && !Brain.Visible && Brain.State == RabbitState.Hidden) { _dive = FaunaSettings.Current.RabbitDiveSeconds; Dived = true; }
+        if (Brain.Visible && !_wasVisible) Dived = false;
+        _wasVisible = Brain.Visible;
+        Visible = Brain.Visible || _dive > 0;
         QueueRedraw();
     }
 
@@ -108,42 +122,7 @@ public partial class Rabbit : CharacterBody2D, IHittable
         return r;
     }
 
-    private static readonly Color Outline = new("#16140f"), Fur = new("#8a7a5e"), FurLight = new("#b8a98a"), Belly = new("#d8ccb0"),
-        EarIn = new("#c99a8a"), Eye = new("#16140f"), Shadow = new(8 / 255f, 10 / 255f, 8 / 255f, 0.35f);
-
-    private void R(float x, float y, float w, float h, Color c) => DrawRect(new Rect2(Mathf.Round(x), Mathf.Round(y), w, h), c);
-
     /// <inheritdoc />
-    public override void _Draw()
-    {
-        if (!Brain.Visible) return;
-        int s = Brain.Facing.X < 0 ? -1 : 1;
-        bool running = Brain.State is RabbitState.Dash1 or RabbitState.Dash2;
-        bool hop = Velocity.LengthSquared() > 1 && !running;
-        float lift = hop ? -Mathf.Abs(Mathf.Sin(_time * 14f)) * 2 : 0;
-        float stretch = running ? 3 : 0;
-        R(-6, -1, 12, 3, Shadow);
-        // body (outline then colour), mirrored by facing
-        float bx = -5 - stretch / 2, by = -7 + lift;
-        R(bx - 1, by - 1, 10 + stretch + 2, 7 + 2, Outline);
-        R(bx, by, 10 + stretch, 7, Fur); R(bx, by + 5, 10 + stretch, 2, Belly); R(bx + (s > 0 ? 0 : 8 + stretch), by + 1, 2, 2, FurLight);
-        // head
-        float hx = s > 0 ? bx + 7 + stretch : bx - 4, hy = by - 3;
-        R(hx - 1, hy - 1, 6 + 2, 5 + 2, Outline); R(hx, hy, 6, 5, Fur);
-        R(hx + (s > 0 ? 4 : 1), hy + 1, 1, 1, Eye);
-        // ears: up when alert (the tell), laid back otherwise
-        if (Brain.EarsUp)
-        {
-            R(hx + 1 - 1, hy - 7, 2 + 2, 7, Outline); R(hx + 3 - 1, hy - 8, 2 + 2, 8, Outline);
-            R(hx + 1, hy - 6, 2, 6, Fur); R(hx + 3, hy - 7, 2, 7, FurLight); R(hx + 3, hy - 6, 1, 4, EarIn);
-        }
-        else
-        {
-            float ex = s > 0 ? hx - 4 : hx + 4;
-            R(ex - 1, hy - 1, 6 + 2, 2 + 2, Outline); R(ex, hy, 6, 2, Fur); R(ex + 1, hy, 3, 1, EarIn);
-        }
-        // tail
-        R(s > 0 ? bx - 2 : bx + 10 + stretch, by + 1, 2, 2, Belly);
-        if (_hitFlash > 0) R(bx, by, 10, 7, new Color(1, 1, 1, _hitFlash * 3));
-    }
+    public override void _Draw() => SpiritOfMurin.Elements.CoelhoArt.Draw(this); // the picture: src/Elements/Fauna/CoelhoArt.cs
+
 }

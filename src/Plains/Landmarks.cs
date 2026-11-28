@@ -24,41 +24,28 @@ public partial class TrackPrint : Node2D
     /// <summary>Seconds of shine left (0 = none); &lt;0 shines for good.</summary>
     public float Glow { get; set; }
 
+    /// <summary>True for a fresh print left by a moving animal (T07); false for the world's generated trails.</summary>
+    public bool Fresh { get; set; }
+    /// <summary>Seconds since it was left (fresh prints).</summary>
+    public float Age { get; set; }
+    /// <summary>Seconds a fresh print lasts (<c>track_seconds</c>).</summary>
+    public float Life { get; set; } = 90;
+    /// <summary>1 when new, fading to 0 at the end of its life (always 1 for a generated print).</summary>
+    public float Opacity => Fresh ? Mathf.Clamp(1.5f * (1 - Age / Mathf.Max(1, Life)), 0, 1) : 1;
+
     private float _time;
-    private static readonly Color Mark = new("#2a2219"), MarkLight = new("#5e4a34"), Shine = new("#d4fbf6");
 
     /// <inheritdoc />
     public override void _Process(double delta)
     {
         _time += (float)delta;
         if (Glow > 0) Glow = Mathf.Max(0, Glow - (float)delta);
+        if (Fresh) { Age += (float)delta; if (Age >= Life) { QueueFree(); return; } }
         QueueRedraw();
     }
 
-    private void R(Vector2 p, float w, float h, Color c) => DrawRect(new Rect2(Mathf.Round(p.X), Mathf.Round(p.Y), w, h), c);
-
     /// <inheritdoc />
-    public override void _Draw()
-    {
-        // prints point along the trail: two marks side by side, the front one ahead
-        Vector2 f = Dir * 3f, s = new Vector2(-Dir.Y, Dir.X) * 2f;
-        bool glow = Glow != 0;
-        if (glow)
-        {
-            float a = 0.35f + 0.25f * Mathf.Sin(_time * 6);
-            R(new Vector2(-6, -5), 12, 10, new Color(Shine, a * 0.5f));
-        }
-        Color c = glow ? Shine : Mark;
-        if (Hoof)
-        {
-            R(-s + f - new Vector2(1, 1), 2, 3, c); R(s + f - new Vector2(1, 1), 2, 3, c);
-            R(-s - f - new Vector2(1, 1), 2, 2, glow ? Shine : MarkLight); R(s - f - new Vector2(1, 1), 2, 2, glow ? Shine : MarkLight);
-        }
-        else
-        {
-            R(-s - new Vector2(1, 1), 2, 2, c); R(s + f - new Vector2(1, 1), 2, 2, c); R(f * 2 - new Vector2(0, 0), 1, 1, glow ? Shine : MarkLight);
-        }
-    }
+    public override void _Draw() => SpiritOfMurin.Elements.PegadaArt.Draw(this, _time); // src/Elements/Fauna/PegadaArt.cs
 }
 
 /// <summary>The campfire at the clearing: E roasts raw meat (the fogueira recipes).</summary>

@@ -36,6 +36,18 @@ public static class Assist
         set { _numbers = value; var p = Prefs.Load(); p.AssistNumbers = value; p.Save(); }
     }
 
+    private static int? _strip;
+
+    /// <summary>The boar's charge strip (T07, decision A): 0 full (default), 1 short, 2 off. Saved in the preferences.</summary>
+    public static int Strip
+    {
+        get => _strip ??= Mathf.Clamp(Prefs.Load().ChargeStrip, 0, 2);
+        set { _strip = Mathf.Clamp(value, 0, 2); var p = Prefs.Load(); p.ChargeStrip = _strip.Value; p.Save(); }
+    }
+
+    /// <summary>The strip's mode in words.</summary>
+    public static string StripName => Strip switch { 1 => "curta", 2 => "desligada", _ => "completa" };
+
     /// <summary>A short summary for the pause menu: what the assist mode shows now.</summary>
     public static string Summary => (Areas, Numbers) switch
     {
@@ -46,7 +58,7 @@ public static class Assist
     };
 
     /// <summary>Forgets the cached values (tests that switch preference files).</summary>
-    public static void Reload() { _areas = null; _numbers = null; }
+    public static void Reload() { _areas = null; _numbers = null; _strip = null; }
 
     /// <summary>Colours: guard (bone), opening (jade), threat (red-ochre), the player's blade (pale jade).</summary>
     public static readonly Color GuardC = new("#ece5d0"), OpenC = new("#6fd8d2"), ThreatC = new("#e0503a"), BladeC = new("#a6f2e2");

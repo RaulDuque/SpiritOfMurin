@@ -1,0 +1,31 @@
+{
+  "_doc": {
+    "about": "Leitura da fauna e do combate (T07). Lido por src/Creatures/FaunaSettings.cs. Os números de comportamento (audição, velocidade, vida) continuam em RabbitTuning.tres, BoarTuning.tres e plains_progression.json.",
+    "track_seconds": "quanto tempo uma pegada nova (deixada por um animal que passou) fica no chão, apagando aos poucos (decisão do criador: 90)",
+    "track_spacing_rabbit / track_spacing_boar": "de quantos em quantos px o animal deixa uma pegada nova enquanto anda ou corre",
+    "track_max": "no máximo quantas pegadas novas no mundo ao mesmo tempo (as mais velhas somem antes)",
+    "track_sector_degrees": "largura total (graus) da indicação de direção ao examinar uma pegada, por grau de Rastreamento (0, 1, 2, 3): começa vaga e fica precisa",
+    "track_hint_seconds": "quanto tempo a indicação de direção fica desenhada no chão",
+    "parry_nudge_px": "quanto o personagem recua quando o couro apara o golpe",
+    "boar_flinch_seconds / boar_flinch_px": "o javali encolhe quando o golpe entra na recomposição: quanto tempo e quantos px",
+    "rabbit_dive_seconds": "quanto dura o mergulho do coelho na toca (encolhe para dentro do buraco, com poeirinha)",
+    "lamina_through_factor": "fração do dano do Passo da Lâmina Silenciosa que atravessa o couro durante o aviso e a investida (decisão do criador: metade)",
+    "near_bar_seconds": "por quanto tempo a barra junto ao animal continua depois que o combate acaba",
+    "combat_radius": "a que distância (px) um javali em aviso, investida ou recomposição conta como combate (mostra a barra junto)",
+    "seen_radius": "a que distância (px) um animal visto entra no mapa"
+  },
+  "track_seconds": 90,
+  "track_spacing_rabbit": 14,
+  "track_spacing_boar": 20,
+  "track_max": 220,
+  "track_sector_degrees": [120, 75, 40, 20],
+  "track_hint_seconds": 2.5,
+  "parry_nudge_px": 2,
+  "boar_flinch_seconds": 0.25,
+  "boar_flinch_px": 3,
+  "rabbit_dive_seconds": 0.35,
+  "lamina_through_factor": 0.5,
+  "near_bar_seconds": 3,
+  "combat_radius": 220,
+  "seen_radius": 180
+}

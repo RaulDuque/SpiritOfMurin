@@ -141,10 +141,11 @@ public sealed class BoarBrain
     }
 
     /// <summary>A blade reached the boar. Damage only lands when it is open (rooting, recovering, walking home).</summary>
-    public HitResult TakeHit(float damage)
+    public HitResult TakeHit(float damage, bool through = false)
     {
         if (State == BoarState.Dead) return HitResult.None;
-        if (!Vulnerable) return HitResult.Deflected;
+        if (!Vulnerable && !through) return HitResult.Deflected;
+        if (!Vulnerable) { Health -= damage; if (Health <= 0) { Enter(BoarState.Dead); return HitResult.Killed; } return HitResult.Damaged; } // through the hide: it keeps charging
         Health -= damage;
         if (Health <= 0) { Enter(BoarState.Dead); return HitResult.Killed; }
         if (State == BoarState.Recover) _extraRecover += _t.HitFlinch;

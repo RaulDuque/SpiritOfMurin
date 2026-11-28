@@ -48,6 +48,7 @@ public sealed class GamePanels
     {
         new(false, "assist_areas", $"Mostrar áreas de combate: {(Assist.Areas ? "ligado" : "desligado")}", "", true),
         new(false, "assist_numbers", $"Mostrar números de dano (causado e recebido): {(Assist.Numbers ? "ligado" : "desligado")}", "", true),
+        new(false, "assist_strip", $"Faixa da investida do javali: {Assist.StripName}", "", true),
         new(false, "assist_back", "Voltar", "", true),
     } : new()
     {
@@ -94,6 +95,7 @@ public sealed class GamePanels
             case "assist": _pauseMode = "assist"; _hud.ShowPause(PauseRows()); break;
             case "assist_areas": Assist.Areas = !Assist.Areas; _hud.ShowPause(PauseRows()); break;
             case "assist_numbers": Assist.Numbers = !Assist.Numbers; _hud.ShowPause(PauseRows()); break;
+            case "assist_strip": Assist.Strip = (Assist.Strip + 1) % 3; _hud.ShowPause(PauseRows()); break;
             case "assist_back": _pauseMode = "main"; _hud.ShowPause(PauseRows()); break;
             case "quit": Bindings.Save(); _player.GetTree().Quit(); break;
         }
