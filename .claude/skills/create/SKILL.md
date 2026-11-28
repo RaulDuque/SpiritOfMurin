@@ -31,10 +31,11 @@ Leia antes: `docs/elementos/PADRAO.md` (o padrão), `docs/elementos/INDICE.md` (
 | `arbusto` | **jogável** | `arbustos/arbusto.json` + `Flora/ArbustoArt.cs` | o JSON (`contact_radius`); arte nova para outra forma |
 | `ferramenta` | **jogável** quando o tipo é `machado`, `picareta` ou `faca` | `machado_pedra` em `plains_items.json` + `src/Elements/Tools/ToolArt.cs` | item com `equip` (axe, pickaxe ou knife) e `tool` {kind, power, reach, damage}; receita; `case` em `ToolArt.Draw` (desenho na mão) e em `ItemIcons.cs` (ícone) |
 | `item` (material, comida, erva) | **jogável** | `tora`, `broto_bambu` em `plains_items.json` | entrada no JSON (com `vigor_now`, `regen_amount` etc. se for usável), ícone, receita ou origem (drop de um elemento) |
-| `arma` | **planejamento** (o personagem só tem espada e faca como armas de combate) | — | ficha `user-docs/tasks/fichas/<id>.md` + a tarefa T18 |
+| `arma` | **jogável** (T18) | `assets/data/equipamento/armas/sabre_ferro.json` + `src/Elements/Armas/SabreFerroArt.cs` | ver **§2b** |
 | `mob` (animal) | **planejamento**. Uma *variante numérica* de coelho ou javali (outra velocidade, audição, vida) dá para fazer nos `.tres` e em `plains_progression.json`; uma espécie nova é código novo | `Rabbit`/`RabbitBrain`, `Boar`/`BoarBrain` | ficha + tarefa (ligar à T08) |
 | `inimigo` (humano, chefe) | **planejamento** | `ValeFighter` + `FighterArt` + `vale_combat.json` | ficha + tarefa (ligar à T08) |
-| `roupa`, `capacete` | **planejamento** (as camadas trocáveis não existem: a túnica e o cabelo fazem parte do `Player.cs`) | — | ficha + a tarefa T18 (equipamento visual) |
+| `roupa` | **jogável** (T18) | `assets/data/equipamento/roupas/tunica_viajante.json` + `src/Elements/Roupas/TunicaViajanteArt.cs` | ver **§2b** |
+| `capacete` | **jogável** (T18) | `assets/data/equipamento/capacetes/chapeu_bambu.json` + `src/Elements/Capacetes/ChapeuBambuArt.cs` | ver **§2b** |
 
 **Ficha de planejamento** (`user-docs/tasks/fichas/<id>.md`): a descrição do criador (literal), forma e cores,
 comportamento (aviso, golpe, recuperação, fuga), números iniciais propostos, materiais e raridade, onde aparece,
@@ -57,6 +58,46 @@ no jogo"**. Ligue a ficha na tarefa e no `user-docs/tasks/README.md`.
 4. **Onde aparece:** para elementos, os `habitats` no JSON bastam (o gerador escolhe dentro da família, com sorteio
    fixo). Não mude os sorteios de `src/Plains/PlainsGenerator.cs`: as sementes antigas precisam manter o que têm.
 5. **Compile:** `dotnet build`.
+
+## 2b. Criar arma, roupa ou capacete (T18)
+
+Leia antes `assets/data/equipamento/LEIA-ME.md` (o esquema) e `docs/elementos/EQUIPAMENTO.md` (camadas, ordem de desenho e
+os três exemplos de edição). O protagonista aprovado é a referência: **nunca mude** `TunicaVerdeArt`, `CabecaArt` nem
+`EspadaArt` ao criar uma peça nova.
+
+1. **Escolha visual:** cor, forma da aba, curva da lâmina que a descrição não fixa → prancha HTML em `user-docs/relatorios/`
+   com a peça **sobre o protagonista**, no tamanho real e ampliada, de frente, costas e perfil (a fase `prancha` do
+   `tests/integration/EquipCheck.tscn` gera as faixas com os pixels do jogo: acrescente o visual em `BoardLooks`). Peças que
+   mudam a silhueta passam pelo `/asset-spec`. Regra dos chapéus do protagonista: aba nivelada, ≤ 16 px, olhos à vista.
+2. **Dados** (`assets/data/equipamento/<armas|roupas|capacetes>/<id>.json`, copie o exemplo da tabela):
+   - arma: `weapon` {`art`, `kind` (`longa` = como a espada; `curta` = como a faca, também ferramenta com `equip: "knife"` e
+     `tool`), `reach`, `damage`, `chain`, `startup`, `active`, `recovery`, `cancel_at`, `lunge`, `third_*`, `techniques`};
+   - roupa: `wear` {`slot`: `corpo`, `art`, `defense`, `weight`}; capacete: `wear` {`slot`: `cabeca`, `art`, `defense`, `weight`};
+   - sempre `id` (= nome do arquivo), `name`, `description` e **`onde`** (onde se consegue: aparece na bolsa e no relatório).
+3. **Desenho** (`src/Elements/<Armas|Roupas|Capacetes>/<Nome>Art.cs`, copie o exemplo):
+   - arma: herde `ArmaArt` (`Length`, `InHand`, `OnBody`; `Curved` + `Spine` se a lâmina for curva, para o brilho do Reforço
+     seguir a curva); registre em `ArmaArts` (`src/Elements/Armas/ArmaArt.cs`);
+   - roupa: herde `MatrixRoupaArt` (3 matrizes: frente e costas 20 colunas, perfil 16, 21 linhas; paleta; mangas); registre
+     em `RoupaArts` (`src/Elements/Roupas/RoupaArt.cs`);
+   - capacete: herde `CapaceteArt` (matrizes de **16 colunas** centradas, `left = -8`, para o perfil espelhar no lugar;
+     `HairCover` = 0, `CabecaArt.BunRows` ou `CabecaArt.BandRows`); registre em `CapaceteArts`;
+   - comente no topo da classe **onde mexer** (comprimento, faixa, aba, cores).
+4. **Ícone:** `case "<id>":` em `src/Game/ItemIcons.cs`.
+5. **Como se consegue:** uma receita em `assets/data/plains/plains_items.json` (`recipes`), ou o id na lista `trouxa` de
+   `assets/data/equipamento/_regras.json`. Não mude os sorteios do gerador.
+6. **Técnica própria de arma** (decisão 2 do criador): uma entrada em `assets/data/equipamento/_tecnicas_armas.json`
+   (`state`: `jogavel` só se o efeito existir no código e tiver teste; senão `futura`) e o id em `weapon.techniques`.
+7. **Compile:** `dotnet build`. A bolsa já mostra a peça (o catálogo lê a pasta sozinho), com ícone, marca de equipado e
+   a comparação (alcance, dano, combo e tempo para armas; defesa e peso para roupas e chapéus).
+
+**Prévia:** `"$GODOT" --path . src/Dev/Inspecao.tscn -- --arma=<art> --roupa=<art> --capacete=<art> --pose=corte2 --dir=0`
+(Tab arma · R roupa · C chapéu · Z pose · Q/E gira nas 8 direções · Espaço anima). Captura: `--shot=res://production/qa/evidence/<data>_create-<id>/inspecao.png`.
+
+**Teste** (com janela no monitor 2): `res://tests/integration/EquipCheck.tscn -- --phase=catalogo --out=res://production/qa/evidence/<data>_create-<id>/`.
+Ele lê **todos** os arquivos da pasta (nenhuma lista para atualizar) e falha se faltar `onde`, desenho registrado, ícone
+próprio, números do golpe, slot certo ou uma origem (receita/trouxa); salva `previa_<id>.png` com a peça nas 8 direções.
+Depois rode `--phase=retrato --ref=res://production/qa/evidence/2026-11-28_t18-equipamento/antes`: o protagonista padrão
+tem de continuar **idêntico** (0 px de diferença). Pasta vazia ou exceção = **NOT ASSESSED** (falha).
 
 ## 3. Pré-visualizar e testar
 
