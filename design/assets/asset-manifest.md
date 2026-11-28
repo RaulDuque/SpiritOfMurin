@@ -1,12 +1,12 @@
 # Asset Manifest
 
-> Last updated: 2026-11-25
+> Last updated: 2026-11-28
 
 ## Progress Summary
 
 | Total | Needed | In Progress | Done | Approved |
 |-------|--------|-------------|------|----------|
-| 2 | 0 | 0 | 0 | 0 |
+| 5 | 0 | 0 | 3 | 3 |
 
 "Approved" aqui conta assets **entregues** e aprovados pelo criador no antes/depois do protótipo. As specs dos dois assets já foram aprovadas em 2026-11-25.
 
@@ -19,3 +19,10 @@
 |----------|------|----------|--------|-----------|
 | ASSET-001 | Espadachim-cultivador, repouso, S (`char_swordsman_idle_s_00.png`) | Sprite / 2D Art | Rejeitado — histórico (2026-11-25) | design/assets/specs/approval-poses-assets.md |
 | ASSET-002 | Discípulo da Guarda Fechada, guarda, S (`char_disciple_guard_s_00.png`) | Sprite / 2D Art | Rejeitado — histórico (2026-11-25) | design/assets/specs/approval-poses-assets.md |
+
+### System: equipamento (T18) — arte desenhada em código
+| Asset ID | Name | Category | Status | Spec File |
+|----------|------|----------|--------|-----------|
+| ASSET-003 | Túnica de Viajante (`tunica_viajante`) | Roupa | Done — aprovado (2026-11-28) | design/assets/specs/t18-equipamento-assets.md |
+| ASSET-004 | Chapéu de Bambu Trançado (`chapeu_bambu`) | Capacete | Done — aprovado (2026-11-28) | design/assets/specs/t18-equipamento-assets.md |
+| ASSET-005 | Sabre de Ferro Gasto (`sabre_ferro`) | Arma | Done — aprovado (2026-11-28) | design/assets/specs/t18-equipamento-assets.md |

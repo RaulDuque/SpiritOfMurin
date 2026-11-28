@@ -49,11 +49,13 @@
 
 | Elemento | Desenho | Dados | Comportamento | Estado | Tarefa |
 |---|---|---|---|---|---|
-| Protagonista (referência visual aprovada pelo criador) | `src/Player/Player.cs` (`DrawFighter`, cores no topo) + `src/Player/PixelPainter.cs` | `assets/data/PlayerTuning.tres` | `Player.cs` | parcial: o desenho fica no `Player.cs` de propósito, até haver roupas trocáveis | T18 |
-| Espada | `Player.cs` (`FrontArm`, `Blade`) | `PlayerTuning.tres` (`sword_*`) | `Player.cs` | antigo | T18 |
-| Faca de Pedra (`faca_pedra`) | `Player.cs` (`FrontArm`), ícone em `ItemIcons.cs` | `plains_items.json` + `PlayerTuning.tres` (`knife_*`) | `Player.cs` | parcial | T18 |
-| Machado e Picareta (`machado_pedra`, `picareta_pedra`, `*_lapidado/a`) | `src/Elements/Tools/ToolArt.cs`, ícones em `ItemIcons.cs` | `plains_items.json` (`tool`) | `PlainsGame.Equip`, `ResourceRules` | no padrão | — |
-| Roupa, capacete | — (hoje a túnica e o cabelo são parte do `Player.cs`) | — | — | não existe | T18 |
+| Protagonista (referência visual aprovada pelo criador) | em camadas (T18): corpo, pernas e mãos em `src/Player/Player.cs` (`Pose`, `DrawFighter`); cabeça e cabelo em `src/Elements/Corpo/CabecaArt.cs`; a pose compartilhada em `src/Elements/Corpo/FighterPose.cs` | `assets/data/PlayerTuning.tres` | `Player.cs` | no padrão (T18; idêntico ao aprovado, 0 px nas 8 direções) | — |
+| Espada (`espada`) | `src/Elements/Armas/EspadaArt.cs` | `assets/data/equipamento/armas/espada.json` | `Player.cs` (`Blade`) | no padrão (T18) | — |
+| Faca de Pedra (`faca_pedra`) | `src/Elements/Armas/FacaPedraArt.cs`, ícone em `ItemIcons.cs` | `assets/data/equipamento/armas/faca_pedra.json` (`weapon` + `tool`); receita em `plains_items.json` | `Player.cs`, `PlainsGame.Equip` | no padrão (T18) | — |
+| Sabre de Ferro Gasto (`sabre_ferro`) | `src/Elements/Armas/SabreFerroArt.cs`, ícone em `ItemIcons.cs` | `assets/data/equipamento/armas/sabre_ferro.json`; técnicas em `_tecnicas_armas.json` | `Player.cs` (`Blade`, Meia-Lua), `PlainsGame.Equipment.cs` | no padrão (T18) | — |
+| Túnica Verde (`tunica_verde`, a do criador) e Túnica de Viajante (`tunica_viajante`) | `src/Elements/Roupas/TunicaVerdeArt.cs`, `TunicaViajanteArt.cs` (base `RoupaArt.cs`), ícones em `ItemIcons.cs` | `assets/data/equipamento/roupas/<id>.json` (`wear`: defesa, peso) | `PlainsGame.Equipment.cs`, `EquipRules` | no padrão (T18) | — |
+| Chapéu de Bambu Trançado (`chapeu_bambu`) | `src/Elements/Capacetes/ChapeuBambuArt.cs` (base `CapaceteArt.cs`), ícone em `ItemIcons.cs` | `assets/data/equipamento/capacetes/chapeu_bambu.json`; receita em `plains_items.json` | `PlainsGame.Equipment.cs` | no padrão (T18) | — |
+| Trouxa de viajante (`trouxa_viajante`, achado da Planície) | `src/Plains/Pickup.cs` (`FeatureKind.Bundle`), ícone em `ItemIcons.cs` | conteúdo em `assets/data/equipamento/_regras.json` (`trouxa`) | `PlainsGenerator` (sob o pinheiro da margem), `PlainsGame.OpenBundle` | no padrão (T18) | — |
 
 ## Itens, técnicas e progressão
 

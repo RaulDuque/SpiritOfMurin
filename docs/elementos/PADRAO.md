@@ -30,6 +30,9 @@ Uma família tem **um comportamento** e **várias aparências**. Um elemento nov
 | Bambu | o mesmo (haste a haste) | `BambuArt` | `assets/data/elements/bambus/` |
 | Arbusto | `WorldElement` (reação ao contato, sem colisão) | `ArbustoArt` | `assets/data/elements/arbustos/` |
 | Ferramenta | `PlainsGame.Equip` + `ToolDef` (tipo, força, alcance) | `src/Elements/Tools/ToolArt.cs` (na mão), `ItemIcons.cs` (na bolsa) | `plains_items.json` (`tool`) |
+| Arma (T18) | `Player.Blade` (alcance, dano, combo, tempos) + `PlainsGame.Equip`; técnicas próprias em `EquipRules` | `src/Elements/Armas/<Nome>Art.cs` (`EspadaArt`, `FacaPedraArt`, `SabreFerroArt`), ícone em `ItemIcons.cs` | `assets/data/equipamento/armas/<id>.json`, `_tecnicas_armas.json` |
+| Roupa (T18) | `PlainsGame.Equipment.cs` (`Wearing`, defesa e peso pelo `EquipRules`) | `src/Elements/Roupas/<Nome>Art.cs` (`TunicaVerdeArt`, `TunicaViajanteArt`) | `assets/data/equipamento/roupas/<id>.json` |
+| Capacete (T18) | o mesmo (espaço `cabeca`) | `src/Elements/Capacetes/<Nome>Art.cs` (`ChapeuBambuArt`); quanto do cabelo cobre: `HairCover` | `assets/data/equipamento/capacetes/<id>.json` |
 | Item / erva / material | `ItemCatalog`, `Inventory`, receitas | `ItemIcons.cs` | `plains_items.json` |
 | Animal | cérebro (`RabbitBrain`, `BoarBrain`) + corpo (`Rabbit`, `Boar`) | `src/Elements/Fauna/CoelhoArt.cs`, `JavaliArt.cs`; a pegada em `PegadaArt.cs` (T07) | `RabbitTuning.tres`, `BoarTuning.tres`, `plains_progression.json` (`creatures`), `plains_fauna.json` (pegadas, leitura do combate) |
 | Inimigo humano / chefe | `ValeFighter` (estados, guarda, golpe) | `src/Combat/FighterArt.cs` | `assets/data/vale_combat.json` |
@@ -49,6 +52,11 @@ src/Elements/                 elementos do mundo (padrão novo, pedido 14)
   Flora/  PinheiroArt.cs BambuArt.cs ArbustoArt.cs …
   Rocks/  RochaArt.cs …
   Tools/  ToolArt.cs
+  Corpo/  FighterPose.cs CabecaArt.cs            (T18: a pose de cada quadro; cabeça, cabelo, coque e fita)
+  Armas/  ArmaArt.cs EspadaArt.cs FacaPedraArt.cs SabreFerroArt.cs
+  Roupas/ RoupaArt.cs TunicaVerdeArt.cs TunicaViajanteArt.cs
+  Capacetes/ CapaceteArt.cs ChapeuBambuArt.cs
+assets/data/equipamento/<armas|roupas|capacetes>/<id>.json   uma peça por arquivo (T18; esquema no LEIA-ME.md da pasta)
   Fauna/  CoelhoArt.cs JavaliArt.cs PegadaArt.cs   (T07: o corpo e o cérebro continuam em src/Creatures/)
 assets/data/elements/<família>/<id>.json   um arquivo por elemento (esquema no LEIA-ME.md da pasta)
 src/Dev/Inspecao.tscn         prévia de qualquer elemento no tamanho real
@@ -90,4 +98,4 @@ As famílias que já existiam antes do padrão (animais, lutadores, itens, técn
 
 ## 6. O comando de autoria
 
-`/create <tipo> "<descrição>"` (skill em `.claude/skills/create/SKILL.md`) aplica este padrão: acha o exemplo mais próximo, cria os arquivos, registra o elemento e diz como pré-visualizar e testar. Os tipos e o que já é jogável hoje estão na skill.
+`/create <tipo> "<descrição>"` (skill em `.claude/skills/create/SKILL.md`) aplica este padrão: acha o exemplo mais próximo, cria os arquivos, registra o elemento e diz como pré-visualizar e testar. Os tipos e o que já é jogável hoje estão na skill. Arma, roupa e capacete são jogáveis desde a T18; como editar as camadas do personagem, com três exemplos: [EQUIPAMENTO.md](EQUIPAMENTO.md).
