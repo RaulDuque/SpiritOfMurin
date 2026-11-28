@@ -51,6 +51,21 @@ public static class Suites
         const string atr = "res://tests/integration/AtributosCheck.tscn";
         foreach (var (ph, about) in Atributos)
             l.Add(new("Atributos e Ki (pedido 14)", ph, atr, new[] { $"--phase={ph}", "--prefs=user://teste_atr_prefs.json" }, About: about));
+        const string inv = "res://tests/integration/InventarioCheck.tscn";
+        foreach (var (ph, about) in new[] {
+            ("bolsa", "T06: bolsa com abas (Tudo, Equipamentos, Ferramentas, Consumíveis, Materiais, Fabricação), moedas, comparação em golpes, \"tenho X de Y\", fabricar na mesma tela, machado lapidado derruba em 3."),
+            ("atalhos", "T06: 1/2/3 na bolsa põem itens nos atalhos sem usar nada; no mundo trocam a ferramenta e usam a erva até acabar (0 e aviso)."),
+            ("atalhos2", "T06: os atalhos continuam depois de fechar e abrir; Controles lista Atalho 1 e Próximo alvo na roda."),
+            ("ficha", "T06: mouse na barra mostra \"Vida 60% · 6/10\"; ficha com +, prévia do dano da arma (FOR) e do teto de CON; mouse e teclado."),
+            ("entrada", "T06: abrir, confirmar e fechar bolsa, ficha e pausa não corta, não dispara Ki, não coleta."),
+            ("oldsave", "T06: jornada antiga carrega com itens, faca, atributos e moedas; abas e atalhos vazios.") })
+            l.Add(new("Bolsa, ficha e HUD (T06)", ph, inv, new[] { $"--phase={ph}", "--prefs=user://teste_inv_prefs.json" }, About: about));
+        foreach (int s in seeds)
+            foreach (var (ph, about) in new[] {
+                ("alvo", "T06: fora da clareira, erva e pegada ao alcance: anel e lista, roda do mouse troca, E age só no escolhido."),
+                ("rodape", "T06: três galhos viram um só \"+3 Galho Rijo\" sobre a cabeça; junto à carcaça o rodapé diz E e K."),
+                ("percurso", "T06: percurso contínuo: falta sílex, a receita diz, recolhe, fabrica, equipa, usa, compara com o lapidado, gasta um ponto, escolhe o alvo.") })
+                l.Add(new("Bolsa, ficha e HUD (T06)", $"{ph}, semente {s}", inv, new[] { $"--phase={ph}", $"--seed={s}", "--prefs=user://teste_inv_prefs.json" }, About: about));
         if (quick) return l;
         foreach (var ph in new[] { "full", "sealed", "resume2", "resume3", "migrate", "migrate2" })
             l.Add(new("Técnicas seladas", ph, tech, new[] { $"--phase={ph}" }, About: "Selo no despertar e volta enfraquecida no nível 3, com medições."));

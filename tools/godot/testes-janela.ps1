@@ -46,6 +46,15 @@ foreach ($sd in 20261126, 777) {
 foreach ($sd in 20261126, 777) {
   & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ElementosCheck.tscn -- '--phase=mundo' "--seed=$sd" @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
 }
+# T06: bag, crafting, shortcuts, sheet, target of E, footer and gains, panels take their input, the route, a journey from before
+foreach ($phase in 'bolsa', 'atalhos', 'atalhos2', 'ficha', 'entrada', 'oldsave') {
+  & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/InventarioCheck.tscn -- "--phase=$phase" '--prefs=user://teste_inv_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+}
+foreach ($sd in 20261126, 777) {
+  foreach ($phase in 'alvo', 'rodape', 'percurso') {
+    & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/InventarioCheck.tscn -- "--phase=$phase" "--seed=$sd" '--prefs=user://teste_inv_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+  }
+}
 if ($SoPrologo) { if ($fail -eq 0) { Write-Host "Prologo: todos os testes passaram." } else { Write-Host "$fail execucao(oes) com falha." }; exit $fail }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/unit/UnitRunner.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ControlsCheck.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }

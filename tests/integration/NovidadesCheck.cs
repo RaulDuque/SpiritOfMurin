@@ -543,11 +543,13 @@ public partial class NovidadesCheck : Node
             items.All(r => r.Icon.Length > 0) && items.First(r => r.Id == "silex").Count == 2 && items.First(r => r.Id == "carne_macia").Count == 1 && hud.Bag.SlotRects.Count == hud.Rows.Count,
             string.Join(", ", items.Select(r => $"{r.Id}×{r.Count}")));
         await Shot("10-bolsa-preenchida");
-        // the knife by keyboard: walk the selection to the recipe and press E
+        // the knife by keyboard: Tab to "Fabricação" (T06), walk the selection to the recipe and press E
+        for (int t = 0; t < 6 && g.BagTab != "fabricacao"; t++) await Tap(Key.Tab);
         for (int k = 0; k <= hud.Rows.Count && !(hud.Rows[hud.Selected].IsRecipe && hud.Rows[hud.Selected].Id == "faca_pedra"); k++) await Tap(Key.D);
-        string detail = hud.Rows[hud.Selected].Detail;
-        Check("the knife's recipe shows what it needs and that it can be made (Fabricar)", hud.Rows[hud.Selected].Action == "Fabricar" && hud.Rows[hud.Selected].Enabled && detail.Contains("Sílex 2/1"), detail);
+        string lines = string.Join(" | ", hud.Rows[hud.Selected].Lines?.Select(l => l.Text) ?? Enumerable.Empty<string>());
+        Check("the knife's recipe shows what it needs and that it can be made (Fabricar)", hud.Rows[hud.Selected].Action == "Fabricar" && hud.Rows[hud.Selected].Enabled && lines.Contains("Sílex: tenho 2 de 1"), lines);
         await Tap(Key.E); await Frames(3);
+        for (int t = 0; t < 6 && g.BagTab != "tudo"; t++) await Tap(Key.Tab); // back to "Tudo"
         Check("crafting by keyboard: flint and branch go down, the knife appears in the same bag", g.Inventory.Count("silex") == 1 && g.Inventory.Count("galho_rijo") == 1 && hud.Rows.Any(r => !r.IsRecipe && r.Id == "faca_pedra" && r.Icon == "faca_pedra"),
             $"sílex {g.Inventory.Count("silex")}, galho {g.Inventory.Count("galho_rijo")}");
         await Shot("11-bolsa-faca-fabricada");

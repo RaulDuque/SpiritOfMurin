@@ -93,6 +93,7 @@ public partial class PlainsRoute : Node
     // moves the selection to the matching row; false (and nothing selected for E) when the row is not there
     private async Task<bool> InvSelect(Func<PlainsHud.Row, bool> match)
     {
+        for (int t = 0; t < 6 && !_game.Hud.Rows.Any(match); t++) await Tap(Godot.Key.Tab); // T06: the bag's tabs
         if (!_game.Hud.Rows.Any(match)) { Note("linha não encontrada no inventário"); return false; }
         for (int i = 0; i <= _game.Hud.Rows.Count && !match(_game.Hud.Rows[_game.Hud.Selected]); i++) await Tap(Godot.Key.S);
         return true;

@@ -119,6 +119,8 @@ public partial class JourneyCheck : Node
 
     private async Task SelectRow(Func<PlainsHud.Row, bool> match)
     {
+        // T06: the bag has tabs (Tab changes it); recipes live in "Fabricação"
+        for (int t = 0; t < 6 && !_game.Hud.Rows.Any(match); t++) await Tap(Godot.Key.Tab);
         for (int i = 0; i <= _game.Hud.Rows.Count && !(_game.Hud.Rows.Count > 0 && match(_game.Hud.Rows[_game.Hud.Selected])); i++) await Tap(Godot.Key.S);
     }
 
