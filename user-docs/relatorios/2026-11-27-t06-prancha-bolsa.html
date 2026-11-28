@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T06 — prancha da bolsa</title>
+<style>
+  :root { --bg:#1b1914; --ink:#ece5d0; --dim:#a39e8c; --jade:#6fd8d2; --card:#26231c; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, "Segoe UI", sans-serif; }
+  header { padding:16px 20px; border-bottom:1px solid #3a3528; position:sticky; top:0; background:var(--bg); z-index:5; }
+  h1 { font-size:20px; margin:0 0 6px; }
+  h2 { font-size:18px; margin:28px 20px 6px; color:var(--jade); }
+  p, .note { margin:4px 20px; color:var(--dim); max-width:1100px; }
+  .bar { display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-top:8px; }
+  .bar label { color:var(--ink); }
+  select, button { background:#3a3528; color:var(--ink); border:1px solid #5a5240; padding:4px 8px; font:inherit; border-radius:4px; }
+  .opts { display:flex; flex-direction:column; gap:24px; padding:10px 20px 30px; }
+  .opt { background:var(--card); border:1px solid #3a3528; border-radius:6px; padding:12px; width:max-content; max-width:100%; overflow-x:auto; }
+  .opt h3 { margin:0 0 4px; font-size:16px; }
+  .opt .why { color:var(--dim); margin:0 0 8px; max-width:900px; }
+  .pair { display:flex; gap:12px; flex-wrap:wrap; }
+  canvas { image-rendering:pixelated; image-rendering:crisp-edges; display:block; border:1px solid #000; }
+  .cap { color:var(--dim); font-size:13px; margin-top:4px; }
+  .rec { color:#ffd166; }
+  .gray canvas { filter:grayscale(1); }
+  .deut canvas { filter:url(#deut); }
+  .prot canvas { filter:url(#prot); }
+  .trit canvas { filter:url(#trit); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="deut"><feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/></filter>
+  <filter id="prot"><feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/></filter>
+  <filter id="trit"><feColorMatrix type="matrix" values="0.95 0.05 0 0 0  0 0.433 0.567 0 0  0 0.475 0.525 0 0  0 0 0 1 0"/></filter>
+</svg>
+<header>
+  <h1>T06 — Prancha da bolsa, da fabricação, da ficha e da escolha do alvo</h1>
+  <div>Cada quadro é desenhado em 640×360 (a resolução do jogo) com as <b>figuras reais</b> dos itens e uma captura real do jogo ao fundo. Escolha o tamanho em que você joga: os pixels ficam do mesmo tamanho da tela do jogo.</div>
+  <div class="bar">
+    <label>Tamanho: <select id="scale">
+      <option value="2">Janela 1280×720 (×2)</option>
+      <option value="3" selected>Tela cheia 1920×1080 (×3)</option>
+      <option value="1">640×360 (×1, só para comparar)</option>
+    </select></label>
+    <label>Cor: <select id="filter">
+      <option value="">cores normais</option><option value="gray">escala de cinza</option>
+      <option value="deut">daltonismo verde (deuteranopia)</option><option value="prot">daltonismo vermelho (protanopia)</option><option value="trit">daltonismo azul (tritanopia)</option>
+    </select></label>
+    <span class="note" id="dpr"></span>
+  </div>
+</header>
+
+<h2>Hoje (para comparar)</h2>
+<p>Capturas do jogo agora: a bolsa com os seus itens (faca, 3 ervas, 2 sílex, 1 galho, 4 toras, 2 minérios, machado na mão, picareta), a ficha e o HUD.</p>
+<div class="opts"><div class="opt"><div class="pair">
+  <div><canvas data-img="t06-prancha/bolsa-hoje.png"></canvas><div class="cap">Bolsa hoje: uma grade só, as receitas embaixo.</div></div>
+  <div><canvas data-img="t06-prancha/ficha-hoje.png"></canvas><div class="cap">Ficha hoje: lista de texto, E gasta.</div></div>
+</div></div></div>
+
+<h2>Pergunta 1 — Como organizar a bolsa (itens e fabricação)</h2>
+<p>As três opções têm as mesmas categorias (Tudo, Equipamentos, Ferramentas, Consumíveis, Materiais), as moedas no alto, o equipado marcado com ✓ e uma aba <b>Fabricação</b>. Na esquerda, a <b>Faca</b> está selecionada e é comparada com o <b>Machado de Pedra</b> que está na mão. Na direita, a aba Fabricação com o <b>Machado Lapidado</b> selecionado: o que falta e a diferença no mesmo pinheiro.</p>
+<div class="opts" id="q1"></div>
+
+<h2>Pergunta 2 — Ficha: botões “+” e a prévia</h2>
+<p>Ficha com 2 pontos livres e o machado na mão. O FOR está selecionado: a prévia diz quanto o próximo ponto muda o dano da arma equipada. O CON mostra quanto ainda pode reduzir até o teto. Nas duas opções, a Vida aparece completa (“Vida 60% · 6/10”).</p>
+<div class="opts" id="q2"></div>
+
+<h2>Pergunta 3 — Qual alvo o E vai acionar, e como trocar</h2>
+<p>Uma erva, uma pegada e uma carcaça ao alcance. A marca mostra o alvo do E; o rótulo diz o nome e como trocar.</p>
+<div class="opts" id="q3"></div>
+
+<h2>Pergunta 4 — Ganhos agrupados e rodapé contextual</h2>
+<p>Recolhendo três galhos seguidos e ganhando XP, perto da carcaça. Os ganhos aparecem perto do personagem, agrupados; o rodapé mostra só o que serve agora.</p>
+<div class="opts" id="q4"></div>
+
+<script src="t06-prancha/icones.js"></script>
+<script>
+// ---------------- the game's look (colours from src/Game/MapView.cs, BagPanel.cs, PlainsHud.cs)
+const C = { paper:'#dccaa0', paperEdge:'#bfa877', ink:'#2a2418', ink2:'#6a5e46', jade:'#1d5e57', slot:'#c9b68d', slotHi:'#e9dcb8', off:'#8a7a5e', seal:'#b33a2a',
+  roller:'#5a3e28', rollerHi:'#7a5a3a', hudText:'#ece5d0', hudDim:'#a39e8c', outline:'#16140f', life:'#7a3a32', lifeHi:'#b0574a', vig:'#b08a3a', ki:'#3a8a8a', good:'#2f7a3a' };
+const FONT = '"Noto Sans","Segoe UI",system-ui,sans-serif';
+const IMG = {}; for (const [k,v] of Object.entries(ICONS)) { const i = new Image(); i.src = v; IMG[k] = i; }
+const BG = new Image(); BG.src = 't06-prancha/hud-hoje.png';
+
+function T(g, x, y, s, size, col, opts={}) { g.font = `${opts.bold?'600 ':''}${size}px ${FONT}`; g.fillStyle = col; g.textAlign = opts.align||'left'; g.textBaseline='alphabetic'; g.fillText(s, x, y); return g.measureText(s).width; }
+function R(g, x, y, w, h, col) { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), w, h); }
+function frame(g, x, y, w, h) { // the parchment with its rollers (BagPanel)
+  R(g, x-6, y-8, w+12, 8, C.roller); R(g, x-6, y+h, w+12, 8, C.roller); R(g, x-6, y-7, w+12, 2, C.rollerHi); R(g, x-6, y+h+1, w+12, 2, C.rollerHi);
+  R(g, x, y, w, h, C.paper); R(g, x, y, w, 3, C.paperEdge); R(g, x, y+h-3, w, 3, C.paperEdge); R(g, x, y, 3, h, C.paperEdge); R(g, x+w-3, y, 3, h, C.paperEdge);
+}
+function world(g) { g.drawImage(BG, 0, 0); g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(0,0,640,360); }
+function slot(g, x, y, sz, id, n, sel, eq, dim) {
+  R(g, x, y, sz, sz, sel ? C.jade : C.ink2); R(g, x+2, y+2, sz-4, sz-4, sel ? C.slotHi : dim ? 'rgba(201,182,141,0.55)' : C.slot);
+  if (IMG[id]) g.drawImage(IMG[id], Math.round(x + sz/2 - 16), Math.round(y + sz/2 - 18));
+  if (dim) { g.fillStyle = 'rgba(220,202,160,0.45)'; g.fillRect(x+2, y+2, sz-4, sz-4); }
+  if (n > 1) { const w = (g.font = `9px ${FONT}`, g.measureText(String(n)).width); T(g, x+sz-w-3+1, y+sz-3+1, String(n), 9, C.slotHi); T(g, x+sz-w-3, y+sz-3, String(n), 9, C.ink); }
+  if (eq) { R(g, x+2, y+2, 10, 10, C.jade); T(g, x+4, y+11, '✓', 8, C.paper); }
+}
+function coins(g, x, y) { if (IMG.moedas) g.drawImage(IMG.moedas, x-26, y-16); T(g, x+2, y+4, 'Moedas: 25', 10, C.ink); }
+function tabs(g, x, y, names, active, vertical) {
+  let cx = x, cy = y; const out = [];
+  names.forEach((n, i) => {
+    g.font = `9px ${FONT}`; const w = vertical ? 92 : g.measureText(n).width + 12;
+    const on = i === active;
+    R(g, cx, cy, w, 14, on ? C.jade : 'rgba(106,94,70,0.25)');
+    T(g, cx + 6, cy + 10, n, 9, on ? C.paper : C.ink);
+    if (vertical) cy += 17; else cx += w + 3;
+  });
+}
+function button(g, x, y, label) { g.font = `10px ${FONT}`; const w = g.measureText(label).width + 16; R(g, x - w, y, w, 18, C.jade); T(g, x - w/2, y + 13, label, 10, C.paper, {align:'center'}); }
+const ITEMS = [['faca_pedra',1,false],['grama_sangue_q1',3,false],['silex',2,false],['galho_rijo',1,false],['tora',4,false],['minerio_ferro',2,false],['machado_pedra',1,true],['picareta_pedra',1,false]];
+const RECIPES = [['faca_pedra',1,true],['machado_pedra',1,false],['picareta_pedra',1,false],['machado_lapidado',1,false],['picareta_lapidada',1,false],['tira_amarracao',2,false],['bolsa_simples',1,false],['carne_macia_assada',1,false]];
+const CATS = ['Tudo','Equipamentos','Ferramentas','Consumíveis','Materiais'];
+
+// the selected item's detail: name, description, comparison with the hand, action
+function detailItem(g, x, y, w) {
+  T(g, x, y+12, 'Faca de Pedra', 11, C.ink, {bold:true});
+  T(g, x, y+26, 'Lasca de sílex amarrada num galho. Esfola a caça e corta bambu.', 9, C.ink2);
+  T(g, x, y+42, 'Na mão: Machado de Pedra → se trocar pela faca:', 9, C.ink, {bold:true});
+  const rows = [['Pinheiro', 'cai em 6 golpes', 'não corta', C.seal], ['Bambu', '3 golpes', '3 golpes', C.ink2], ['Dano em animais', '1,1', '1,1', C.ink2], ['Alcance', '22 px', '22 px', C.ink2], ['Esfolar carcaça', 'sim', 'sim', C.ink2]];
+  rows.forEach((r, i) => { const yy = y + 55 + i * 11; T(g, x+4, yy, r[0], 9, C.ink2); T(g, x+96, yy, r[1], 9, C.ink2); T(g, x+176, yy, '→  ' + r[2], 9, r[3]); });
+  button(g, x + w, y + 2, 'Equipar  [E]');
+}
+// the crafting detail: what is missing, in "tenho X de Y", and the difference on the same tree
+function detailRecipe(g, x, y, w) {
+  T(g, x, y+12, 'Machado Lapidado', 11, C.ink, {bold:true});
+  const need = [['Tora', 4, 1], ['Pedra Bruta', 0, 2], ['Tira de Amarração', 0, 1]];
+  need.forEach((n, i) => { const ok = n[1] >= n[2]; T(g, x+4, y + 28 + i * 11, `${ok ? '✓' : '✗'} ${n[0]}: tenho ${n[1]} de ${n[2]}`, 9, ok ? C.good : C.seal, {bold: !ok}); });
+  T(g, x, y + 66, 'Comparado ao Machado de Pedra (na mão):', 9, C.ink, {bold:true});
+  T(g, x+4, y + 78, 'Pinheiro: 6 golpes → 3 golpes   ·   Salgueiro: 5 → 3   ·   Bambu: 3 → 2', 9, C.jade);
+  T(g, x+4, y + 89, 'Alcance 22 → 24 px   ·   Dano em animais 1,1 → 1,1', 9, C.ink2);
+  R(g, x + w - 100, y + 2, 100, 18, C.off); T(g, x + w - 50, y + 15, 'Fabricar  [E]', 10, C.paper, {align:'center'});
+  T(g, x + w - 100, y + 32, 'Falta: 2 Pedra Bruta,', 8, C.seal); T(g, x + w - 100, y + 42, '1 Tira de Amarração', 8, C.seal);
+}
+
+// ---- Option A: tabs on top
+function bagA(g, crafting) {
+  world(g); const x = 40, y = 23, w = 560, h = 314; frame(g, x, y, w, h);
+  T(g, x+12, y+17, 'Bolsa', 12, C.ink, {bold:true}); coins(g, x+w-80, y+12);
+  tabs(g, x+12, y+24, [...CATS, 'Fabricação'], crafting ? 5 : 0);
+  R(g, x+12, y+41, w-24, 1, C.ink2);
+  const sz = 40; const list = crafting ? RECIPES : ITEMS;
+  list.forEach((it, i) => slot(g, x+12 + (i%13)*sz, y+46 + Math.floor(i/13)*sz, sz-2, it[0], it[1], crafting ? i === 3 : i === 0, !crafting && it[2], crafting && !it[2]));
+  R(g, x+12, y+92, w-24, 1, C.ink2);
+  if (crafting) detailRecipe(g, x+12, y+98, w-24); else detailItem(g, x+12, y+98, w-24);
+  T(g, x+12, y+h-7, 'Tab ou Q/R: categoria · setas: escolher · E ou clique: agir · I ou Esc: fechar', 8, C.ink2);
+}
+// ---- Option B: category column on the left
+function bagB(g, crafting) {
+  world(g); const x = 40, y = 23, w = 560, h = 314; frame(g, x, y, w, h);
+  T(g, x+12, y+17, 'Bolsa', 12, C.ink, {bold:true}); coins(g, x+w-80, y+12);
+  R(g, x+12, y+22, w-24, 1, C.ink2);
+  tabs(g, x+12, y+30, [...CATS, 'Fabricação'], crafting ? 5 : 0, true);
+  const sz = 40, gx = x+112; const list = crafting ? RECIPES : ITEMS;
+  list.forEach((it, i) => slot(g, gx + (i%10)*sz, y+30 + Math.floor(i/10)*sz, sz-2, it[0], it[1], crafting ? i === 3 : i === 0, !crafting && it[2], crafting && !it[2]));
+  R(g, gx, y+76, w-124, 1, C.ink2);
+  if (crafting) detailRecipe(g, gx, y+82, w-124); else detailItem(g, gx, y+82, w-124);
+  T(g, x+12, y+h-7, 'W/S na coluna: categoria · setas na grade: escolher · E ou clique: agir · I ou Esc: fechar', 8, C.ink2);
+}
+// ---- Option C: one grid, items grouped by category with small headers (crafting stays a tab)
+function bagC(g, crafting) {
+  world(g); const x = 40, y = 23, w = 560, h = 314; frame(g, x, y, w, h);
+  T(g, x+12, y+17, 'Bolsa', 12, C.ink, {bold:true}); coins(g, x+w-80, y+12);
+  tabs(g, x+12, y+24, ['Itens', 'Fabricação'], crafting ? 1 : 0);
+  R(g, x+12, y+41, w-24, 1, C.ink2);
+  const sz = 34;
+  if (crafting) {
+    RECIPES.forEach((it, i) => slot(g, x+12 + (i%15)*sz, y+46, sz-2, it[0], it[1], i === 3, false, !it[2]));
+    R(g, x+12, y+84, w-24, 1, C.ink2); detailRecipe(g, x+12, y+90, w-24);
+  } else {
+    const groups = [['Equipamentos', [ITEMS[0]]], ['Ferramentas', [ITEMS[6], ITEMS[7]]], ['Consumíveis', [ITEMS[1]]], ['Materiais', [ITEMS[2], ITEMS[3], ITEMS[4], ITEMS[5]]]];
+    let cx = x+12;
+    groups.forEach(([name, items]) => {
+      T(g, cx, y+52, name, 8, C.ink2);
+      items.forEach((it, i) => slot(g, cx + i*sz, y+56, sz-2, it[0], it[1], it[0] === 'faca_pedra', it[2], false));
+      cx += Math.max(items.length * sz, 70) + 8;
+    });
+    R(g, x+12, y+94, w-24, 1, C.ink2); detailItem(g, x+12, y+100, w-24);
+  }
+  T(g, x+12, y+h-7, 'Tab: Itens ou Fabricação · setas: escolher · E ou clique: agir · I ou Esc: fechar', 8, C.ink2);
+}
+
+// ---- the sheet
+function sheet(g, style) {
+  world(g); const x = 70, y = 20, w = 500, h = 320; frame(g, x, y, w, h);
+  T(g, x+12, y+17, 'Ficha — Nível 4', 12, C.ink, {bold:true}); T(g, x+w-12, y+17, 'Pontos livres: 2', 11, C.jade, {bold:true, align:'right'});
+  T(g, x+12, y+31, 'Vida 60% · 6/10   ·   Vigor 40/70   ·   Ki 80/100   ·   XP 0/45', 9, C.ink2);
+  R(g, x+12, y+36, w-24, 1, C.ink2);
+  const attrs = [['FOR','Força',1],['VIT','Vitalidade',0],['INT','Inteligência',0],['CON','Constituição',2],['AGI','Agilidade',0],['SOR','Sorte',1],['KI','Reserva de energia',0]];
+  attrs.forEach((a, i) => {
+    const yy = y + 44 + i * 19, sel = i === 0;
+    if (sel) R(g, x+12, yy, 236, 17, 'rgba(29,94,87,0.18)');
+    T(g, x+18, yy+12, a[0], 10, C.ink, {bold:true}); T(g, x+48, yy+12, String(a[2]), 10, C.ink, {bold:true}); T(g, x+64, yy+12, a[1], 9, C.ink2);
+    if (style === 'A') { R(g, x+226, yy+1, 15, 15, sel ? C.jade : C.ink2); T(g, x+233, yy+12, '+', 12, C.paper, {align:'center', bold:true}); }
+    else { R(g, x+44, yy+1, 1, 1, C.ink2); R(g, x+200, yy+1, 30, 15, sel ? C.jade : 'rgba(29,94,87,0.35)'); T(g, x+215, yy+12, '+1', 9, C.paper, {align:'center', bold:true}); }
+  });
+  const px = x + 262, pw = w - 274;
+  R(g, px, y+44, pw, 128, 'rgba(201,182,141,0.45)');
+  T(g, px+6, y+58, 'Com +1 em FOR (fica 2):', 10, C.ink, {bold:true});
+  T(g, px+6, y+73, 'Dano corpo a corpo: 106% → 112%', 9, C.ink);
+  T(g, px+6, y+86, 'Machado de Pedra (na mão):', 9, C.ink2);
+  T(g, px+12, y+98, 'dano em animais 1,06 → 1,12', 9, C.jade, {bold:true});
+  T(g, px+12, y+110, 'crítico (×1,5): 1,59 → 1,68', 9, C.ink2);
+  T(g, px+6, y+126, 'O pinheiro não muda: 6 golpes (força', 8, C.ink2); T(g, px+6, y+136, 'é do machado, não do FOR).', 8, C.ink2);
+  T(g, px+6, y+156, 'CON 2: recebe 94% do dano · ainda', 8, C.ink2); T(g, px+6, y+166, 'pode reduzir 39 pontos até o teto (45%).', 8, C.ink2);
+  if (style === 'B') { T(g, x+12, y+186, 'Passar o mouse no "+1" mostra a prévia; clicar gasta.', 8, C.ink2); }
+  T(g, x+12, y+h-7, style === 'A' ? 'W/S: atributo · E, Enter ou clique no +: gastar 1 ponto · C fechar' : 'W/S: atributo · E, Enter ou clique no +1: gastar · C fechar', 8, C.ink2);
+}
+function hudLife(g) { world(g); R(g, 4, 4, 210, 50, 'rgba(22,20,15,0.6)'); R(g, 10, 10, 84, 5, C.life); R(g, 10, 10, 50, 5, C.lifeHi); T(g, 98, 15, 'Vida 60%', 9, C.hudText);
+  R(g, 96, 18, 110, 16, 'rgba(22,20,15,0.95)'); T(g, 100, 30, 'Vida 60% · 6/10', 9, '#ffffff', {bold:true});
+  T(g, 14, 70, '← ao passar o mouse na barra (sempre exato na ficha)', 9, '#ffffff'); }
+
+// ---- the target of E
+function target(g, style) {
+  world(g);
+  // three things near the swordsman (simplified shapes over the real ground)
+  const herb = [300, 196], track = [338, 206], carc = [322, 178], me = [318, 222];
+  // herb
+  R(g, herb[0]-1, herb[1]-8, 1, 8, '#4f8a3a'); R(g, herb[0]+1, herb[1]-9, 1, 9, '#5f9a44'); R(g, herb[0]-1, herb[1]-9, 1, 2, '#c0382e'); R(g, herb[0]+1, herb[1]-10, 1, 2, '#c0382e');
+  // track
+  R(g, track[0]-2, track[1]-2, 4, 3, '#3b2a1a'); R(g, track[0]+2, track[1]-6, 2, 2, '#3b2a1a'); R(g, track[0]-4, track[1]-6, 2, 2, '#3b2a1a');
+  // carcass
+  R(g, carc[0]-8, carc[1]-4, 16, 6, '#6a5a44'); R(g, carc[0]-8, carc[1]-4, 16, 1, '#8a7a5e'); R(g, carc[0]+6, carc[1]-6, 4, 4, '#6a5a44');
+  // swordsman (a simple stand-in)
+  R(g, me[0]-5, me[1]-24, 10, 22, '#e6dcc0'); R(g, me[0]-4, me[1]-33, 8, 9, '#c89a72'); R(g, me[0]-4, me[1]-36, 8, 4, '#16140f');
+  const label = (x, y, text) => { g.font = `9px ${FONT}`; const w = g.measureText(text).width + 10; R(g, x - w/2, y - 11, w, 14, 'rgba(22,20,15,0.85)'); T(g, x, y, text, 9, '#ffffff', {align:'center'}); };
+  if (style === 'A') { // jade corners around the target
+    const [x, y] = herb; const c = '#6fd8d2'; [[-7,-14],[5,-14],[-7,2],[5,2]].forEach(([dx,dy]) => { R(g, x+dx, y+dy, 3, 1, c); R(g, x+dx + (dx<0?0:2), y+dy, 1, 3, c); });
+    label(herb[0], herb[1] - 18, 'E: colher erva   ·   Tab: trocar (1 de 3)');
+    [track, carc].forEach(([x, y]) => R(g, x-1, y-14, 3, 3, 'rgba(255,255,255,0.55)'));
+  } else if (style === 'B') { // an arrow over the target, small dots over the others
+    const [x, y] = herb; g.fillStyle = '#ffd166'; g.beginPath(); g.moveTo(x-4, y-18); g.lineTo(x+4, y-18); g.lineTo(x, y-12); g.fill();
+    label(herb[0], herb[1] - 22, 'E: colher erva   ·   Tab: trocar');
+    [track, carc].forEach(([x, y]) => { g.fillStyle = 'rgba(255,209,102,0.5)'; g.beginPath(); g.arc(x, y - 12, 2, 0, 7); g.fill(); });
+  } else { // a ring on the ground under the target, the others listed
+    const [x, y] = herb; g.strokeStyle = '#6fd8d2'; g.lineWidth = 1; g.beginPath(); g.ellipse(x, y, 9, 4, 0, 0, 7); g.stroke();
+    label(herb[0], herb[1] - 16, 'E: colher erva');
+    R(g, 400, 150, 150, 46, 'rgba(22,20,15,0.85)'); T(g, 408, 163, '▸ erva (E)', 9, '#6fd8d2'); T(g, 408, 176, '  pegada', 9, '#ffffff'); T(g, 408, 189, '  carcaça      Tab: trocar', 9, '#ffffff');
+  }
+}
+
+// ---- gains near the character and the contextual footer
+function gains(g, style) {
+  world(g);
+  const me = [318, 222];
+  R(g, me[0]-5, me[1]-24, 10, 22, '#e6dcc0'); R(g, me[0]-4, me[1]-33, 8, 9, '#c89a72'); R(g, me[0]-4, me[1]-36, 8, 4, '#16140f');
+  const pop = (x, y, t, c) => { g.font = `600 9px ${FONT}`; g.lineWidth = 3; g.strokeStyle = '#16140f'; g.strokeText(t, x, y); T(g, x, y, t, 9, c, {bold:true}); };
+  if (style === 'A') { // stacked over the head, the same item counts up
+    if (IMG.galho_rijo) g.drawImage(IMG.galho_rijo, me[0]-38, me[1]-70, 16, 16);
+    pop(me[0]-20, me[1]-58, '+3 Galho Rijo', '#ece5d0'); pop(me[0]-20, me[1]-46, '+3 XP', '#ffd166');
+  } else { // to the side of the character, in a short column that fades
+    R(g, me[0]+14, me[1]-62, 92, 30, 'rgba(22,20,15,0.6)');
+    if (IMG.galho_rijo) g.drawImage(IMG.galho_rijo, me[0]+12, me[1]-66, 16, 16);
+    pop(me[0]+30, me[1]-50, '+3 Galho Rijo', '#ece5d0'); pop(me[0]+30, me[1]-38, '+3 XP', '#ffd166');
+  }
+  // contextual footer
+  R(g, 0, 346, 640, 14, 'rgba(22,20,15,0.85)');
+  T(g, 6, 356, 'E pegar carne   ·   K esfolar com Ki   ·   Tab trocar alvo   ·   I bolsa   ·   Esc: todos os comandos', 9, '#ece5d0');
+}
+
+// ---------------- drawing every canvas at the chosen size
+const QUESTIONS = {
+  q1: [
+    ['A', 'Abas no alto', true, 'Categorias como abas logo abaixo do título; a grade ocupa a largura toda; o detalhe e a comparação embaixo. É a bolsa de hoje com abas: muda pouco o que você já conhece.', g => bagA(g, false), g => bagA(g, true)],
+    ['B', 'Coluna de categorias à esquerda', false, 'Categorias numa coluna à esquerda (como um menu), a grade e o detalhe à direita. Fica mais espaço vertical para muitas categorias no futuro; a grade fica mais estreita.', g => bagB(g, false), g => bagB(g, true)],
+    ['C', 'Tudo numa página, em grupos', false, 'Sem abas de categoria: os itens já aparecem agrupados com um título pequeno (Equipamentos, Ferramentas…). Só “Itens” e “Fabricação” são abas. Vê-se tudo de uma vez, mas com muitos itens a página cresce.', g => bagC(g, false), g => bagC(g, true)],
+  ],
+  q2: [
+    ['A', 'Botão “+” no fim de cada linha', true, 'Um botão “+” à direita de cada atributo; o selecionado (mouse ou W/S) mostra a prévia no quadro ao lado. Clique no “+” ou E/Enter gasta.', g => sheet(g, 'A'), g => hudLife(g)],
+    ['B', 'Botão “+1” junto do valor', false, 'Um botão “+1” mais largo, mais perto do nome; passar o mouse nele mostra a prévia; clicar gasta.', g => sheet(g, 'B'), g => hudLife(g)],
+  ],
+  q3: [
+    ['A', 'Cantos verdes em volta do alvo', true, 'Quatro cantinhos jade enquadram o alvo; os outros ficam com um pontinho. O rótulo diz a ação e “Tab: trocar (1 de 3)”.', g => target(g, 'A')],
+    ['B', 'Seta amarela sobre o alvo', false, 'Uma seta pequena aponta o alvo; pontos amarelos fracos sobre os outros.', g => target(g, 'B')],
+    ['C', 'Anel no chão + lista ao lado', false, 'Um anel no chão sob o alvo e uma lista curta dos alvos ao alcance, com o atual marcado.', g => target(g, 'C')],
+  ],
+  q4: [
+    ['A', 'Sobre a cabeça, contando', true, 'Os ganhos sobem sobre a cabeça e o mesmo item soma (“+3 Galho Rijo”) em vez de repetir linhas.', g => gains(g, 'A')],
+    ['B', 'Ao lado do personagem, numa coluna', false, 'Uma coluna curta ao lado do personagem, com a figura do item; deixa a área acima da cabeça livre para avisos.', g => gains(g, 'B')],
+  ],
+};
+function build() {
+  const scale = +document.getElementById('scale').value, dpr = window.devicePixelRatio || 1;
+  document.getElementById('dpr').textContent = dpr !== 1 ? `(o Windows está ampliando a tela em ${Math.round(dpr*100)}%; a prancha compensa para os pixels ficarem do tamanho do jogo)` : '';
+  const css = 640 * scale / dpr, cssH = 360 * scale / dpr;
+  document.querySelectorAll('canvas[data-img]').forEach(cv => {
+    const im = new Image(); im.onload = () => { cv.width = 640; cv.height = 360; cv.style.width = css + 'px'; cv.style.height = cssH + 'px'; cv.getContext('2d').drawImage(im, 0, 0); }; im.src = cv.dataset.img;
+  });
+  for (const [q, opts] of Object.entries(QUESTIONS)) {
+    const host = document.getElementById(q); host.innerHTML = '';
+    for (const [key, title, rec, why, ...draws] of opts) {
+      const div = document.createElement('div'); div.className = 'opt';
+      div.innerHTML = `<h3>Opção ${key} — ${title} ${rec ? '<span class="rec">(recomendada)</span>' : ''}</h3><p class="why">${why}</p>`;
+      const pair = document.createElement('div'); pair.className = 'pair';
+      draws.forEach(d => { const cv = document.createElement('canvas'); cv.width = 640; cv.height = 360; cv.style.width = css + 'px'; cv.style.height = cssH + 'px'; const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; d(g); pair.appendChild(cv); });
+      div.appendChild(pair); host.appendChild(div);
+    }
+  }
+}
+{ const q = new URLSearchParams(location.search).get('escala'); if (q) document.getElementById('scale').value = q; }
+document.getElementById('scale').onchange = build;
+document.getElementById('filter').onchange = e => { document.body.className = e.target.value; };
+Promise.all([BG, ...Object.values(IMG)].map(i => i.complete ? 1 : new Promise(r => { i.onload = r; i.onerror = r; }))).then(build);
+</script>
+</body>
+</html>

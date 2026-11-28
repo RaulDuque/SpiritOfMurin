@@ -1,6 +1,6 @@
 # T06 — Inventário, ficha, HUD e escolha de interação (Entrega 6 da campanha)
 
-**Estado:** planejada · **Frente:** A · **Depende de:** T05 · **Origem:** pedido 10 (Entrega 6, `user-docs/relatorios/prompts/10-campanha-inicial.md`), pedido 13 item 10 (`prompts/13-mira-tecnicas-bolsa-moedas.md`), pedido 14 item 6.A e decisões de abertura (`prompts/14-organizacao-criacao-conteudo.md`)
+**Estado:** pronta (2026-11-27) · relatório [2026-11-27-t06-bolsa-ficha-hud.md](../relatorios/2026-11-27-t06-bolsa-ficha-hud.md) · design [inventory-sheet-hud.md](../../design/gdd/inventory-sheet-hud.md) · evidências `production/qa/evidence/2026-11-27_inventario-ficha-hud/` · teste `tests/integration/InventarioCheck.tscn` · **Frente:** A · **Depende de:** T05 · **Origem:** pedido 10 (Entrega 6, `user-docs/relatorios/prompts/10-campanha-inicial.md`), pedido 13 item 10 (`prompts/13-mira-tecnicas-bolsa-moedas.md`), pedido 14 item 6.A e decisões de abertura (`prompts/14-organizacao-criacao-conteudo.md`)
 
 ## Objetivo do jogador
 
@@ -45,7 +45,19 @@ Abrir a bolsa e responder em poucos segundos: "O que equipei? O que posso usar? 
 - `docs/elementos/PADRAO.md` (padrão de organização dos elementos, escrito na sessão principal).
 - Não depende de T07; a T07 usa a escolha de interação (examinar pegada perto de carcaça).
 
-## Decisões abertas (do criador)
+## Decisões tomadas (2026-11-27, prancha `user-docs/relatorios/2026-11-27-t06-prancha-bolsa.html`)
+
+1. **Bolsa:** abas no alto (Tudo, Equipamentos, Ferramentas, Consumíveis, Materiais, Fabricação); grade na largura toda; detalhe e comparação embaixo (opção A).
+2. **Ficha:** botão "+" no fim de cada linha e a prévia num quadro ao lado (opção A).
+3. **Alvo do E:** anel no chão sob o alvo e uma lista curta dos alvos ao alcance (opção C). O alvo inicial é o mais perto do personagem.
+4. **Trocar o alvo:** a **roda do mouse** (ações "Próximo alvo" e "Alvo anterior" em Controles, com espaço para uma tecla). O Tab continua abrindo a bolsa.
+5. **Ganhos:** sobem sobre a cabeça, e o mesmo item soma ("+3 Galho Rijo") (opção A).
+6. **Atalhos de item:** H (erva) + **8 atalhos: 1 a 6, Q e R**. O E continua sendo pegar.
+7. **H continua exigindo a Bolsa Simples.** Os atalhos 1-6, Q e R funcionam desde o início.
+8. **Categorias:** Tudo, Equipamentos, Ferramentas, Consumíveis, Materiais (campo `category` no catálogo).
+9. **Vida completa** ("Vida 50% · 6/12") ao passar o mouse na barra e sempre na ficha. O HUD continua só com a porcentagem.
+
+## Decisões abertas (do criador) — as perguntas originais
 
 1. **Quantos atalhos de item e em que teclas?**
    - A) 4 espaços em 1–4 (recomendado: cabe no rodapé e não conflita com WASD/J/K/L);

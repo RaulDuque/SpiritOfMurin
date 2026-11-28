@@ -53,6 +53,8 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-27 | [2026-11-27-atributos-ki.md](2026-11-27-atributos-ki.md) | Pedido 14, entrega 14.0: Qi → Ki (texto, código e saves antigos), FOR, defesa de CON, crítico, vida do inimigo em números na barra, números de dano no Modo de assistência |
 | 2026-11-27 | [2026-11-27-pedido14-organizacao-e-entrega5.md](2026-11-27-pedido14-organizacao-e-entrega5.md) | Pedido 14: pasta de tarefas (`user-docs/tasks/`), padrão de elementos, cena de Inspeção, `/create` (salgueiro e rocha de ferro), Entrega 5 (machado, picareta, pinheiro, rochas, bambu, arbustos vivos), brilho azul do Reforço, corte maior, ícones no minimapa, andar sobre a água; prompts das entregas futuras |
 | 2026-11-27 | [2026-11-27-como-criar-e-editar-elementos.md](2026-11-27-como-criar-e-editar-elementos.md) | Guia para editar à mão: tabela "quero mudar → abro → edito → testo", passo a passo e os dois exemplos testados do `/create` |
+| 2026-11-27 | [2026-11-27-t06-prancha-bolsa.html](2026-11-27-t06-prancha-bolsa.html) | Prancha das decisões da T06 (bolsa, ficha, alvo do E, ganhos) desenhada em 640×360 com as figuras reais e a captura do jogo, em ×2 e ×3, cinza e daltonismo |
+| 2026-11-27 | [2026-11-27-t06-bolsa-ficha-hud.md](2026-11-27-t06-bolsa-ficha-hud.md) | T06: bolsa com abas e moedas, Fabricação com "tenho X de Y", comparação de ferramentas em golpes, 8 atalhos (1-6, Q, R) + H, ficha com "+" e prévia da arma e do teto de CON, "Vida 60% · 6/10" ao passar o mouse, alvo do E com anel e lista (roda troca), rodapé contextual, ganhos sobre a cabeça; bateria 778/778 com repetições |
 
 ## Prompts de imagem do criador
 

@@ -1,10 +1,10 @@
 # Tarefas do SpiritOfMurin — ponto de retomada
 
-*Atualizado em 2026-11-27, no fim do pedido 14. Leia isto primeiro ao voltar ao projeto, de qualquer sessão ou ferramenta.*
+*Atualizado em 2026-11-27, no fim da T06. Leia isto primeiro ao voltar ao projeto, de qualquer sessão ou ferramenta.*
 
 **Em 1 minuto:**
-- **Em andamento:** nenhuma. O pedido 14 terminou.
-- **Próximo prompt a mandar:** o da **[T06](T06-inventario-ficha-hud.md)** (bolsa, ficha e HUD), na seção "Prompt pronto para executar". Copie e cole numa sessão nova.
+- **Em andamento:** nenhuma. A T06 terminou (2026-11-27).
+- **Próximo prompt a mandar:** o da **[T07](T07-combate-rastreamento-fauna.md)** (combate, rastreamento, javali e coelho), na seção "Prompt pronto para executar". Copie e cole numa sessão nova.
 - **O que você pode testar agora:** a seção "Pronto" abaixo. Tudo abre pelo **PainelDeTestes.exe → Jogar** (ou **Inspeção** para ver os elementos).
 - **O que depende de você:** a seção "Decisões abertas".
 
@@ -14,7 +14,7 @@ Cada tarefa tem um id estável (T01, T02…). As que têm trabalho suficiente ga
 
 | # | Tarefa | Por quê nessa ordem |
 |---|---|---|
-| 1 | **[T06](T06-inventario-ficha-hud.md) — bolsa, ficha, HUD, escolha de interação** | Com machado, picareta e 15 materiais novos, a bolsa precisa de categorias e da aba de fabricação |
+| ✓ | ~~[T06](T06-inventario-ficha-hud.md) — bolsa, ficha, HUD, escolha de interação~~ | pronta em 2026-11-27 |
 | 2 | **[T07](T07-combate-rastreamento-fauna.md) — combate, rastreamento, javali e coelho** | Completa a Entrega 7 com os animais que já existem |
 | 3 | **[T18](T18-equipamento-visual.md) — armas, roupas, capacetes** | Torna jogáveis os tipos `arma`, `roupa` e `capacete` do `/create` |
 | 4 | **[T08](T08-fauna-expandida-chefes.md) — fauna nova, elites e chefes** (sub-entregas T08a–T08j) | Depende do vocabulário de combate da T07 |
@@ -37,13 +37,13 @@ Cada tarefa tem um id estável (T01, T02…). As que têm trabalho suficiente ga
 | 14.1 | Brilho azul na espada com o Reforço de Ki; rastro de corte maior | [pedido 14](../relatorios/2026-11-27-pedido14-organizacao-e-entrega5.md) | Shift + J com 75 de Ki |
 | 14.3 | Andar sobre a água funda com Shift (10 Ki/s) ou nadar devagar (só Planície) | idem | entre no riacho fundo |
 | **T05** | **Machado e picareta; cortar pinheiro e salgueiro, quebrar rocha (quartzo, ferro), bambu cedendo, arbustos que se abrem** | idem, [T05](T05-recursos-arvores-pedras-bambus.md) | roteiro "Painel → Jogar" no relatório |
+| **T06** | **Bolsa com abas, Fabricação com "tenho X de Y", comparação em golpes, 8 atalhos (1-6, Q, R) + H, ficha com "+" e prévia da arma, "Vida 60% · 6/10" ao passar o mouse, alvo do E com anel e lista (roda troca), rodapé contextual, ganhos sobre a cabeça** | [t06-bolsa-ficha-hud](../relatorios/2026-11-27-t06-bolsa-ficha-hud.md) | roteiro curto no relatório |
 | — | Padrão de elementos, cena de Inspeção e comando `/create` | [como criar e editar](../relatorios/2026-11-27-como-criar-e-editar-elementos.md) | Painel → Inspeção; `/create arvore "…"` |
 
 ## Parcial (existe, mas falta algo): detalhes em [conciliacao-2026-11-27.md](conciliacao-2026-11-27.md)
 
 | Assunto | O que já há | O que falta | Tarefa |
 |---|---|---|---|
-| Bolsa e ficha | figuras, pilhas, fabricar, FOR | categorias, aba, comparar, atalhos, "+", "Vida 50% · 6/12", rodapé contextual, escolha do alvo do E | T06 |
 | Javali | aviso (casco, cabeça, olho, poeira), contra-ataque, barra com números | sons na Planície, faixa da investida (a opção existe e não é usada), barra junto ao animal | T07 |
 | Coelho e pegadas | orelha erguida, fuga para a toca, Shift funciona | entrada na toca visível, sinal de ruído, pegadas deixadas pelo movimento, precisão do Rastreamento | T07 |
 | Pássaros | bandos com sombra | aves que pousam e fogem de você | T08 |
@@ -54,12 +54,7 @@ Cada tarefa tem um id estável (T01, T02…). As que têm trabalho suficiente ga
 
 As da próxima tarefa ficam em destaque. Cada prompt pergunta as suas, uma por vez, antes de implementar.
 
-- **T06 (próxima):**
-  - quantos atalhos de item e em que teclas;
-  - como trocar o alvo do E;
-  - onde mostrar "Vida 50% · 6/12";
-  - H exige a Bolsa Simples;
-  - quais categorias.
+- **T07 (próxima):** as decisões estão no arquivo da tarefa (Lâmina enfraquecida contra o javali, faixa da investida, barra junto ao animal, animais no mapa…).
 - **Pendências registradas no pedido 14 (item 7):**
   - **Lâmina enfraquecida contra o javali:** atravessa o couro na investida? (T07, decisão 1)
   - **Animais no mapa:** os javalis vivos aparecem no mapa dos blocos visitados, como hoje (o 14.2 os desenha com ícone), só depois de examinar a trilha, ou nunca? (T07, decisão 5)
@@ -85,3 +80,4 @@ Para elementos que precisam de aprovação visual antes do código (fauna nova, 
 | Id | Fechada em | Commits |
 |---|---|---|
 | T05 + pedido 14 | 2026-11-27 | ver o relatório do pedido 14 |
+| T06 | 2026-11-27 | ver o relatório da T06 |
