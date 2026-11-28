@@ -55,6 +55,9 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-27 | [2026-11-27-como-criar-e-editar-elementos.md](2026-11-27-como-criar-e-editar-elementos.md) | Guia para editar à mão: tabela "quero mudar → abro → edito → testo", passo a passo e os dois exemplos testados do `/create` |
 | 2026-11-27 | [2026-11-27-t06-prancha-bolsa.html](2026-11-27-t06-prancha-bolsa.html) | Prancha das decisões da T06 (bolsa, ficha, alvo do E, ganhos) desenhada em 640×360 com as figuras reais e a captura do jogo, em ×2 e ×3, cinza e daltonismo |
 | 2026-11-27 | [2026-11-27-t06-bolsa-ficha-hud.md](2026-11-27-t06-bolsa-ficha-hud.md) | T06: bolsa com abas e moedas, Fabricação com "tenho X de Y", comparação de ferramentas em golpes, 8 atalhos (1-6, Q, R) + H, ficha com "+" e prévia da arma e do teto de CON, "Vida 60% · 6/10" ao passar o mouse, alvo do E com anel e lista (roda troca), rodapé contextual, ganhos sobre a cabeça; bateria 778/778 com repetições |
+| 2026-11-27 | [2026-11-27-t07-prancha-javali.html](2026-11-27-t07-prancha-javali.html) | Prancha das decisões da T07: o aviso do javali com a faixa da investida e a barra junto ao animal, no tamanho real do jogo, assistência ligada e desligada |
+| 2026-11-28 | [2026-11-28-t07-combate-fauna.md](2026-11-28-t07-combate-fauna.md) | T07: aparo, investida e contra-ataque distintos; faixa da investida (completa/curta/desligada); barra junto ao animal; Lâmina atravessa com metade do dano; coelho agacha e mergulha na toca; pegadas frescas pelo caminho real; exame com precisão por Rastreamento; javali no mapa só depois de visto; Disparo de Ki se desfaz no fim do alcance; diagonal 0,8 por eixo; vídeos e onde mexer |
+| 2026-11-28 | [prompts/15-t07-combate-fauna.md](prompts/15-t07-combate-fauna.md) | Pedido do criador para a T07 e o ajuste da diagonal (texto integral) |
 
 ## Prompts de imagem do criador
 

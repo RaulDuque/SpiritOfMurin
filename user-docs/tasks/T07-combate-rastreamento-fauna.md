@@ -1,6 +1,6 @@
 # T07 — Combate, rastreamento e leitura da fauna real (Entrega 7 da campanha)
 
-**Estado:** planejada · **Frente:** B (parte 1) · **Depende de:** T05, T06 (escolha de interação) · **Origem:** pedido 10 (Entrega 7, `user-docs/relatorios/prompts/10-campanha-inicial.md`), pedido 14 itens 1, 6.B e 7 (`prompts/14-organizacao-criacao-conteudo.md`), `user-docs/futuro-do game/gpt.md` (padrões do coelho e do javali, Rastreamento)
+**Estado:** pronta (2026-11-28) — relatório [2026-11-28-t07-combate-fauna](../relatorios/2026-11-28-t07-combate-fauna.md), GDD `design/gdd/combat-tracking-fauna.md`, evidências `production/qa/evidence/2026-11-28_t07-fauna/` · **Frente:** B (parte 1) · **Depende de:** T05, T06 (escolha de interação) · **Origem:** pedido 10 (Entrega 7, `user-docs/relatorios/prompts/10-campanha-inicial.md`), pedido 14 itens 1, 6.B e 7 (`prompts/14-organizacao-criacao-conteudo.md`), `user-docs/futuro-do game/gpt.md` (padrões do coelho e do javali, Rastreamento)
 
 ## Objetivo do jogador
 
@@ -46,7 +46,34 @@ Fonte: `user-docs/relatorios/2026-11-26-visual-mobs.md` §3.7–3.10 e §4, `des
 - **T06** (escolha de interação: examinar pegada perto de carcaça ou erva; rodapé contextual).
 - **T09** só para a parte "legível na chuva" (o critério de chuva fica pendente até a T09).
 
-## Decisões abertas (do criador)
+## Decisões tomadas (2026-11-27, prancha `user-docs/relatorios/2026-11-27-t07-prancha-javali.html`)
+
+1. **Passo da Lâmina Silenciosa enfraquecido contra o javali:** **B** — atravessa o couro durante o aviso e a investida com **metade do dano** (1,5) e o javali continua correndo. O Disparo de Ki Concentrado (100 Ki) e o Reforço de Ki (75 Ki) mantêm as regras deles.
+2. **Faixa da investida:** **A** — bordas tracejadas cor de terra com preenchimento fraco, ligada por padrão, com o comprimento e a largura reais; em Esc → Modo de assistência dá para reduzir ou desligar.
+3. **Barra junto ao animal:** **A** — barra compacta com "atual/máximo" sobre o animal durante o combate; a barra do alto continua; some ao sair do combate.
+4. **Postura:** só Vida, por enquanto (a postura fica para inimigos humanos e chefes, T08).
+5. **Javalis no mapa:** só depois de vê-los por perto ou de examinar uma pegada da trilha deles.
+6. **Coelho:** continua com 1 de Vida.
+7. **Pegadas novas:** ficam **90 s** no chão (valor em dados), apagando aos poucos.
+
+## Onde ficou cada coisa (2026-11-28)
+
+| Para mudar | Arquivo |
+|---|---|
+| Orelhas do coelho | `src/Elements/Fauna/CoelhoArt.cs` → `Ears` |
+| Agachado, corrida, mergulho na toca | `CoelhoArt.Draw` / `CoelhoArt.Dive`; duração em `plains_fauna.json` (`rabbit_dive_seconds`) |
+| Poeira do javali | `src/Elements/Fauna/JavaliArt.cs` → `Dust` |
+| Faixa da investida | `JavaliArt.Strip` / `StripLength`; modo em Esc → Modo de assistência (`src/Game/Assist.cs`, `Strip`) |
+| Resvalo e recuo do javali | `JavaliArt.Glance` / `Body`; tempos em `plains_fauna.json` |
+| Duração da pegada nova | `assets/data/plains/plains_fauna.json` → `track_seconds` |
+| Desenho da pegada | `src/Elements/Fauna/PegadaArt.cs` |
+| Onde o Ki se desfaz | `src/Combat/KiFizzle.cs` |
+| Barra junto ao animal | `src/Game/NearBar.cs` |
+| Cone do exame | `src/Game/TrackHint.cs`; precisão por grau em `track_sector_degrees` |
+
+**Dependência registrada:** "legível na chuva" fica para a **T09**. Quando a chuva existir, acrescente a fase `chuva` ao `FaunaCheck` copiando a fase `vento`, que compara a imagem com e sem a faixa.
+
+## Decisões abertas (do criador) — as perguntas originais
 
 1. **Lâmina enfraquecida contra o javali** (pendência do pedido 14 item 7): o Passo da Lâmina Silenciosa enfraquecido (dano 3) pode atravessar o couro durante a investida?
    - A) não, só acerta na recomposição como os outros golpes (recomendado: mantém a lição do javali);

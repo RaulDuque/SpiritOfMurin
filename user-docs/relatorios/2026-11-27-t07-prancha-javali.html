@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T07 — prancha do javali</title>
+<style>
+  :root { --bg:#1b1914; --ink:#ece5d0; --dim:#a39e8c; --jade:#6fd8d2; --card:#26231c; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, "Segoe UI", sans-serif; }
+  header { padding:16px 20px; border-bottom:1px solid #3a3528; position:sticky; top:0; background:var(--bg); z-index:5; }
+  h1 { font-size:20px; margin:0 0 6px; } h2 { font-size:18px; margin:28px 20px 6px; color:var(--jade); }
+  p { margin:4px 20px; color:var(--dim); max-width:1100px; }
+  .bar { display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-top:8px; }
+  select { background:#3a3528; color:var(--ink); border:1px solid #5a5240; padding:4px 8px; font:inherit; border-radius:4px; }
+  .opts { display:flex; flex-direction:column; gap:24px; padding:10px 20px 30px; }
+  .opt { background:var(--card); border:1px solid #3a3528; border-radius:6px; padding:12px; width:max-content; max-width:100%; overflow-x:auto; }
+  .opt h3 { margin:0 0 4px; font-size:16px; } .why { color:var(--dim); margin:0 0 8px; max-width:900px; }
+  .pair { display:flex; gap:12px; flex-wrap:wrap; } canvas { image-rendering:pixelated; display:block; border:1px solid #000; }
+  .rec { color:#ffd166; }
+  .gray canvas { filter:grayscale(1); } .deut canvas { filter:url(#deut); } .prot canvas { filter:url(#prot); } .trit canvas { filter:url(#trit); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="deut"><feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/></filter>
+  <filter id="prot"><feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/></filter>
+  <filter id="trit"><feColorMatrix type="matrix" values="0.95 0.05 0 0 0  0 0.433 0.567 0 0  0 0.475 0.525 0 0  0 0 0 1 0"/></filter>
+</svg>
+<header>
+  <h1>T07 — Prancha: faixa da investida e barra de vida junto ao javali</h1>
+  <div>Todas as opções no <b>mesmo enquadramento</b>: uma captura real do jogo com o javali em aviso, a direção já travada, apontando para o personagem. A faixa tem o comprimento real da investida (170 px) e a largura da área que acerta (15 px para cada lado).</div>
+  <div class="bar">
+    <label>Tamanho: <select id="scale"><option value="2">Janela 1280×720 (×2)</option><option value="3" selected>Tela cheia 1920×1080 (×3)</option><option value="1">640×360 (×1)</option></select></label>
+    <label>Cor: <select id="filter"><option value="">cores normais</option><option value="gray">escala de cinza</option><option value="deut">daltonismo verde</option><option value="prot">daltonismo vermelho</option><option value="trit">daltonismo azul</option></select></label>
+  </div>
+</header>
+
+<h2>Hoje (para comparar)</h2>
+<p>Sem assistência: só 4 marquinhas curtas no chão. Com assistência: o corredor tracejado vermelho, que já existe.</p>
+<div class="opts"><div class="opt"><div class="pair"><canvas data-img="t07-prancha/javali-aviso-assistencia-desligada.png"></canvas><canvas data-img="t07-prancha/javali-aviso-assistencia-ligada.png"></canvas></div></div></div>
+
+<h2>Pergunta 2 — A faixa da investida (sem assistência)</h2>
+<p>Aparece quando o javali trava a direção e some quando a investida termina. Em Esc → Modo de assistência haverá a opção de reduzir ou desligar.</p>
+<div class="opts" id="q2"></div>
+
+<h2>Pergunta 3 — A barra de vida junto ao javali</h2>
+<p>Durante o combate (javali focado com Espaço, ou em aviso/investida perto de você). A barra do alto (“6/6”) é a de hoje.</p>
+<div class="opts" id="q3"></div>
+
+<script>
+const FONT = '"Noto Sans","Segoe UI",system-ui,sans-serif';
+const BOAR = { x:250, y:186, fx:0.98994946, fy:0.14142136, len:170, half:15, hp:6, max:6 };
+const OFF = new Image(); OFF.src = 't07-prancha/javali-aviso-assistencia-desligada.png';
+function T(g, x, y, s, size, col, align) { g.font = `600 ${size}px ${FONT}`; g.textAlign = align || 'left'; g.lineWidth = 3; g.strokeStyle = '#16140f'; g.strokeText(s, x, y); g.fillStyle = col; g.fillText(s, x, y); }
+function corridor(len, half, back) { const nx = -BOAR.fy, ny = BOAR.fx, b = back || 0; return [[BOAR.x + nx*half - BOAR.fx*b, BOAR.y + ny*half - BOAR.fy*b], [BOAR.x + BOAR.fx*len + nx*half, BOAR.y + BOAR.fy*len + ny*half], [BOAR.x + BOAR.fx*len - nx*half, BOAR.y + BOAR.fy*len - ny*half], [BOAR.x - nx*half - BOAR.fx*b, BOAR.y - ny*half - BOAR.fy*b]]; }
+function poly(g, pts) { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) g.lineTo(p[0], p[1]); g.closePath(); }
+// --- the strip, three looks
+function stripA(g) { // dashed earth-coloured edges, faint fill: reads as scuffed ground
+  g.drawImage(OFF, 0, 0);
+  const pts = corridor(BOAR.len, BOAR.half, -14);
+  poly(g, pts); g.fillStyle = 'rgba(176,112,58,0.14)'; g.fill();
+  g.setLineDash([4, 3]); g.lineWidth = 1; g.strokeStyle = 'rgba(210,150,80,0.9)';
+  g.beginPath(); g.moveTo(...pts[0]); g.lineTo(...pts[1]); g.moveTo(...pts[3]); g.lineTo(...pts[2]); g.stroke(); g.setLineDash([]);
+}
+function stripB(g) { // a translucent red-ochre band with a solid edge
+  g.drawImage(OFF, 0, 0);
+  const pts = corridor(BOAR.len, BOAR.half, -14);
+  poly(g, pts); g.fillStyle = 'rgba(224,80,58,0.22)'; g.fill(); g.lineWidth = 1; g.strokeStyle = 'rgba(224,80,58,0.85)'; g.stroke();
+}
+function stripC(g) { // chevrons on the ground along the line, no band
+  g.drawImage(OFF, 0, 0);
+  const nx = -BOAR.fy, ny = BOAR.fx;
+  for (let d = 26; d < BOAR.len; d += 18) {
+    const cx = BOAR.x + BOAR.fx * d, cy = BOAR.y + BOAR.fy * d, a = 1 - d / BOAR.len * 0.6;
+    g.strokeStyle = `rgba(230,150,70,${a})`; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(cx - BOAR.fx*5 + nx*6, cy - BOAR.fy*5 + ny*6); g.lineTo(cx, cy); g.lineTo(cx - BOAR.fx*5 - nx*6, cy - BOAR.fy*5 - ny*6); g.stroke();
+  }
+}
+// --- the bar near the boar
+function barNear(g, withNumbers, posture, keepTop) {
+  g.drawImage(OFF, 0, 0);
+  if (!keepTop) { g.fillStyle = '#4e5f39'; } // the top bar stays in the capture; option "substitui" covers it below
+  const w = withNumbers ? 34 : 24, h = withNumbers ? 7 : 3, x = Math.round(BOAR.x - w/2), y = Math.round(BOAR.y - 34);
+  g.fillStyle = '#16140f'; g.fillRect(x - 1, y - 1, w + 2, h + 2); g.fillStyle = '#2b1f1a'; g.fillRect(x, y, w, h);
+  g.fillStyle = '#b0403a'; g.fillRect(x, y, Math.round(w * BOAR.hp / BOAR.max), h);
+  if (withNumbers) { g.font = `600 7px ${FONT}`; g.textAlign = 'center'; g.lineWidth = 2; g.strokeStyle = '#16140f'; g.strokeText('6/6', x + w/2, y + 6); g.fillStyle = '#ece5d0'; g.fillText('6/6', x + w/2, y + 6); }
+  if (posture) { g.fillStyle = '#16140f'; g.fillRect(x - 1, y + h + 1, w + 2, 4); g.fillStyle = '#2a2418'; g.fillRect(x, y + h + 2, w, 2); g.fillStyle = '#e6c86a'; g.fillRect(x, y + h + 2, Math.round(w * 0.35), 2); }
+}
+function barReplace(g) { barNear(g, true, false, false); g.fillStyle = 'rgba(78,95,57,1)'; } // drawn below: hide the top bar
+const Q = {
+  q2: [
+    ['A', 'Bordas tracejadas cor de terra, ligada por padrão', true, 'Duas linhas tracejadas cor de terra e um preenchimento bem fraco: parece o chão marcado pelo casco. Discreta, mas mostra o comprimento e a largura reais da investida.', stripA],
+    ['B', 'Faixa vermelha translúcida, ligada por padrão', false, 'Uma faixa vermelho-ocre com borda: mais fácil de ver, mais “interface” (parecida com o modo de assistência de hoje).', stripB],
+    ['C', 'Setas no chão, ligada por padrão', false, 'Setas › ao longo da linha, sem faixa: mostra a direção e o alcance com o mínimo de tinta, mas não mostra a largura.', stripC],
+    ['D', 'Nenhuma faixa: só no Modo de assistência', false, 'Como hoje: sem assistência, só as 4 marquinhas; o corredor aparece só com Esc → Modo de assistência ligado.', g => g.drawImage(OFF, 0, 0)],
+  ],
+  q3: [
+    ['A', 'Barra com números junto ao javali, e a do alto continua', true, 'Uma barra compacta sobre o javali com “6/6” dentro, enquanto houver combate; a barra do alto (com o nome e o nível) continua. Some ao sair do combate.', g => barNear(g, true, false, true)],
+    ['B', 'Barra fina sem números junto ao javali, e a do alto continua', false, 'Só a barrinha (3 px) sobre o javali; os números ficam na barra do alto.', g => barNear(g, false, false, true)],
+    ['C', 'Com barra de postura embaixo (decisão 4)', false, 'A barra de Vida e, embaixo, uma barra amarela de postura que enche com os golpes aparados; cheia, prolonga a recomposição. Precisa da decisão 4 = “sim”.', g => barNear(g, true, true, true)],
+  ],
+};
+function build() {
+  const scale = +document.getElementById('scale').value, dpr = window.devicePixelRatio || 1, css = 640 * scale / dpr, cssH = 360 * scale / dpr;
+  document.querySelectorAll('canvas[data-img]').forEach(cv => { const im = new Image(); im.onload = () => { cv.width = 640; cv.height = 360; cv.style.width = css + 'px'; cv.style.height = cssH + 'px'; cv.getContext('2d').drawImage(im, 0, 0); }; im.src = cv.dataset.img; });
+  for (const [q, opts] of Object.entries(Q)) {
+    const host = document.getElementById(q); host.innerHTML = '';
+    for (const [k, title, rec, why, draw] of opts) {
+      const div = document.createElement('div'); div.className = 'opt';
+      div.innerHTML = `<h3>Opção ${k} — ${title} ${rec ? '<span class="rec">(recomendada)</span>' : ''}</h3><p class="why">${why}</p>`;
+      const cv = document.createElement('canvas'); cv.width = 640; cv.height = 360; cv.style.width = css + 'px'; cv.style.height = cssH + 'px';
+      const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; draw(g); div.appendChild(cv); host.appendChild(div);
+    }
+  }
+}
+{ const q = new URLSearchParams(location.search).get('escala'); if (q) document.getElementById('scale').value = q; }
+document.getElementById('scale').onchange = build;
+document.getElementById('filter').onchange = e => { document.body.className = e.target.value; };
+OFF.onload = build; if (OFF.complete) build();
+</script>
+</body>
+</html>

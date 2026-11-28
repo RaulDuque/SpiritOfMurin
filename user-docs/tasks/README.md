@@ -1,10 +1,10 @@
 # Tarefas do SpiritOfMurin — ponto de retomada
 
-*Atualizado em 2026-11-27, no fim da T06. Leia isto primeiro ao voltar ao projeto, de qualquer sessão ou ferramenta.*
+*Atualizado em 2026-11-28, no fim da T07. Leia isto primeiro ao voltar ao projeto, de qualquer sessão ou ferramenta.*
 
 **Em 1 minuto:**
-- **Em andamento:** nenhuma. A T06 terminou (2026-11-27).
-- **Próximo prompt a mandar:** o da **[T07](T07-combate-rastreamento-fauna.md)** (combate, rastreamento, javali e coelho), na seção "Prompt pronto para executar". Copie e cole numa sessão nova.
+- **Em andamento:** nenhuma. A T07 terminou (2026-11-28).
+- **Próximo prompt a mandar:** o da **[T18](T18-equipamento-visual.md)** (armas, roupas, capacetes), na seção "Prompt pronto para executar". Copie e cole numa sessão nova.
 - **O que você pode testar agora:** a seção "Pronto" abaixo. Tudo abre pelo **PainelDeTestes.exe → Jogar** (ou **Inspeção** para ver os elementos).
 - **O que depende de você:** a seção "Decisões abertas".
 
@@ -15,7 +15,7 @@ Cada tarefa tem um id estável (T01, T02…). As que têm trabalho suficiente ga
 | # | Tarefa | Por quê nessa ordem |
 |---|---|---|
 | ✓ | ~~[T06](T06-inventario-ficha-hud.md) — bolsa, ficha, HUD, escolha de interação~~ | pronta em 2026-11-27 |
-| 2 | **[T07](T07-combate-rastreamento-fauna.md) — combate, rastreamento, javali e coelho** | Completa a Entrega 7 com os animais que já existem |
+| ✓ | ~~[T07](T07-combate-rastreamento-fauna.md) — combate, rastreamento, javali e coelho~~ | pronta em 2026-11-28 |
 | 3 | **[T18](T18-equipamento-visual.md) — armas, roupas, capacetes** | Torna jogáveis os tipos `arma`, `roupa` e `capacete` do `/create` |
 | 4 | **[T08](T08-fauna-expandida-chefes.md) — fauna nova, elites e chefes** (sub-entregas T08a–T08j) | Depende do vocabulário de combate da T07 |
 | 5 | **[T09](T09-clima-e-agua.md) — clima, lagos, peixes e patos** | Depende da T07 (avisos legíveis na chuva) |
@@ -38,14 +38,14 @@ Cada tarefa tem um id estável (T01, T02…). As que têm trabalho suficiente ga
 | 14.3 | Andar sobre a água funda com Shift (10 Ki/s) ou nadar devagar (só Planície) | idem | entre no riacho fundo |
 | **T05** | **Machado e picareta; cortar pinheiro e salgueiro, quebrar rocha (quartzo, ferro), bambu cedendo, arbustos que se abrem** | idem, [T05](T05-recursos-arvores-pedras-bambus.md) | roteiro "Painel → Jogar" no relatório |
 | **T06** | **Bolsa com abas, Fabricação com "tenho X de Y", comparação em golpes, 8 atalhos (1-6, Q, R) + H, ficha com "+" e prévia da arma, "Vida 60% · 6/10" ao passar o mouse, alvo do E com anel e lista (roda troca), rodapé contextual, ganhos sobre a cabeça** | [t06-bolsa-ficha-hud](../relatorios/2026-11-27-t06-bolsa-ficha-hud.md) | roteiro curto no relatório |
+| **T07** | **Javali: aparo, investida e contra-ataque distintos; faixa da investida (Esc → Modo de assistência: completa/curta/desligada); barra "atual/máximo" junto ao animal; Lâmina atravessa o couro com metade do dano. Coelho: agacha antes de fugir, mergulha na toca. Pegadas frescas pelo caminho real (90 s); exame mais preciso com Rastreamento; javali no mapa só depois de visto ou rastreado; Disparo de Ki se desfaz no fim do alcance** | [t07-combate-fauna](../relatorios/2026-11-28-t07-combate-fauna.md) | roteiro curto no relatório |
 | — | Padrão de elementos, cena de Inspeção e comando `/create` | [como criar e editar](../relatorios/2026-11-27-como-criar-e-editar-elementos.md) | Painel → Inspeção; `/create arvore "…"` |
 
 ## Parcial (existe, mas falta algo): detalhes em [conciliacao-2026-11-27.md](conciliacao-2026-11-27.md)
 
 | Assunto | O que já há | O que falta | Tarefa |
 |---|---|---|---|
-| Javali | aviso (casco, cabeça, olho, poeira), contra-ataque, barra com números | sons na Planície, faixa da investida (a opção existe e não é usada), barra junto ao animal | T07 |
-| Coelho e pegadas | orelha erguida, fuga para a toca, Shift funciona | entrada na toca visível, sinal de ruído, pegadas deixadas pelo movimento, precisão do Rastreamento | T07 |
+| Leitura na chuva | a fase `vento` do `FaunaCheck` mostra a faixa legível na rajada | repetir com chuva | T09 |
 | Pássaros | bandos com sombra | aves que pousam e fogem de você | T08 |
 | Clima | vento e rajadas | chuva, trovoada, raios | T09 |
 | Rajada | capim, copa e folhas reagem | a ordem capim → copa → folhas não é encenada | T09 |
@@ -54,10 +54,8 @@ Cada tarefa tem um id estável (T01, T02…). As que têm trabalho suficiente ga
 
 As da próxima tarefa ficam em destaque. Cada prompt pergunta as suas, uma por vez, antes de implementar.
 
-- **T07 (próxima):** as decisões estão no arquivo da tarefa (Lâmina enfraquecida contra o javali, faixa da investida, barra junto ao animal, animais no mapa…).
+- **T18 (próxima):** as decisões estão no arquivo da tarefa.
 - **Pendências registradas no pedido 14 (item 7):**
-  - **Lâmina enfraquecida contra o javali:** atravessa o couro na investida? (T07, decisão 1)
-  - **Animais no mapa:** os javalis vivos aparecem no mapa dos blocos visitados, como hoje (o 14.2 os desenha com ícone), só depois de examinar a trilha, ou nunca? (T07, decisão 5)
   - **Tempos da cena final do Sênior:** pausa antes de reviver, duração da fala e da explosão. Hoje estão em `src/Vale/SeniorFinale.cs`. Ajustar depois de você jogar sem reposição de vida. Vai para a T08 (chefes).
 - **T08, T09, T10–T16, T17, T18:** a lista de cada uma está no arquivo da tarefa.
 
@@ -69,6 +67,8 @@ As da próxima tarefa ficam em destaque. Cada prompt pergunta as suas, uma por v
 - [ ] **Dificuldade real do Sênior** numa luta sem reposição artificial de vida.
 - [ ] **Brilho azul do Reforço e rastro maior do corte:** estão do jeito que você queria?
 - [ ] **Andar sobre a água e nadar:** o custo de 10 Ki/s está bom?
+- [ ] **T07 no seu monitor:** a faixa da investida (cor e tracejado), a barra junto ao javali, o efeito de onde o Ki se desfaz e o cone do exame da pegada estão legíveis?
+- [ ] **Diagonal** (0,8 da velocidade em cada eixo): está natural agora?
 - [ ] **Salgueiro e rocha de ferro**, criados pelo `/create`: aparência aprovada? Se não, diga o que mudar.
 
 ## Fichas visuais
@@ -81,3 +81,4 @@ Para elementos que precisam de aprovação visual antes do código (fauna nova, 
 |---|---|---|
 | T05 + pedido 14 | 2026-11-27 | ver o relatório do pedido 14 |
 | T06 | 2026-11-27 | ver o relatório da T06 |
+| T07 | 2026-11-28 | ver o relatório da T07 |
