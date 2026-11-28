@@ -1,0 +1,25 @@
+{
+  "_doc": {
+    "about": "Técnicas próprias das armas (T18, decisão 2 do criador: armas trazem técnicas; decisão seguinte: elas são descobertas com o tempo). Lido por src/Items/EquipRules.cs.",
+    "<id>.weapon_kind": "a arte da arma em que a técnica funciona (o sabre: sabre_ferro)",
+    "<id>.state": "jogavel (já existe no jogo) ou futura (só a ficha; entra numa tarefa seguinte)",
+    "<id>.discover": "como se descobre: cuts = cortes que acertam com a arma; a técnica aparece no Livro e passa a valer",
+    "meia_lua": "arc_degrees = meio ângulo do último corte do combo (o comum é 75); vigor_extra = vigor a mais nesse corte; trail = multiplicador do rastro"
+  },
+  "meia_lua": {
+    "name": "Meia-Lua", "weapon_kind": "sabre_ferro", "state": "jogavel",
+    "description": "O 3º corte do combo vira uma varrida larga: o arco passa de 150° para 240°.",
+    "discover": { "cuts": 12 },
+    "arc_degrees": 120, "vigor_extra": 4, "trail": 1.4
+  },
+  "saque_viajante": {
+    "name": "Saque do Viajante", "weapon_kind": "sabre_ferro", "state": "futura",
+    "description": "Parado 0,8 s com o sabre, o primeiro corte sai mais rápido, com +50% de dano e +6 px de alcance.",
+    "discover": { "cuts": 0 }
+  },
+  "corte_fluido": {
+    "name": "Corte Fluido", "weapon_kind": "sabre_ferro", "state": "futura",
+    "description": "O combo do sabre ganha um 4º corte leve, encadeado só se o 3º acertar.",
+    "discover": { "cuts": 0 }
+  }
+}

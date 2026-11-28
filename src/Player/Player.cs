@@ -54,7 +54,20 @@ public partial class Player : CharacterBody2D
     public const uint GapLayer = 16;
 
     /// <summary>Half angle, degrees, of the blade's arc for the current action (the thrust is narrow).</summary>
-    public float BladeArcDegrees => _act is { Kind: ActionKind.Thrust } ? 20f : Tuning.HitArcDegrees;
+    public float BladeArcDegrees => _act is { Kind: ActionKind.Thrust } ? 20f : CutArcDegrees;
+
+    /// <summary>Half angle, degrees, of a cut now: the Meia-Lua's wide sweep on its last cut (T18), else the tuning's.</summary>
+    public float CutArcDegrees => _act is { Kind: ActionKind.Cut, Wide: true } ? WideCutDegrees : Tuning.HitArcDegrees;
+
+    /// <summary>The Meia-Lua (T18, a technique of the sabre found by practice): the last cut's half angle (0 = not known), its extra Vigor and the trail's multiplier. Set by the region from <c>_tecnicas_armas.json</c>.</summary>
+    public float WideCutDegrees { get; set; }
+    /// <summary>The Meia-Lua's extra Vigor.</summary>
+    public float WideCutVigor { get; set; }
+    /// <summary>The Meia-Lua's trail multiplier.</summary>
+    public float WideCutTrail { get; set; } = 1;
+
+    /// <summary>True during a Meia-Lua sweep.</summary>
+    public bool WideCut => _act is { Kind: ActionKind.Cut, Wide: true };
 
     /// <summary>Pixels a region adds to a cut's reach when it tests a hit (the prologue tests a little wider); the assist mode draws with it.</summary>
     public float CutSlack { get; set; }
@@ -69,11 +82,11 @@ public partial class Player : CharacterBody2D
     {
         if (_act is not { Kind: ActionKind.Cut or ActionKind.Thrust } a) return null;
         bool knife = ShortTool, thrust = a.Kind == ActionKind.Thrust;
-        float reach = thrust ? a.Reach : knife ? ShortReach : Tuning.SwordReach;
+        float reach = thrust ? a.Reach : knife ? ShortReach : LongReach;
         float r = reach + (thrust ? ThrustSlack : CutSlack);
         int phase = a.T < a.Startup ? 0 : a.T < a.Startup + a.Active ? 1 : 2;
         float prog = phase == 0 ? a.T / Mathf.Max(0.001f, a.Startup) : phase == 2 ? 1 - (a.T - a.Startup - a.Active) / Mathf.Max(0.001f, a.Recovery) : 1;
-        return (Facing, r, thrust ? 20f : Tuning.HitArcDegrees, phase, Mathf.Clamp(prog, 0, 1));
+        return (Facing, r, thrust ? 20f : CutArcDegrees, phase, Mathf.Clamp(prog, 0, 1));
     }
 
     /// <summary>True during the third cut of the chain (heavier hit).</summary>
@@ -107,6 +120,39 @@ public partial class Player : CharacterBody2D
 
     /// <summary>Turns the body to face a direction (scenes and cutscenes).</summary>
     public void Face(Vector2 dir) { if (dir.LengthSquared() > 0.0001f) Facing = dir.Normalized(); }
+
+    /// <summary>
+    /// A reproducible pose for pictures and previews (T18): the action (<see cref="ActionKind.None"/> = standing or
+    /// walking), the cut's number in the chain, how far through the action's live part it is (0..1), the walk phase
+    /// (radians of the step cycle), whether the legs walk, the clock that moves the sash and the breath, and the
+    /// Reforço de Ki's glow on the blade.
+    /// </summary>
+    public readonly record struct PoseShot(ActionKind Kind, int CutN, float Progress, float WalkPhase, bool Moving, float Time, bool Glow);
+
+    /// <summary>True while a <see cref="PoseShot"/> holds the body still: nothing advances, the picture stays the same every frame.</summary>
+    public bool PoseFrozen { get; private set; }
+
+    /// <summary>The clock of the frozen pose (<see cref="PoseShot.Time"/>); the Ki palm's sparks read it.</summary>
+    public float PoseClock { get; private set; }
+
+    /// <summary>Holds the body in <paramref name="s"/> facing <paramref name="dir"/> (the Inspeção and the picture checks); <see cref="ReleasePose"/> lets it go.</summary>
+    public void FreezePose(Vector2 dir, PoseShot s)
+    {
+        PoseFrozen = true; Face(dir);
+        _slashes.Clear(); _ghosts.Clear(); _invulnerable = 0; _hurtFlash = 0; _reinforcing = false; _buffer = null;
+        _walk = s.WalkPhase; _moving = s.Moving; _time = s.Time; PoseClock = s.Time;
+        ReinforceCharges = s.Glow ? 1 : 0;
+        _act = s.Kind == ActionKind.None ? null : new Act
+        {
+            Kind = s.Kind, N = Mathf.Max(1, s.CutN), Startup = 0.1f, Active = 0.1f, Recovery = 0.1f, CancelAt = 0.3f,
+            T = s.Kind is ActionKind.Step or ActionKind.Side or ActionKind.Dash or ActionKind.Recoil ? 0.1f * Mathf.Clamp(s.Progress, 0, 0.99f) : 0.1f + 0.1f * Mathf.Clamp(s.Progress, 0, 1),
+            Live = true, Fired = true,
+        };
+        QueueRedraw();
+    }
+
+    /// <summary>Lets a frozen body move again (standing, no action).</summary>
+    public void ReleasePose() { PoseFrozen = false; _act = null; _moving = false; ReinforceCharges = 0; }
 
     // ---- free aim by the mouse (pedido 13, item 7) ----
     private Vector2 _mouseView;
@@ -334,8 +380,29 @@ public partial class Player : CharacterBody2D
     public float ToolReach { get; set; }
     /// <summary>The tool in hand: its damage on animals; 0 = the knife's.</summary>
     public int ToolDamage { get; set; }
-    private float ShortReach => Equipped is Weapon.Axe or Weapon.Pickaxe && ToolReach > 0 ? ToolReach : Tuning.KnifeReach;
-    private int ShortDamage => Equipped is Weapon.Axe or Weapon.Pickaxe && ToolDamage > 0 ? ToolDamage : Tuning.KnifeDamage;
+    private float ShortReach => Equipped is Weapon.Axe or Weapon.Pickaxe && ToolReach > 0 ? ToolReach : HeldBlade?.Reach ?? Tuning.KnifeReach;
+    private int ShortDamage => Equipped is Weapon.Axe or Weapon.Pickaxe && ToolDamage > 0 ? ToolDamage : HeldBlade?.Damage ?? Tuning.KnifeDamage;
+
+    /// <summary>
+    /// The numbers of a blade's strike (T18), from the weapon's data (<c>assets/data/equipamento/armas/&lt;id&gt;.json</c>):
+    /// reach (px), damage, cuts in the chain, the cut's startup, live time, recovery and the moment it can be chained,
+    /// the lunge; for the last cut of a long chain: the extra startup and live time, the extra recovery and cancel, its
+    /// lunge and the damage multiplier.
+    /// </summary>
+    public sealed record BladeStats(float Reach, int Damage, int Chain, float Startup, float Active, float Recovery, float CancelAt, float Lunge,
+        float ThirdExtra = 0, float ThirdRecovery = 0, float ThirdCancel = 0, float ThirdLunge = 0, int ThirdMult = 1, bool Short = false);
+
+    /// <summary>The blade in hand's numbers; null = the tuning's sword (long blade) or knife (short), as before T18.</summary>
+    public BladeStats? Blade { get; set; }
+
+    /// <summary>The blade numbers that apply to what the hand holds now: the long blade's only with <see cref="Weapon.Sword"/>, the short one's only with <see cref="Weapon.Knife"/> (a scene that puts another thing in the hand falls back to the tuning).</summary>
+    private BladeStats? HeldBlade => Blade is { } b && (b.Short ? Equipped == Weapon.Knife : Equipped == Weapon.Sword) ? b : null;
+
+    /// <summary>The weapon's own technique id (T18, decision 2: weapons may bring one), or empty.</summary>
+    public string WeaponTechnique { get; set; } = "";
+
+    private float LongReach => HeldBlade?.Reach ?? Tuning.SwordReach;
+    private int LongDamage(int n) => HeldBlade is { } b ? b.Damage * (n == Mathf.Max(1, b.Chain) && b.Chain >= 3 ? b.ThirdMult : 1) : Tuning.SwordDamage * (n == 3 ? 2 : 1);
 
     /// <summary>How loud the character is right now (animals hear by it).</summary>
     public enum NoiseLevel { Still, Sneak, Walk, Loud }
@@ -472,7 +539,7 @@ public partial class Player : CharacterBody2D
         public float T, Startup, Active, Recovery, CancelAt, Lunge;
         public int N, Damage;
         public Vector2 StepVelocity, From, Dir;
-        public bool Live, Lamina, Fired, Reinforced;
+        public bool Live, Lamina, Fired, Reinforced, Wide;
         public float Reach, Radius, A0, A1;
         public Node2D? Orbit;
         public float Duration => Kind is ActionKind.Step or ActionKind.Side or ActionKind.Dash or ActionKind.Recoil ? Startup : Startup + Active + Recovery;
@@ -496,27 +563,24 @@ public partial class Player : CharacterBody2D
     private readonly List<(Vector2 World, float Life)> _ghosts = new();
     private readonly PixelPainter _paint = new();
 
-    // Paleta base: Verde Jade + Amarelo/Dourado Imperial e Marfim Quente
+    // Paleta base: Verde Jade + Amarelo/Dourado Imperial e Marfim Quente.
+    // T18: as camadas trocáveis têm as suas cores nos próprios arquivos — cabeça e cabelo em src/Elements/Corpo/CabecaArt.cs,
+    // a túnica verde em src/Elements/Roupas/TunicaVerdeArt.cs, a espada e a faca em src/Elements/Armas/. Aqui ficam o corpo
+    // (pele, calça, botas), o contorno, o Ki e as poses deitado e ajoelhado.
     private static readonly Color
-        Robe = new("#f5eedc"),         // túnica marfim dourado claro
-        Shade = new("#cbb37c"),        // sombra ocre quente
-        Trim = new("#2f7a53"),         // debrum e detalhes verde jade
-        Sash = new("#1c4f35"),         // faixa principal verde esmeralda profundo
-        SashLight = new("#68c28e"),    // brilho verde jade claro da fita e faixa
-        Scabbard = new("#3d2817"),     // bainha marrom escuro
+        Robe = new("#f5eedc"),         // túnica marfim dourado claro (deitado/ajoelhado)
+        Shade = new("#cbb37c"),        // sombra ocre quente (faixa da calça)
+        Trim = new("#2f7a53"),         // debrum e detalhes verde jade (deitado)
+        Sash = new("#1c4f35"),         // faixa principal verde esmeralda profundo (deitado/ajoelhado)
         Skin = new("#e2b58e"),         // pele
         SkinShade = new("#c48b6c"),    // sombra de pele (mão traseira)
-        Hair = new("#1c181d"),         // cabelo escuro quente
+        Hair = new("#1c181d"),         // cabelo escuro quente (deitado/ajoelhado)
         Pants = new("#3b352c"),        // calça marrom-carvão
-        Blade = new("#f7f9fc"),        // lâmina polida
-        BladeEdge = new("#d6c7a1"),    // fio dourado pálido
-        Hilt = new("#5c3a1e"),         // cabo de madeira escura
-        Gold = new("#f5cb5c"),         // guarda e fivela dourada
-        GoldDeep = new("#d49b27"),     // detalhes amarelo-dourado
+        Boots = new("#1c1915"),        // botas escuras
+        GoldDeep = new("#d49b27"),     // detalhes amarelo-dourado (bota)
         Outline = new("#17130e"),      // contorno marrom-preto quente
         Learn = new("#e6fff0"),        // centro do risco de Ki jade claro
-        LearnGlow = new("#4eb87d"),    // brilho de Ki verde esmeralda
-        Flint = new("#8c8a80");        // faca de pedra
+        LearnGlow = new("#4eb87d");    // brilho de Ki verde esmeralda
 
     /// <inheritdoc />
     public override void _Ready()
@@ -561,6 +625,7 @@ public partial class Player : CharacterBody2D
     /// <inheritdoc />
     public override void _PhysicsProcess(double delta)
     {
+        if (PoseFrozen) { QueueRedraw(); return; } // a picture pose (T18): nothing advances
         float dt = (float)delta;
         _time += dt;
         _invulnerable = Mathf.Max(0, _invulnerable - dt);
@@ -627,8 +692,8 @@ public partial class Player : CharacterBody2D
         if (_act is { Kind: ActionKind.Cut or ActionKind.Thrust, Live: true } live && live.T < live.Startup + live.Active)
         {
             bool knife = ShortTool;
-            float reach = live.Kind == ActionKind.Thrust ? live.Reach : knife ? ShortReach : Tuning.SwordReach;
-            int dmg = live.Kind == ActionKind.Thrust ? live.Damage : knife ? ShortDamage : Tuning.SwordDamage * (live.N == 3 ? 2 : 1);
+            float reach = live.Kind == ActionKind.Thrust ? live.Reach : knife ? ShortReach : LongReach;
+            int dmg = live.Kind == ActionKind.Thrust ? live.Damage : knife ? ShortDamage : LongDamage(live.N);
             BladeActive?.Invoke(GlobalPosition, Facing, reach, dmg, _swingId);
         }
 
@@ -761,7 +826,21 @@ public partial class Player : CharacterBody2D
             TurnToAim();
             int n = _act is { Kind: ActionKind.Cut } prev && prev.N < MaxChain ? prev.N + 1 : 1;
             _swingId++;
-            if (ShortTool)
+            if (HeldBlade is { } bs)
+            {
+                // the weapon's own numbers (T18); the last cut of a chain of 3 or more is the heavy one
+                bool last = bs.Chain >= 3 && n == bs.Chain;
+                float extra = last ? bs.ThirdExtra : 0f;
+                _act = new Act
+                {
+                    Kind = ActionKind.Cut, N = n, Startup = bs.Startup + extra, Active = bs.Active + extra,
+                    Recovery = (bs.Recovery + (last ? bs.ThirdRecovery : 0f)) * RecoveryMultiplier, CancelAt = (bs.CancelAt + (last ? bs.ThirdCancel : 0f)) * RecoveryMultiplier,
+                    Lunge = last ? bs.ThirdLunge : bs.Lunge,
+                };
+                // the Meia-Lua: the last cut sweeps wide when the technique is known and the extra Vigor is there
+                if (last && WideCutDegrees > 0 && SpendVigor(WideCutVigor)) _act.Wide = true;
+            }
+            else if (ShortTool)
                 _act = new Act
                 {
                     Kind = ActionKind.Cut, N = n, Startup = Tuning.KnifeStartup, Active = Tuning.KnifeActive,
@@ -794,7 +873,7 @@ public partial class Player : CharacterBody2D
         }
     }
 
-    private int MaxChain => ShortTool ? Tuning.KnifeMaxChain : 3;
+    private int MaxChain => HeldBlade is { Chain: > 0 } bl ? bl.Chain : ShortTool ? Tuning.KnifeMaxChain : 3;
 
     public static bool InBladeArc(Vector2 origin, Vector2 dir, float reach, float arcDegrees, Vector2 target, float radius)
     {
@@ -854,7 +933,7 @@ public partial class Player : CharacterBody2D
             {
                 World = GlobalPosition + (ShortTool ? new Vector2(Facing.X * 14f, -12f + Facing.Y * 10f) : new Vector2(Facing.X * 22f, -14f + Facing.Y * 16f)),
                 Angle = Facing.Angle() + Mathf.DegToRad(side) + Mathf.Pi / 2f,
-                Length = a.Kind == ActionKind.Thrust ? SlashThrust : ShortTool ? SlashKnife : a.N == 3 ? SlashSwordThird : SlashSword,
+                Length = a.Kind == ActionKind.Thrust ? SlashThrust : ShortTool ? SlashKnife : a.Wide ? SlashSwordThird * WideCutTrail : a.N == 3 ? SlashSwordThird : SlashSword,
                 Life = SlashLife, Max = SlashLife, Reinforced = a.Reinforced,
             });
         }
@@ -965,347 +1044,187 @@ public partial class Player : CharacterBody2D
         p.Flush(this, Outline);
     }
 
-    // Pixel matrices (12x14 head; 20x21 front/back robe; slim 16x21 side robe)
-    private static readonly string[] CabecaFrente =
+    // ---- the equipment's look (T18): which drawing each layer uses. The numbers of the strike stay in the item's data.
+    /// <summary>Art id of the thing in hand (<c>espada</c>, <c>faca_pedra</c>, <c>sabre_ferro</c>…; see <see cref="Elements.ArmaArts"/>); null = the drawing of <see cref="Equipped"/>.</summary>
+    public string? WeaponArt { get; set; }
+
+    /// <summary>Art id of the robe (see <see cref="Elements.RoupaArts"/>); the approved green tunic by default.</summary>
+    public string Outfit { get; set; } = Elements.RoupaArts.Default;
+
+    /// <summary>Art id of the hat (see <see cref="Elements.CapaceteArts"/>); null = bare head.</summary>
+    public string? Hat { get; set; }
+
+    /// <summary>The drawing of the thing in hand now (null with empty hands).</summary>
+    public string? HeldArt => Equipped == Weapon.None ? null : WeaponArt != null && Equipped is Weapon.Knife or Weapon.Sword && (Blade == null || HeldBlade != null) ? WeaponArt : Equipped switch
     {
-        "......hh....",
-        ".....hvvh...",
-        ".....hhaa...",
-        "....ttjtt...",
-        "..hhvvvvhh..",
-        ".hvvahhhhvh.",
-        ".hvhhlphhvh.",
-        ".hhhplllphh.",
-        ".hhpplllphh.",
-        ".hhisssipph.",
-        ".hhplpllpvh.",
-        ".hhsppppph..",
-        "..hsspppsh..",
-        "....spps....",
+        Weapon.Knife => "faca_pedra", Weapon.Axe => "machado", Weapon.Pickaxe => "picareta", _ => "espada",
     };
 
-    private static readonly string[] CabecaCostas =
-    {
-        "......hh....",
-        ".....hvvh...",
-        ".....hvah...",
-        "....ttjtt...",
-        "..hhvvvvhh..",
-        ".hvvavvhvvh.",
-        ".hvahhvvhvh.",
-        ".hhvhvvhhvh.",
-        ".hhvhvhhhvh.",
-        ".hhvhhvhhvh.",
-        ".hhhhvvhhvh.",
-        "..hhhvhhvh..",
-        "...hhhhvh...",
-        ".....hhh....",
-    };
+    private readonly Elements.FighterPose _pose = new();
 
-    private static readonly string[] CabecaPerfil =
-    {
-        ".....hh.....",
-        "....hvah....",
-        "....hvvh....",
-        "...ttjjtt...",
-        "..hhvvvvhh..",
-        ".hvvavhhvvh.",
-        ".hvahhhhhlp.",
-        ".hvhhsppplp.",
-        ".hvhhpppllp.",
-        ".hhhhsppih..",
-        "..hvhppppll.",
-        "..hhhssppp..",
-        "...hhssppp..",
-        ".....sspp...",
-    };
+    /// <summary>Where the weapon hand and the tip were in the last frame drawn (figure pixels; the picture checks read them).</summary>
+    public Vector2 HandPoint => _pose.Hand;
+    /// <summary>The weapon's tip in the last frame drawn.</summary>
+    public Vector2 TipPoint => _pose.Tip;
 
-    private static readonly string[] TunicaFrente =
+    /// <summary>
+    /// The frame's pose for the layers: view, side, lean, the hands and the tip (from the action, the walk or the rest),
+    /// the hem and the head's height. The weapon's <see cref="Elements.ArmaArt.Length"/> sets how far the tip is.
+    /// </summary>
+    private Elements.FighterPose Pose(Elements.ArmaArt? weapon)
     {
-        "....mmtmrrrrrtww....",
-        "...mmmtrrrrrrtrww...",
-        "...mmmmtrrrrtrrww...",
-        "...mmddtrrrrtrrww...",
-        "...mmddrtrrtrrrww...",
-        "...mmddrtrrtrrrww...",
-        "...mmmmrrttrrrrww...",
-        "....mmmmrttrrrww....",
-        "....ttttttttggtt....",
-        "....ttttttttggtt....",
-        "....dddddddddddd....",
-        "....mmmmmrrrwrtt....",
-        "...mmmmrmrrrwrttw...",
-        "...mmmmrmrrrwrttw...",
-        "..mmmmrrmrrrwrttww..",
-        "..mmmmrmrrrrrwrttw..",
-        "..mmmmrmrrrrrwrttw..",
-        ".mmmmrrmrrrrrwrjjww.",
-        ".mmmmrrmrrrrrwrjjww.",
-        ".tttttttttttttttttt.",
-        ".dddddddddmmmmmmmmm.",
-    };
-
-    private static readonly string[] TunicaCostas =
-    {
-        "....mmmmrrrrrrww....",
-        "...mmmdddddddddww...",
-        "...mmmmrdddddrrww...",
-        "...mmddrrrrrrrrww...",
-        "...mmddrrrrrrrrww...",
-        "...mmddrrrrrrrrww...",
-        "...mmmmrrrrrrrrww...",
-        "....mmmmrrrrrrww....",
-        "....tttttttttttt....",
-        "....tttttttttttt....",
-        "....dddddddddddd....",
-        "....mmmmmrrrwrww....",
-        "...mmmmrmrrrwrrww...",
-        "...mmmmrmrrrwrrww...",
-        "..mmmmrrmrrrwrrrww..",
-        "..mmmmrmrrrrrwrrww..",
-        "..mmmmrmrrrrrwrrww..",
-        ".mmmmrrmrrrrrwrrrww.",
-        ".mmmmrrmrrrrrwrrrww.",
-        ".tttttttttttttttttt.",
-        ".dddddddddmmmmmmmmm.",
-    };
-
-    private static readonly string[] TunicaPerfil =
-    {
-        "....mmmrrrrw....",
-        "...mmmmrrrrtw...",
-        "...mmmmmmmrtw...",
-        "...mmddmmmrtw...",
-        "...mmddmmmrtr...",
-        "...mmddmmmrtr...",
-        "...mmmmmmmrtr...",
-        "....ttttttgt....",
-        "....ttttttgt....",
-        "....dddddddd....",
-        "....mmmmmrtw....",
-        "...mmmmmmrtjw...",
-        "...mmmmmmrtjw...",
-        "..mmmmmmmrtjww..",
-        "..mmmmmmmrtjww..",
-        "..mmmmmmmrtjww..",
-        ".mmmmmmmmrrtjww.",
-        ".mmmmmmmmrrtjww.",
-        ".mmmmmmmmrrddww.",
-        ".tttttttttttttt.",
-        ".dddddddmmmmmmm.",
-    };
-
-    // Paleta Verde Jade + Amarelo/Dourado Imperial e Marfim Quente
-    private static readonly Dictionary<char, Color> Pigmentos = new()
-    {
-        ['i'] = new("#17130e"), // contorno / olhos
-        ['h'] = new("#1c181d"), // cabelo escuro
-        ['v'] = new("#3b333d"), // volume do cabelo
-        ['a'] = new("#5c505e"), // brilho no topo do cabelo
-        ['s'] = new("#c48b6c"), // sombra de pele
-        ['p'] = new("#e2b58e"), // pele base
-        ['l'] = new("#f3cca4"), // luz da pele
-        ['t'] = new("#2f7a53"), // faixa principal / debrum (verde jade)
-        ['j'] = new("#68c28e"), // brilho verde jade da faixa e fita
-        ['d'] = new("#1c4f35"), // sombra profunda da faixa e dobra (verde esmeralda escuro)
-        ['m'] = new("#cbb37c"), // sombra da túnica (ocre quente)
-        ['r'] = new("#f5eedc"), // túnica base (marfim dourado claro)
-        ['w'] = new("#fffbf0"), // luz da túnica
-        ['b'] = new("#4a4236"), // calça média
-        ['g'] = new("#f5cb5c"), // placa/fivela dourada
-        ['k'] = new("#1c1915"), // botas escuras
-    };
-
-    private void PintarLinhas(string[] rows, int left, int top, bool mirror, int hem = 0)
-    {
-        for (int y = 0; y < rows.Length; y++)
-        {
-            string row = rows[y];
-            for (int start = 0; start < row.Length;)
-            {
-                char pigment = row[start];
-                int end = start + 1;
-                while (end < row.Length && row[end] == pigment) end++;
-                if (pigment != '.')
-                {
-                    int offset = mirror ? row.Length - end : start;
-                    _paint.Rect(left + offset + (y >= 16 ? hem : 0), top + y, end - start, 1, Pigmentos[pigment]);
-                }
-                start = end;
-            }
-        }
-    }
-
-    private void DrawFighter()
-    {
-        var p = _paint;
+        var f = _pose;
         float face = Facing.Angle(), fx = Mathf.Cos(face), fy = Mathf.Sin(face);
-        string view = Mathf.Abs(fy) > Mathf.Abs(fx) * 0.8f ? (fy > 0 ? "down" : "up") : "side";
-        int s = fx < 0 ? -1 : 1;
-
-        bool dashing = _act is { Kind: ActionKind.Step or ActionKind.Side or ActionKind.Dash };
-        float walkCycle = _moving ? Mathf.Sin(_walk) : 0f;
-        int leanX = dashing ? Mathf.RoundToInt(fx * 2f) : 0;
-
-        float x = 0, y = 0, sy = y - 25, nx = -fy;
-        Vector2 hand, tip;
-        float bladeLen = Equipped == Weapon.Knife ? 0.4f : Equipped is Weapon.Axe or Weapon.Pickaxe ? 0.55f : 1f;
-
+        f.View = Mathf.Abs(fy) > Mathf.Abs(fx) * 0.8f ? (fy > 0 ? Elements.FighterView.Down : Elements.FighterView.Up) : Elements.FighterView.Side;
+        f.S = fx < 0 ? -1 : 1; f.Fx = fx; f.Fy = fy; f.Nx = -fy;
+        f.Dashing = _act is { Kind: ActionKind.Step or ActionKind.Side or ActionKind.Dash };
+        f.Moving = _moving; f.Time = _time;
+        f.WalkCycle = _moving ? Mathf.Sin(_walk) : 0f;
+        f.LeanX = f.Dashing ? Mathf.RoundToInt(fx * 2f) : 0;
+        f.ShoulderY = -25;
+        float x = 0, sy = f.ShoulderY, nx = f.Nx, len = weapon?.Length ?? 1f;
+        int s = f.S, leanX = f.LeanX;
+        bool side = f.View == Elements.FighterView.Side;
         if (_act is { Kind: ActionKind.Cut } cut)
         {
             float k = Mathf.Clamp((cut.T - cut.Startup) / cut.Active, 0f, 1f), from = cut.N % 2 == 1 ? -75f : 75f;
             float a = face + Mathf.DegToRad(from + (-from * 2f) * k);
-            hand = new Vector2(x + leanX + Mathf.Cos(a) * 11, sy + 4 + Mathf.Sin(a) * 8);
-            tip = hand + new Vector2(Mathf.Cos(a) * 20, Mathf.Sin(a) * 14) * bladeLen;
+            f.Hand = new Vector2(x + leanX + Mathf.Cos(a) * 11, sy + 4 + Mathf.Sin(a) * 8);
+            f.Tip = f.Hand + new Vector2(Mathf.Cos(a) * 20, Mathf.Sin(a) * 14) * len;
         }
         else if (_act is { Kind: ActionKind.Thrust })
         {
-            hand = new Vector2(x + fx * 12, sy + 3 + fy * 8);
-            tip = hand + new Vector2(fx * 22, fy * 15) * bladeLen;
+            f.Hand = new Vector2(x + fx * 12, sy + 3 + fy * 8);
+            f.Tip = f.Hand + new Vector2(fx * 22, fy * 15) * len;
         }
         else if (_act is { Kind: ActionKind.Ki })
         {
-            hand = new Vector2(x - nx * 7 * s, sy + 9);
-            tip = hand + new Vector2(fx * 6, 12) * bladeLen;
-            p.Rect(x + fx * 11 + nx * 3, sy + 3 + fy * 8, 3, 3, LearnGlow);
-            p.Rect(x + fx * 12 + nx * 3, sy + 4 + fy * 8, 1, 1, Learn);
+            f.Hand = new Vector2(x - nx * 7 * s, sy + 9);
+            f.Tip = f.Hand + new Vector2(fx * 6, 12) * len;
         }
-        else if (dashing)
+        else if (f.Dashing)
         {
-            hand = new Vector2(x + leanX - fx * 6 + nx * 6 * (view == "side" ? -s : 1), sy + 8);
-            tip = hand + new Vector2(-fx * 13, 8) * bladeLen;
+            f.Hand = new Vector2(x + leanX - fx * 6 + nx * 6 * (side ? -s : 1), sy + 8);
+            f.Tip = f.Hand + new Vector2(-fx * 13, 8) * len;
         }
-        else if (view == "side")
+        else if (side)
         {
-            float armSwing = walkCycle * 2.5f;
-            hand = new Vector2(x + leanX - s * 1 + armSwing, sy + 9);
-            tip = hand + new Vector2(s * 14, 7) * bladeLen;
+            float armSwing = f.WalkCycle * 2.5f;
+            f.Hand = new Vector2(x + leanX - s * 1 + armSwing, sy + 9);
+            f.Tip = f.Hand + new Vector2(s * 14, 7) * len;
         }
         else
         {
-            float armSwing = walkCycle * 1.5f;
-            hand = new Vector2(x + leanX + nx * 7 + fx * 3, sy + 9 + armSwing);
-            tip = hand + new Vector2(fx * 14, 9 + fy * 4 + armSwing * 0.5f) * bladeLen;
+            float armSwing = f.WalkCycle * 1.5f;
+            f.Hand = new Vector2(x + leanX + nx * 7 + fx * 3, sy + 9 + armSwing);
+            f.Tip = f.Hand + new Vector2(fx * 14, 9 + fy * 4 + armSwing * 0.5f) * len;
         }
+        f.Hem = _moving ? Mathf.RoundToInt(Mathf.Sin(_walk * 2)) : (f.Dashing ? -Mathf.RoundToInt(fx) : 0);
+        int breath = _act == null && !_moving && Mathf.Sin(_time * 2.4f) > 0.55f ? 1 : 0;
+        f.HeadY = -41 + breath;
+        return f;
+    }
 
-        // Bainha diagonal nas costas quando está de frente com espada
-        if (Equipped == Weapon.Sword && view == "down")
+    /// <summary>
+    /// The swordsman in layers (T18), back to front: what the weapon shows on the body (scabbard), the arm behind, the
+    /// legs, the robe (<see cref="Elements.RoupaArt"/>), the head with the hair (<see cref="Elements.CabecaArt"/>), the hat
+    /// (<see cref="Elements.CapaceteArt"/>), then the arm in front with the weapon (<see cref="Elements.ArmaArt"/>). Seen
+    /// from behind the arms go first, under the robe.
+    /// </summary>
+    private void DrawFighter()
+    {
+        var p = _paint;
+        var weapon = Elements.ArmaArts.Get(HeldArt);
+        var robe = Elements.RoupaArts.Get(Outfit);
+        var hat = Elements.CapaceteArts.Get(Hat);
+        var f = Pose(weapon);
+        float x = 0, sy = f.ShoulderY, nx = f.Nx, fx = f.Fx, fy = f.Fy, walkCycle = f.WalkCycle;
+        int s = f.S, leanX = f.LeanX;
+        bool side = f.Profile, back = f.Back;
+
+        if (_act is { Kind: ActionKind.Ki })
         {
-            p.Line(x + leanX + 4, sy - 3, x + leanX - 6, sy + 11, Scabbard, 2);
-            p.Rect(x + leanX + 4, sy - 4, 2, 2, Gold);
+            p.Rect(x + fx * 11 + nx * 3, sy + 3 + fy * 8, 3, 3, LearnGlow);
+            p.Rect(x + fx * 12 + nx * 3, sy + 4 + fy * 8, 1, 1, Learn);
         }
 
-        bool back = view == "up";
+        weapon?.OnBody(p, f);
 
-        // Segundo braço (oposto ao braço da espada): balança em oposição aos passos
+        // the second arm (the free one): swings against the steps
         void BackArm()
         {
-            if (view == "side")
+            if (side)
             {
-                float backShX = x + leanX + s * 2f;
-                float backShY = sy + 2f;
+                float backShX = x + leanX + s * 2f, backShY = sy + 2f;
                 float oppSwing = -walkCycle * 5.5f;
-                float backHandX = backShX + oppSwing + (_moving ? s * 1.5f : s * 2.5f);
-                float backHandY = sy + 8.5f - Mathf.Abs(walkCycle) * 1.2f;
-
-                p.Line(backShX, backShY, backHandX, backHandY, Outline, 4);
-                p.Line(backShX, backShY, backHandX, backHandY, Shade, 2);
-                p.Rect(backHandX - 1, backHandY - 1, 2, 2, Sash);
-                p.Rect(backHandX, backHandY, 2, 2, SkinShade);
+                var hand = new Vector2(backShX + oppSwing + (_moving ? s * 1.5f : s * 2.5f), sy + 8.5f - Mathf.Abs(walkCycle) * 1.2f);
+                robe.BackSleeve(p, f, new Vector2(backShX, backShY), hand);
+                p.Rect(hand.X, hand.Y, 2, 2, SkinShade);
             }
             else
             {
-                float oppShX = x + leanX - nx * 6;
-                float oppShY = sy + 2;
+                float oppShX = x + leanX - nx * 6, oppShY = sy + 2;
                 float oppSwing = -walkCycle * 2.2f;
-                float oppHandX = oppShX - nx * 1f - fx * 1f;
-                float oppHandY = sy + 9f + oppSwing;
-
-                p.Line(oppShX, oppShY, oppHandX, oppHandY, Shade, 4);
-                p.Line(oppShX, oppShY, oppHandX, oppHandY, Robe, 2);
-                p.Rect(oppHandX - 1, oppHandY - 2, 3, 2, Trim);
-                p.Rect(oppHandX, oppHandY, 2, 2, Skin);
+                var hand = new Vector2(oppShX - nx * 1f - fx * 1f, sy + 9f + oppSwing);
+                robe.BackSleeve(p, f, new Vector2(oppShX, oppShY), hand);
+                p.Rect(hand.X, hand.Y, 2, 2, Skin);
             }
         }
 
         void FrontArm()
         {
-            float shX = x + leanX + (view == "side" ? -s * 1f : nx * 6), shY = sy + 2;
-
-            if (view == "side")
-            {
-                // Contorno escuro para separar o braço da túnica no perfil
-                p.Line(shX, shY, hand.X, hand.Y, Outline, 5);
-                p.Line(shX, shY, hand.X, hand.Y, Shade, 3);
-                p.Line(shX, shY, hand.X, hand.Y, Robe, 2);
-                p.Rect(hand.X - 2, hand.Y - 3, 4, 2, Sash);
-                p.Rect(hand.X - 2, hand.Y - 1, 4, 1, GoldDeep);
-            }
-            else
-            {
-                p.Line(shX, shY, hand.X, hand.Y, Shade, 4);
-                p.Line(shX, shY, hand.X, hand.Y, Robe, 2);
-                float midX = Mathf.Round((shX + hand.X) * 0.5f), midY = Mathf.Round((shY + hand.Y) * 0.5f);
-                p.Rect(midX - 1, midY + 1, 3, 2, Shade);
-                p.Rect(hand.X - 1, hand.Y - 2, 3, 2, Trim);
-            }
+            Vector2 hand = f.Hand, tip = f.Tip;
+            robe.FrontSleeve(p, f, new Vector2(x + leanX + (side ? -s * 1f : nx * 6), sy + 2), hand);
 
             // the Reforço de Ki: a blue glow around the blade while strikes are reinforced (and growing during the gesture)
             float glow = ReinforceCharges > 0 || StrikeReinforced ? 1f : _reinforcing ? ReinforceProgress : 0f;
-            if (glow > 0 && Equipped != Weapon.None)
+            if (glow > 0 && weapon != null)
             {
                 float pulse = 0.75f + 0.25f * Mathf.Sin(_time * 9f);
                 Vector2 d = (tip - hand).Normalized();
                 // soft light (no outline): a wide faint halo, a narrower brighter one, then sparks along the edge
-                p.GlowLine(hand.X - d.X * 2, hand.Y - d.Y * 2, tip.X + d.X * 3, tip.Y + d.Y * 3, new Color(ReinforceHalo, 0.22f * glow * pulse), 5);
-                p.GlowLine(hand.X - d.X, hand.Y - d.Y, tip.X + d.X * 2, tip.Y + d.Y * 2, new Color(ReinforceHalo, 0.45f * glow * pulse), 3);
-                float len = (tip - hand).Length();
+                if (weapon.Curved)
+                {
+                    // a curved blade (T18): the halo follows the blade's back in two runs, meeting at the bend
+                    Vector2 mid = weapon.Spine(f, 0.55f);
+                    p.GlowLine(hand.X - d.X * 2, hand.Y - d.Y * 2, mid.X, mid.Y, new Color(ReinforceHalo, 0.22f * glow * pulse), 5);
+                    p.GlowLine(mid.X, mid.Y, tip.X + d.X * 3, tip.Y + d.Y * 3, new Color(ReinforceHalo, 0.22f * glow * pulse), 5);
+                    p.GlowLine(hand.X - d.X, hand.Y - d.Y, mid.X, mid.Y, new Color(ReinforceHalo, 0.45f * glow * pulse), 3);
+                    p.GlowLine(mid.X, mid.Y, tip.X + d.X * 2, tip.Y + d.Y * 2, new Color(ReinforceHalo, 0.45f * glow * pulse), 3);
+                }
+                else
+                {
+                    p.GlowLine(hand.X - d.X * 2, hand.Y - d.Y * 2, tip.X + d.X * 3, tip.Y + d.Y * 3, new Color(ReinforceHalo, 0.22f * glow * pulse), 5);
+                    p.GlowLine(hand.X - d.X, hand.Y - d.Y, tip.X + d.X * 2, tip.Y + d.Y * 2, new Color(ReinforceHalo, 0.45f * glow * pulse), 3);
+                }
                 Vector2 n = new(-d.Y, d.X);
                 for (int k = 0; k < 3; k++)
                 {
-                    float f = Mathf.PosMod(_time * 1.6f + k / 3f, 1f);
-                    Vector2 sp = hand + d * (len * f) + n * (k % 2 == 0 ? 2 : -2);
-                    p.GlowLine(sp.X, sp.Y, sp.X, sp.Y, new Color(ReinforceLight, glow * (1 - f * 0.6f)), 1);
+                    float t = Mathf.PosMod(_time * 1.6f + k / 3f, 1f);
+                    Vector2 sp = weapon.Spine(f, t) + n * (k % 2 == 0 ? 2 : -2);
+                    p.GlowLine(sp.X, sp.Y, sp.X, sp.Y, new Color(ReinforceLight, glow * (1 - t * 0.6f)), 1);
                 }
             }
 
-            if (Equipped == Weapon.Sword)
-            {
-                p.Line(hand.X, hand.Y, tip.X, tip.Y, Blade, 1);
-                Vector2 dir = (tip - hand).Normalized();
-                Vector2 perp = new(-dir.Y, dir.X);
-                p.Line(hand.X + dir.X * 3 + perp.X, hand.Y + dir.Y * 3 + perp.Y,
-                       tip.X - dir.X * 2 + perp.X, tip.Y - dir.Y * 2 + perp.Y, BladeEdge, 1);
-                p.Line(hand.X + dir.X * 2 - perp.X * 2, hand.Y + dir.Y * 2 - perp.Y * 2,
-                       hand.X + dir.X * 2 + perp.X * 2, hand.Y + dir.Y * 2 + perp.Y * 2, Gold, 1);
-                p.Line(hand.X - dir.X * 2, hand.Y - dir.Y * 2, hand.X + dir.X, hand.Y + dir.Y, Hilt, 2);
-                p.Rect(hand.X - dir.X * 3, hand.Y - dir.Y * 3, 1, 1, Gold);
-            }
-            else if (Equipped is Weapon.Axe or Weapon.Pickaxe)
-                Elements.ToolArt.Draw(p, Equipped == Weapon.Axe ? "machado" : "picareta", hand, tip); // the tools' pictures: src/Elements/Tools/ToolArt.cs
-            else if (Equipped == Weapon.Knife)
-            {
-                p.Line(hand.X, hand.Y, tip.X, tip.Y, Flint, 2);
-                p.Rect(hand.X - 1, hand.Y - 1, 3, 3, Hilt);
-            }
+            weapon?.InHand(p, f); // the drawings: src/Elements/Armas/ (sword, knife, sabre…) and src/Elements/Tools/ToolArt.cs
             p.Rect(hand.X, hand.Y, 2, 2, Skin);
         }
 
-        if (view == "side" || back) BackArm();
+        if (side || back) BackArm();
         if (back) FrontArm();
 
         float stride = walkCycle;
-        int legSpread = dashing ? 2 : 0;
-        int legShift = view == "side" ? Mathf.RoundToInt(stride * 2f) : 0;
+        int legSpread = f.Dashing ? 2 : 0;
+        int legShift = side ? Mathf.RoundToInt(stride * 2f) : 0;
         void Boot(int left, float lift)
         {
             int top = -8 - Mathf.RoundToInt(lift * 2);
             p.Rect(left, top, 4, 7, Pants);
             p.Rect(left, top + 3, 4, 1, Shade);
-            p.Rect(left - 1, top + 6, 6, 2, Pigmentos['k']);
+            p.Rect(left - 1, top + 6, 6, 2, Boots);
             p.Rect(left + 1, top + 6, 2, 1, GoldDeep);
         }
-        if (view == "side")
+        if (side)
         {
             Boot(-4 - legSpread - legShift, Mathf.Max(0, stride));
             Boot(-2 + legSpread + legShift, Mathf.Max(0, -stride));
@@ -1316,26 +1235,13 @@ public partial class Player : CharacterBody2D
             Boot(2 + legSpread, Mathf.Max(0, -stride));
         }
 
-        bool profile = view == "side", mirror = profile && s < 0;
-        int hem = _moving ? Mathf.RoundToInt(Mathf.Sin(_walk * 2)) : (dashing ? -Mathf.RoundToInt(fx) : 0);
-        int robeLeft = profile ? -8 : -10;
-        PintarLinhas(back ? TunicaCostas : profile ? TunicaPerfil : TunicaFrente, robeLeft + leanX, -27, mirror, hem);
-
-        int breath = _act == null && !_moving && Mathf.Sin(_time * 2.4f) > 0.55f ? 1 : 0;
-        int hy = -41 + breath;
-        float speedFactor = _moving ? 1.5f : 1f;
-        float flutter = Mathf.Sin(_time * 6f * speedFactor);
-        float flutterTip = Mathf.Sin(_time * 6f * speedFactor - 1.1f);
-        float tail = profile ? -s * 9 : back ? 8 : -8;
-
-        p.Line(leanX, hy + 3, leanX + tail / 2, hy + 4 + flutter * 0.5f, Trim, 1);
-        p.Line(leanX + tail / 2, hy + 4 + flutter * 0.5f, leanX + tail + flutterTip, hy + 7, Pigmentos['j'], 1);
-
-        PintarLinhas(back ? CabecaCostas : profile ? CabecaPerfil : CabecaFrente, -6 + leanX, hy, mirror);
+        robe.Body(p, f);                                   // src/Elements/Roupas/
+        Elements.CabecaArt.Draw(p, f, hat?.HairCover ?? 0); // src/Elements/Corpo/CabecaArt.cs
+        hat?.Draw(p, f);                                   // src/Elements/Capacetes/
 
         if (!back)
         {
-            if (view != "side") BackArm();
+            if (!side) BackArm();
             FrontArm();
         }
         p.Flush(this, Outline);

@@ -1,0 +1,5 @@
+{
+  "_doc": "Regras gerais do equipamento (T18). Lido por src/Items/EquipRules.cs. defense_cap: o máximo que as roupas juntas seguram do dano (fração), além da CON. trouxa: o que a trouxa de viajante da Planície contém.",
+  "defense_cap": 0.4,
+  "trouxa": ["tunica_viajante", "sabre_ferro"]
+}

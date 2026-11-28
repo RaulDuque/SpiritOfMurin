@@ -18,7 +18,8 @@ public partial class KiPalm : Node2D
     /// <inheritdoc />
     public override void _Process(double delta)
     {
-        _t += (float)delta;
+        // a picture pose (T18) holds the clock too, so the sparks stand in the same place every frame
+        _t = GetParent() is Player { PoseFrozen: true } fp ? fp.PoseClock : _t + (float)delta;
         QueueRedraw();
     }
 

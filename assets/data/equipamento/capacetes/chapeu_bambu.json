@@ -1,0 +1,7 @@
+{
+  "id": "chapeu_bambu",
+  "name": "Chapéu de Bambu Trançado",
+  "description": "Copa baixa de bambu seco, aba estreita. Esconde o coque e a faixa; quase não pesa.",
+  "onde": "Fabricar: 3 Varas de Bambu + 1 Tira de Amarração (aba Fabricação).",
+  "wear": { "slot": "cabeca", "art": "chapeu_bambu", "defense": 0.03, "weight": 0.02 }
+}

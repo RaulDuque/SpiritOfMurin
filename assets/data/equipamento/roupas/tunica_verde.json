@@ -1,0 +1,8 @@
+{
+  "id": "tunica_verde",
+  "name": "Túnica Verde",
+  "description": "A sua túnica marfim de debrum jade, com a faixa verde e a fivela dourada. Sempre com você.",
+  "onde": "Você já a veste. Tirar outra roupa a devolve.",
+  "base": true,
+  "wear": { "slot": "corpo", "art": "tunica_verde", "defense": 0, "weight": 0 }
+}

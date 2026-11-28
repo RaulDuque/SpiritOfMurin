@@ -5,6 +5,7 @@
     "items.<id>.name": "nome mostrado ao jogador",
     "items.<id>.description": "frase curta do inventário (diz para que serve)",
     "items.<id>.equip": "o que o item põe na mão: knife (faca), axe (machado), pickaxe (picareta) ou vazio",
+    "equipamento (T18)": "armas, roupas e capacetes ficam um por arquivo em assets/data/equipamento/ (armas/, roupas/, capacetes/; esquema no LEIA-ME.md de lá) e entram neste catálogo ao carregar. A faca de pedra mudou para lá (o id faca_pedra é o mesmo); as receitas continuam aqui.",
     "items.<id>.tool": "ferramenta (pedido 14, Entrega 5): kind = machado, picareta ou faca (que elementos trabalha; ver assets/data/elements), power = trabalho por golpe (golpes = toughness / power), reach = alcance do golpe (px), damage = dano em animais",
     "items.<id>.regen_amount / regen_seconds": "ao usar: Vida recuperada aos poucos ao longo destes segundos (preparo medicinal: multiplicado pela potência de INT)",
     "items.<id>.heal_now": "ao usar: Vida recuperada na hora (preparo medicinal: multiplicado pela potência de INT)",
@@ -18,7 +19,6 @@
   "items": {
     "silex":              { "category": "material", "name": "Sílex", "description": "Pedra que lasca com gume. Material da faca." },
     "galho_rijo":         { "category": "material", "name": "Galho Rijo", "description": "Madeira seca e firme, boa para cabo. Material da faca." },
-    "faca_pedra":         { "category": "equipamento", "name": "Faca de Pedra", "description": "Lasca de sílex amarrada num galho. Corte curto; permite esfolar e aproveitar a caça. Corta bambu.", "equip": "knife", "tool": { "kind": "faca", "power": 1 } },
     "machado_pedra":      { "category": "ferramenta", "name": "Machado de Pedra", "description": "Cunha de sílex presa num galho rijo. Derruba árvores (6 golpes num pinheiro) e corta bambu.", "equip": "axe", "tool": { "kind": "machado", "power": 1, "reach": 22, "damage": 1 } },
     "picareta_pedra":     { "category": "ferramenta", "name": "Picareta de Pedra", "description": "Ponta de sílex grossa num cabo curto. Quebra rochas com veio (5 golpes).", "equip": "pickaxe", "tool": { "kind": "picareta", "power": 1, "reach": 20, "damage": 1 } },
     "machado_lapidado":   { "category": "ferramenta", "name": "Machado Lapidado", "description": "Lâmina de pedra polida num cabo de pinho. Corta o dobro: 3 golpes num pinheiro.", "equip": "axe", "tool": { "kind": "machado", "power": 2, "reach": 24, "damage": 1 } },
@@ -50,7 +50,8 @@
     "presa_espiritual":   { "category": "material", "name": "Presa Espiritual", "description": "Extraída com um fio de Ki: guarda a força do javali. Catalisador, mais adiante." },
     "tendao":             { "category": "material", "name": "Tendão", "description": "Material secundário da caça. Serve de cordão (arcos e costura, mais adiante)." },
     "tira_amarracao":     { "category": "material", "name": "Tira de Amarração", "description": "Tira de pele para amarrar. Material da bolsa." },
-    "bolsa_simples":      { "category": "equipamento", "name": "Bolsa Simples", "description": "Presa na cintura: deixa uma erva à mão.", "passive": "Tecla H usa a melhor erva da bolsa sem abrir o inventário." }
+    "bolsa_simples":      { "category": "equipamento", "name": "Bolsa Simples", "description": "Presa na cintura: deixa uma erva à mão.", "passive": "Tecla H usa a melhor erva da bolsa sem abrir o inventário." },
+    "trouxa_viajante":    { "category": "material", "name": "Trouxa de Viajante", "description": "Uma trouxa de linho amarrada, esquecida sob o pinheiro da margem (T18). Ao pegar, o que tem dentro vai para a bolsa." }
   },
   "recipes": [
     { "id": "faca_pedra", "output": "faca_pedra", "count": 1, "inputs": { "silex": 1, "galho_rijo": 1 } },
@@ -61,6 +62,7 @@
     { "id": "tiras_pele", "output": "tira_amarracao", "count": 2, "inputs": { "pele_rasgada": 1 } },
     { "id": "tiras_couro", "output": "tira_amarracao", "count": 3, "inputs": { "couro_rasgado": 1 } },
     { "id": "bolsa_pele", "output": "bolsa_simples", "count": 1, "inputs": { "pele_comum": 1, "tira_amarracao": 2 } },
+    { "id": "chapeu_bambu", "output": "chapeu_bambu", "count": 1, "inputs": { "vara_bambu": 3, "tira_amarracao": 1 } },
     { "id": "bolsa_couro", "output": "bolsa_simples", "count": 1, "inputs": { "couro_comum": 1, "tira_amarracao": 1 } },
     { "id": "assar_macia", "output": "carne_macia_assada", "count": 1, "inputs": { "carne_macia": 1 }, "station": "fogueira" },
     { "id": "assar_rija", "output": "carne_rija_assada", "count": 1, "inputs": { "carne_rija": 1 }, "station": "fogueira" }

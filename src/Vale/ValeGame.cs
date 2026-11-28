@@ -212,6 +212,10 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
         Spawn("dis_camp", ValeFighter.Kind.Disciple, 44.5f, 10.6f, f => { f.AggroR = 110; f.Leash = 200; f.Line = "O sênior não precisa de você. Eu bastarei."; f.Drops = new[] { ("faixa", 1), ("pedra", 1) }; });
         // the swordsman of the prologue
         Player.Equipped = Player.Weapon.Sword;
+        // T18: the prologue's sword is the first weapon of the system: its numbers and drawing come from assets/data/equipamento/armas/espada.json
+        const string swordData = Items.ItemCatalog.EquipmentFolder + "/armas/espada.json";
+        if (Godot.FileAccess.FileExists(swordData) && Items.ItemCatalog.ParseEquipment(Godot.FileAccess.GetFileAsString(swordData)).Weapon is { } sword)
+        { Player.Blade = Items.EquipRules.Blade(sword); Player.WeaponArt = sword.Art; }
         Player.CollisionMask = 1 | Player.GapLayer;
         Player.SetMaxHealth(Combat.PlayerHealth);
         Player.MaxKi = Combat.PlayerKiMax; Player.KiRegen = Combat.PlayerKiRegen; Player.Ki = Player.MaxKi;

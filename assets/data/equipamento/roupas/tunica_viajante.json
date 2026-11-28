@@ -1,0 +1,7 @@
+{
+  "id": "tunica_viajante",
+  "name": "Túnica de Viajante",
+  "description": "Linho cru gasto, gola cruzada e um remendo na saia. Segura um pouco os golpes, mas pesa nos cortes e nos passos.",
+  "onde": "Na trouxa de viajante esquecida sob o pinheiro da margem, ao norte da clareira.",
+  "wear": { "slot": "corpo", "art": "tunica_viajante", "defense": 0.08, "weight": 0.1 }
+}
