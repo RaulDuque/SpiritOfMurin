@@ -12,6 +12,11 @@ public partial class PlayerTuning : Resource
 {
     /// <summary>Walking speed in pixels per second (prototype: player_speed).</summary>
     [Export] public float MoveSpeed { get; set; } = 105f;
+    /// <summary>
+    /// Speed on each axis when walking diagonally, as a fraction of <see cref="MoveSpeed"/> (the creator found the plain
+    /// 0.707 slow on screen, 2026-11-27): 0.8 makes the diagonal about 13% faster in distance, which feels like walking straight.
+    /// </summary>
+    [Export] public float DiagonalAxisSpeed { get; set; } = 0.8f;
 
     /// <summary>Seconds a pressed cut or step waits for the current action to allow a cancel.</summary>
     [Export] public float BufferTime { get; set; } = 0.2f;

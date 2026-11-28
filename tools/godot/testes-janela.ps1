@@ -31,7 +31,7 @@ foreach ($phase in 'aim', 'charge', 'charge-plains', 'reinforce', 'bag', 'money'
   & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/NovidadesCheck.tscn -- "--phase=$phase" '--prefs=user://teste_nov_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
 }
 # pedido 14.0: FOR, CON, critical, Vida in numbers, damage numbers, Qi -> Ki with old files
-foreach ($phase in 'plains', 'vale', 'oldsave') {
+foreach ($phase in 'plains', 'vale', 'oldsave', 'diagonal') {
   & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/AtributosCheck.tscn -- "--phase=$phase" '--prefs=user://teste_atr_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
 }
 # pedido 14, campaign delivery 5: trees, rocks, bamboo, bushes (both seeds, then a journey from before)

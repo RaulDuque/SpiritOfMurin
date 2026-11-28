@@ -369,6 +369,18 @@ public partial class Player : CharacterBody2D
     /// </summary>
     public Plains.WaterState OnWater { get; set; }
 
+    /// <summary>
+    /// The walk's diagonal: a straight move stays as it is; a diagonal one goes <paramref name="axis"/> of the speed on
+    /// each axis (0.707 would be the same distance as straight). Analog sticks blend by how diagonal they point.
+    /// </summary>
+    public static Vector2 DiagonalScale(Vector2 move, float axis)
+    {
+        float l2 = move.LengthSquared();
+        if (l2 < 0.0001f) return move;
+        float diag = 2 * Mathf.Abs(move.X * move.Y) / l2; // 0 straight … 1 exactly diagonal
+        return move * (1 + (axis * Mathf.Sqrt2 - 1) * diag);
+    }
+
     /// <summary>Walking speed multiplier (AGI). 1 = the tuning's speed.</summary>
     public float MoveSpeedMultiplier { get; set; } = 1f;
 
@@ -568,7 +580,7 @@ public partial class Player : CharacterBody2D
             else Vigor = Mathf.Min(MaxVigor, Vigor + VigorRegen * dt);
         }
         bool locked = InputLocked || Health <= 0 || Lying > 0;
-        Vector2 move = locked ? Vector2.Zero : Input.GetVector("move_left", "move_right", "move_up", "move_down");
+        Vector2 move = locked ? Vector2.Zero : DiagonalScale(Input.GetVector("move_left", "move_right", "move_up", "move_down"), Tuning.DiagonalAxisSpeed);
         // Shift over deep water is the water walk, not sneaking (pedido 14.3)
         bool sneaking = !locked && OnWater == Plains.WaterState.None && InputMap.HasAction("sneak") && Input.IsActionPressed("sneak");
 

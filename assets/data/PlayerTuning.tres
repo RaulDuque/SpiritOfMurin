@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_tuning")
 MoveSpeed = 105.0
+DiagonalAxisSpeed = 0.8
 BufferTime = 0.2
 CutStartup = 0.07
 CutActive = 0.08

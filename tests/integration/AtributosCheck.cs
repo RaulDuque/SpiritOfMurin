@@ -57,7 +57,7 @@ public partial class AtributosCheck : Node
         SaveGame.Erase(SavePath);
         if (Godot.FileAccess.FileExists(Prefs.Path)) DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(Prefs.Path));
         Bindings.Init(); Assist.Reload(); Aim.Reload(); Aim.UseForSession(false);
-        _ = _phase switch { "vale" => ValePhase(), "oldsave" => OldSavePhase(), "visual" => VisualPhase(), "mapa" => MapPhase(), _ => PlainsPhase() };
+        _ = _phase switch { "vale" => ValePhase(), "oldsave" => OldSavePhase(), "visual" => VisualPhase(), "mapa" => MapPhase(), "diagonal" => DiagonalPhase(), _ => PlainsPhase() };
     }
 
     private void Check(string name, bool ok, string detail = "") { _results.Add((name, ok, detail)); GD.Print($"{(ok ? "OK  " : "FAIL")} {name}{(detail.Length > 0 ? " — " + detail : "")}"); }
@@ -248,6 +248,31 @@ public partial class AtributosCheck : Node
         _pg.Panels.OpenMap(); await Frames(6);
         await Shot("11-mapa-com-icones-e-legenda");
         _pg.Panels.Choose("back"); await Frames(2);
+        Finish();
+    }
+
+    // ------------------------------------------------------------------ the walk's diagonal (2026-11-27)
+    private async Task DiagonalPhase()
+    {
+        _pg = GD.Load<PackedScene>("res://src/Plains/Plains.tscn").Instantiate<PlainsGame>();
+        _pg.SavePath = SavePath; _pg.ShowIntro = false; _pg.Start = PlainsGame.StartMode.New;
+        AddChild(_pg);
+        await Frames(40);
+        var p = _pg.Player;
+        async Task<Vector2> Walk(params Key[] keys)
+        {
+            p.GlobalPosition = _pg.Gen.StartPixel; await Frames(4);
+            foreach (var k in keys) Press(k, true);
+            await Flush(); await Frames(6);
+            var v = p.Velocity;
+            foreach (var k in keys) Press(k, false);
+            await Flush(); await Frames(4);
+            return v;
+        }
+        var straight = await Walk(Key.D);
+        var diag = await Walk(Key.D, Key.S);
+        Check("walking straight: the tuning's speed (105 px/s)", Mathf.IsEqualApprox(straight.Length(), p.Tuning.MoveSpeed, 1f), $"{straight.Length():0.0}");
+        Check("walking diagonally: 0.8 of it on each axis (about 13% more distance)", Mathf.IsEqualApprox(diag.X, p.Tuning.MoveSpeed * 0.8f, 1f) && Mathf.IsEqualApprox(diag.Y, p.Tuning.MoveSpeed * 0.8f, 1f), $"{diag}");
         Finish();
     }
 

@@ -25,6 +25,7 @@ public static class Suites
         ("plains", "FOR 5 aumenta o corte da faca (1 → 1,3); crítico ×1,5 com '!'; CON 5 recebe 3,4 de 4; vida do javali em números dentro da barra; números de dano ligam e desligam no Modo de assistência; FOR salvo."),
         ("vale", "Prólogo: vida do discípulo em números na barra; o golpe mostra o dano; sem ficha, sem FOR nem crítico."),
         ("oldsave", "Qi → Ki: jornada real de antes do renome continua com Ki, KI e o Livro; a tecla do Qi num botão do mouse vira a do Ki."),
+        ("diagonal", "Andar na diagonal: 0,8 da velocidade em cada eixo (cerca de 13% mais distância que reto); reto continua 105 px/s."),
     };
 
     /// <summary>Monta a lista para as sementes escolhidas. <paramref name="quick"/> deixa só o prólogo, a recuperação e a unidade.</summary>
