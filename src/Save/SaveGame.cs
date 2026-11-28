@@ -91,6 +91,8 @@ public sealed class SaveData
     public bool TechniquesReturned { get; set; }
     /// <summary>Planície chunks explored (the map), as [x, y].</summary>
     public List<int[]> Explored { get; set; } = new();
+    /// <summary>Animals already seen or tracked (T07): only these show on the map. Old saves: empty.</summary>
+    public List<string> SeenAnimals { get; set; } = new();
     /// <summary>Manual map markers (world px), as [x, y].</summary>
     public List<float[]> Markers { get; set; } = new();
     /// <summary>The hour of the day (0-24) when the journey was written; -1 (older journeys) starts at the data's start hour.</summary>

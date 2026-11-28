@@ -184,7 +184,7 @@ public partial class JourneyCheck : Node
         _player.GlobalPosition = first.GlobalPosition + new Vector2(0, 3); await Frames(3);
         int xp0 = stats.TotalXp;
         await Tap(Godot.Key.E);
-        Check("E on a print: animal and direction; first look gives Rastreamento and XP", Recent("Pegadas pequenas, de coelho. Seguem para o") && skills.Grade("rastreamento") == 1 && stats.TotalXp == xp0 + _game.Data.Xp.TrailExamined + _game.Data.Xp.Practice, $"XP {xp0} → {stats.TotalXp}; {Last(4)}");
+        Check("E on a print: animal and direction; first look gives Rastreamento and XP", Recent("Pegadas pequenas, de coelho. Levam mais ou menos para o") && skills.Grade("rastreamento") == 1 && stats.TotalXp == xp0 + _game.Data.Xp.TrailExamined + _game.Data.Xp.Practice, $"XP {xp0} → {stats.TotalXp}; {Last(4)}");
         await Shot("02-pegada-examinada");
         int xp1 = stats.TotalXp, pr1 = skills.Practice("rastreamento");
         await Tap(Godot.Key.E);

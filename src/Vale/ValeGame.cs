@@ -624,7 +624,11 @@ public partial class ValeGame : Node2D, IValeHost, IMapSource
             }
             foreach (var p in _pots.Where(p => IsInstanceValid(p) && !p.IsQueuedForDeletion()).ToList())
                 if (p.GlobalPosition.DistanceTo(w.Foot) < 16) BreakPot(p);
-            if (w.Done) { w.QueueFree(); _waves.Remove(w); }
+            if (w.Done)
+            {
+                if (w.Went < float.MaxValue) w.GetParent().AddChild(new KiFizzle { Dir = w.Shot.Dir, GlobalPosition = w.GlobalPosition, ZIndex = 10 }); // where it gives out (T07)
+                w.QueueFree(); _waves.Remove(w);
+            }
         }
     }
 

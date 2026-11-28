@@ -31,6 +31,8 @@ public partial class PlainsGame : Node2D, IMapSource
 
     /// <summary>Chunks the swordsman has entered (the map shows only these). Saved with the journey.</summary>
     public HashSet<Vector2I> Explored { get; } = new();
+    /// <summary>Animals seen (within <c>seen_radius</c>) or whose trail was examined (T07): the map shows only these boars.</summary>
+    public HashSet<string> SeenAnimals { get; } = new();
     /// <inheritdoc />
     public List<Vector2> MapMarkers { get; } = new();
     /// <inheritdoc />
@@ -194,11 +196,18 @@ public partial class PlainsGame : Node2D, IMapSource
                     case FeatureKind.Campfire: v.WorldIcon(f.Position, MapIcon.Campfire); break;
                     case FeatureKind.MeditationMat: v.WorldIcon(f.Position, MapIcon.Mat); break;
                     case FeatureKind.Burrow: v.WorldIcon(f.Position, MapIcon.Burrow); break;
-                    case FeatureKind.Boar: if (World.State.CarcassAt(PlainsGenerator.CreatureIdOf(f)) == null) v.WorldIcon(f.Position, MapIcon.Boar); break;
+                    case FeatureKind.Boar: if (BoarOnMap(f)) v.WorldIcon(f.Position, MapIcon.Boar); break;
                     case FeatureKind.Herb: if (!World.State.IsCollected(f.Id)) v.WorldIcon(f.Position, MapIcon.Herb); break;
                     case FeatureKind.CoinPouch: if (!World.State.IsCollected(f.Id)) v.WorldIcon(f.Position, MapIcon.Coins); break;
                 }
         v.WorldLabel(Gen.StartPixel + new Vector2(0, -40), "clareira", MapView.Ink);
+    }
+
+    /// <summary>True when the boar of <paramref name="f"/> shows on the map (T07): seen or tracked, and still alive.</summary>
+    public bool BoarOnMap(Feature f)
+    {
+        string id = PlainsGenerator.CreatureIdOf(f);
+        return (SeenAnimals.Contains(id) || World.State.IsTrailExamined($"trail@{f.Tile.X},{f.Tile.Y}")) && World.State.CarcassAt(id) == null;
     }
 
     /// <summary>The map zoom when it opens.</summary>
@@ -407,6 +416,8 @@ public partial class PlainsGame : Node2D, IMapSource
         Feed = new GainFeed { Name = "Ganhos", Around = Player }; GetNode<Node2D>("World").AddChild(Feed);
         Feed.Log.Window = HudSettings.Current.GainSeconds;
         Target = new TargetMarker { Name = "AlvoDoE", Around = Player }; GetNode<Node2D>("World").AddChild(Target);
+        Near = new NearBar { Name = "BarraJunto" }; GetNode<Node2D>("World").AddChild(Near);
+        Tracks = new FreshTracks { Name = "PegadasFrescas", Parent = World.Objects }; AddChild(Tracks);
         Player.EmptyHanded += () => Hud.Toast(Bindings.F("Mãos vazias: fabrique uma ferramenta no inventário ([inventory])."));
         Player.OutOfBreath += () => Hud.Toast("Sem fôlego: espere o vigor voltar ou coma carne assada.");
         Player.TechniqueRefused += (_, m) => { Hud.Toast(m); Sfx?.Play("fizzle"); };
@@ -431,6 +442,7 @@ public partial class PlainsGame : Node2D, IMapSource
             Spot = new Vector2(d.Spot[0], d.Spot[1]);
             Book = d.Book ?? new();
             foreach (var e in d.Explored) if (e.Length == 2) Explored.Add(new Vector2I(e[0], e[1]));
+            foreach (var a in d.SeenAnimals ?? new()) SeenAnimals.Add(a);
             foreach (var mk in d.Markers) if (mk.Length == 2) MapMarkers.Add(new Vector2(mk[0], mk[1]));
             Clues.Clear(); Clues.AddRange(d.Clues);
             Wallet.Set(d.Coins);
@@ -548,6 +560,8 @@ public partial class PlainsGame : Node2D, IMapSource
         Hud.SetReinforce(Player.ReinforceCharges);
         Hud.SetLevel(Stats.Level, Stats.Xp, Stats.XpToNext(Stats.Level), Stats.Points);
         UpdateWaves(dt);
+        UpdateNearBar(dt);
+        UpdateSeen();
         UpdateFocus();
         UpdatePrompt();
         Hud.SetKiKeyHint(KiKeyAction == "esfolar" ? "[ki] esfolar com Ki" : $"[ki] disparo de Ki{(Tech.State("ki_wave") == TechniqueState.Sealed ? " (selado)" : "")}");
@@ -713,12 +727,22 @@ public partial class PlainsGame : Node2D, IMapSource
                     Sfx?.Play("hit");
                 }
                 var r = Player.ResolveStrike(w.Shot.Damage, melee: false); // the Ki: critical, no FOR
-                if (h.ReceiveHit(r.Amount) is HitResult.Damaged or HitResult.Killed) Numbers.Dealt(h.GlobalPosition + new Vector2(0, -h.BodyRadius - 14), r);
+                HitResult res;
+                if (w.Shot.Lamina && h is Boar lb && !lb.Brain.Vulnerable)
+                {
+                    // T07 decision B: the Lâmina goes through the hide at a fraction of its damage; the boar keeps charging
+                    r = r with { Amount = r.Amount * FaunaSettings.Current.LaminaThroughFactor };
+                    res = lb.ReceiveHitThrough(r.Amount);
+                }
+                else res = h.ReceiveHit(r.Amount);
+                if (res is HitResult.Damaged or HitResult.Killed) Numbers.Dealt(h.GlobalPosition + new Vector2(0, -h.BodyRadius - 14), r);
                 hit = true;
                 if (!w.Shot.Lamina) { w.Stop(); break; }
             }
             if (w.Done)
             {
+                // the shot gives out at the end of its range: it crumbles where it ends (T07)
+                if (w.Went < float.MaxValue) World.Objects.AddChild(new KiFizzle { Dir = w.Shot.Dir, GlobalPosition = w.GlobalPosition, ZIndex = 10 });
                 KiShotEnded?.Invoke(w, hit || w.HitSet.Count > 0);
                 w.QueueFree(); _waves.Remove(w);
             }
@@ -799,9 +823,53 @@ public partial class PlainsGame : Node2D, IMapSource
     {
         if (n is Boar b)
         {
-            b.Deflected += _ => Hud.Toast("O couro grosso desvia o golpe. Espere a investida passar.");
-            b.HitPlayer += _ => Hud.Toast("A investida acertou!");
+            b.Deflected += OnDeflected;
+            b.HitPlayer += _ => { Sfx?.Play("hurt"); Hud.Toast("A investida acertou!"); };
         }
+    }
+
+    private ulong _deflectToastAt;
+
+    /// <summary>The fresh prints the animals leave (T07).</summary>
+    public FreshTracks Tracks { get; private set; } = null!;
+
+    /// <summary>The compact Vida bar over the animal in a fight (T07).</summary>
+    public NearBar Near { get; private set; } = null!;
+    private IHittable? _nearWho;
+    private float _nearLeft;
+
+    // T07: an animal counts as seen when it comes within seen_radius of the swordsman (a hidden rabbit does not)
+    private void UpdateSeen()
+    {
+        float r = FaunaSettings.Current.SeenRadius;
+        foreach (var n in GetTree().GetNodesInGroup("creatures"))
+            if (n is IHittable h && n is Node2D b && b.Visible && !SeenAnimals.Contains(h.CreatureId) && b.GlobalPosition.DistanceTo(Player.GlobalPosition) <= r)
+                SeenAnimals.Add(h.CreatureId);
+    }
+
+    // the bar near the animal: the focused one, or a boar that warns, charges or recovers close by; it lingers a few seconds
+    private void UpdateNearBar(float dt)
+    {
+        var f = FaunaSettings.Current;
+        IHittable? who = Focused != null && Focused.CanBeHit ? Focused : null;
+        who ??= GetTree().GetNodesInGroup("creatures").OfType<Boar>()
+            .Where(b => b.CanBeHit && b.Brain.State is BoarState.Warn or BoarState.Charge or BoarState.Recover && b.GlobalPosition.DistanceTo(Player.GlobalPosition) <= f.CombatRadius)
+            .OrderBy(b => b.GlobalPosition.DistanceTo(Player.GlobalPosition)).FirstOrDefault();
+        if (who != null) { _nearWho = who; _nearLeft = f.NearBarSeconds; }
+        else _nearLeft = Mathf.Max(0, _nearLeft - dt);
+        if (_nearWho is not Node2D n || !IsInstanceValid(n) || !_nearWho.CanBeHit || _nearLeft <= 0) { _nearWho = null; Near.Show(null, 0, 1); return; }
+        float hp = _nearWho is Boar bb ? bb.HealthExact : _nearWho.HealthLeft;
+        Near.Show(n, hp, _nearWho.HealthMax);
+    }
+
+    // the parry (T07): the blade glances off the hide — a dry sound, the swordsman's arm is nudged back a little, no Vida lost
+    private void OnDeflected(Boar b)
+    {
+        Sfx?.Play("parry");
+        Vector2 away = Player.GlobalPosition - b.GlobalPosition;
+        if (away.LengthSquared() > 0.01f) Player.MoveAndCollide(away.Normalized() * FaunaSettings.Current.ParryNudgePx);
+        ulong now = Time.GetTicksMsec();
+        if (now - _deflectToastAt > 4000 || _deflectToastAt == 0) { _deflectToastAt = now; Hud.Toast("O couro grosso desvia o golpe. Espere a investida passar."); }
     }
 
     private void OnCreatureDied(IHittable who, Vector2 at)
@@ -827,7 +895,8 @@ public partial class PlainsGame : Node2D, IMapSource
             if (h is Boar bb && !bb.Brain.Vulnerable && Player.RollReinforceBreak() && bb.BreakGuard(Tech.Data.KiReinforce.Full.Stagger))
                 Hud.Toast("O golpe reforçado rompe a defesa do javali!");
             var r = Player.ResolveStrike(damage, melee: true); // Reforço, FOR, critical
-            if (h.ReceiveHit(r.Amount) is HitResult.Damaged or HitResult.Killed) Numbers.Dealt(h.GlobalPosition + new Vector2(0, -h.BodyRadius - 14), r);
+            var res = h is Boar hb ? hb.ReceiveHitFrom(r.Amount, origin) : h.ReceiveHit(r.Amount);
+            if (res is HitResult.Damaged or HitResult.Killed) { Numbers.Dealt(h.GlobalPosition + new Vector2(0, -h.BodyRadius - 14), r); Sfx?.Play("hit"); }
         }
         // the world's elements (pedido 14, Entrega 5): a tree, a rock, a bamboo clump within the blade's arc
         foreach (var n in GetTree().GetNodesInGroup("elements"))
@@ -1109,14 +1178,24 @@ public partial class PlainsGame : Node2D, IMapSource
         return true;
     }
 
+    /// <summary>The hint of the last print examined (for checks): centre angle and half width.</summary>
+    public (float Center, float Half) LastTrackSector { get; private set; }
+    /// <summary>The last print examined (for checks).</summary>
+    public TrackPrint? LastTrackPrint { get; private set; }
+
     private bool Examine(TrackPrint t)
     {
         int g = Skills.Grade("rastreamento");
         bool boar = t.Hoof;
-        string dir = Compass(t.Dir);
         var target = World.Objects.GetChildren().OfType<IHittable>().FirstOrDefault(h => h.CreatureId == t.CreatureId);
         Vector2 at = target?.GlobalPosition ?? (World.State.CarcassAt(t.CreatureId) ?? t.GlobalPosition + t.Dir * 200);
-        string text = $"{(boar ? "Pegadas de casco, fundas" : "Pegadas pequenas, de coelho")}. Seguem para {dir}.";
+        // T07: the hint points to where the animal (or its burrow) really is, as precise as the grade allows
+        Vector2 real = at - t.GlobalPosition; if (real.LengthSquared() < 1) real = t.Dir;
+        var sector = TrackingRules.Sector(real, g, t.FeatureId, FaunaSettings.Current);
+        LastTrackSector = sector; LastTrackPrint = t;
+        World.Objects.AddChild(new TrackHint { Sector = sector, Life = FaunaSettings.Current.TrackHintSeconds, GlobalPosition = t.GlobalPosition });
+        string age = t.Fresh ? (t.Age < 20 ? " Frescas: o animal passou agora há pouco." : $" Deixadas há uns {Mathf.RoundToInt(t.Age / 10f) * 10} segundos.") : "";
+        string text = $"{(boar ? "Pegadas de casco, fundas" : "Pegadas pequenas, de coelho")}.{age} Levam {TrackingRules.Words(sector, g)}.";
         if (g >= 1) text += $" O rastro termina a uns {Mathf.RoundToInt(at.DistanceTo(t.GlobalPosition) / 32f)} passos.";
         if (g >= 2) text += $" Pela marca: {(boar ? "javali" : "coelho")} de Nv {World.LevelOf(boar ? "boar" : "rabbit", t.CreatureId)}.";
         if (World.State.CarcassAt(t.CreatureId) != null) text += " (O animal já foi caçado.)";
@@ -1126,6 +1205,7 @@ public partial class PlainsGame : Node2D, IMapSource
         if (g >= 1)
             foreach (var p in World.Objects.GetChildren().OfType<TrackPrint>().Where(p => p.TrailId == t.TrailId && p.Index > t.Index && (g >= 3 || p.Index <= t.Index + 3)))
                 p.Glow = g >= 3 ? -1f : 4f; // Mestre: the whole trail ahead keeps shining
+        if (t.CreatureId.Length > 0) SeenAnimals.Add(t.CreatureId); // tracked: it shows on the map
         if (World.State.MarkTrailExamined(t.TrailId))
         {
             Practice("rastreamento", t.TrailId);
@@ -1182,7 +1262,7 @@ public partial class PlainsGame : Node2D, IMapSource
             Level = Stats.Level, Xp = Stats.Xp, Points = Stats.Points, TotalXp = Stats.TotalXp, Attributes = Stats.Attributes,
             Practice = practice, PracticeKeys = keys, Crafted = _crafted.ToList(),
             Region = "planicie", Phase = "planicie", Book = Book, LossApplied = LossApplied, TechniquesReturned = TechniquesReturned,
-            Explored = Explored.Select(c => new[] { c.X, c.Y }).ToList(), Markers = MapMarkers.Select(m => new[] { m.X, m.Y }).ToList(), Clues = Clues.ToList(), Coins = Wallet.Coins,
+            Explored = Explored.Select(c => new[] { c.X, c.Y }).ToList(), SeenAnimals = SeenAnimals.OrderBy(a => a).ToList(), Markers = MapMarkers.Select(m => new[] { m.X, m.Y }).ToList(), Clues = Clues.ToList(), Coins = Wallet.Coins,
         };
     }
 
