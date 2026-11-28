@@ -1,6 +1,6 @@
 # Índice dos elementos — onde está cada um hoje
 
-*Atualizado em 2026-11-27 (pedido 14). Padrão: [PADRAO.md](PADRAO.md).*
+*Atualizado em 2026-11-28 (T07: javali, coelho, pegadas e efeitos do combate no padrão; antes: pedido 14). Padrão: [PADRAO.md](PADRAO.md).*
 
 **Como ler o estado:**
 - **no padrão:** desenho, dados, comportamento e prévia nos lugares do padrão.
@@ -28,7 +28,8 @@
 | Elemento | Desenho | Dados | Comportamento | Onde nasce | Estado | Tarefa |
 |---|---|---|---|---|---|---|
 | Sílex, galho, erva, raiz, bolsinha de moedas | `src/Plains/Pickup.cs` | `plains_items.json` | `PlainsGame.TakePickup` | features `flint`, `branch`, `herb`, `root`, `coinpouch` | antigo | T17 |
-| Fogueira, esteira de meditação, pegada | `src/Plains/Landmarks.cs` (`Campfire`, `MeditationMat`, `TrackPrint`) | `plains_worldgen.json`, `plains_ambient.json` | `PlainsGame.TryInteract` | clareira (forçados) e trilhas | antigo | T17 |
+| Fogueira, esteira de meditação | `src/Plains/Landmarks.cs` (`Campfire`, `MeditationMat`) | `plains_worldgen.json`, `plains_ambient.json` | `PlainsGame.TryInteract` | clareira (forçados) | antigo | T17 |
+| Pegada (gerada na trilha ou fresca) | `src/Elements/Fauna/PegadaArt.cs` | `assets/data/plains/plains_fauna.json` (`track_seconds` = quanto dura a fresca, `track_spacing_*`, `track_max`, `track_sector_degrees`) | `TrackPrint` (`Landmarks.cs`), `src/Creatures/FreshTracks.cs` (pegadas pelo caminho real), `TrackingRules` (`FaunaSettings.cs`), `PlainsGame.Examine` | trilhas da clareira (gerador) + atrás de coelhos e javalis em movimento | no padrão | — |
 | Carcaça | `src/Creatures/Carcass.cs` | `plains_progression.json` (`hides`, `spiritual`) | `PlainsGame.TakePart` | onde o animal morre | antigo | T17 |
 | Baú, vaso, erva, corpo, objeto caído do Vale | `src/Vale/ValeProps.cs` (`ValeChest`, `ValePot`, `ValeHerb`, `ValeCorpse`, `ValeDrop`) | `src/Vale/ValeState.cs` | `ValeGame` | `ValeMap.cs` | antigo | T17 |
 
@@ -36,8 +37,9 @@
 
 | Elemento | Desenho | Dados | Comportamento | Onde nasce | Estado | Tarefa |
 |---|---|---|---|---|---|---|
-| Coelho de Campo (`rabbit`) | `src/Creatures/Rabbit.cs` (`_Draw`) | `assets/data/plains/RabbitTuning.tres`, `plains_progression.json` (`creatures.rabbit`) | `src/Creatures/RabbitBrain.cs` | feature `burrow` | parcial | T07 / T17 |
-| Javali da Mata (`boar`) | `src/Creatures/Boar.cs` (`_Draw`, `DrawAssist`) | `BoarTuning.tres`, `creatures.boar` | `src/Creatures/BoarBrain.cs` | feature `boar` | parcial | T07 / T17 |
+| Coelho de Campo (`rabbit`) | `src/Elements/Fauna/CoelhoArt.cs` (orelhas em `Ears`, agachado e corrida em `Draw`, mergulho em `Dive`) | `assets/data/plains/RabbitTuning.tres`, `plains_progression.json` (`creatures.rabbit`), `plains_fauna.json` (`rabbit_dive_seconds`) | `src/Creatures/RabbitBrain.cs` + `Rabbit.cs` | feature `burrow` | no padrão | — |
+| Javali da Mata (`boar`) | `src/Elements/Fauna/JavaliArt.cs` (poeira em `Dust`, faixa da investida em `Strip`, resvalo em `Glance`, corpo e recuo em `Body`); áreas da assistência em `Boar.DrawAssist` | `BoarTuning.tres`, `creatures.boar`, `plains_fauna.json` (recuo, empurrão do aparo, fator da Lâmina) | `src/Creatures/BoarBrain.cs` + `Boar.cs` | feature `boar` | no padrão | — |
+| Efeitos do combate com a fauna | `src/Combat/KiFizzle.cs` (onde o Disparo de Ki se desfaz), `src/Game/NearBar.cs` (barra junto ao animal), `src/Game/TrackHint.cs` (cone da direção ao examinar) | `plains_fauna.json` (`near_bar_seconds`, `combat_radius`, `track_hint_seconds`) | `PlainsGame` (`UpdateNearBar`, `UpdateWaves`, `Examine`) | — | no padrão | — |
 | Discípulo da Guarda Fechada | `src/Combat/FighterArt.cs` | `assets/data/vale_combat.json` | `src/Vale/ValeFighter.cs` (`Kind.Disciple`) | `ValeMap.cs` | parcial | T08 |
 | Espadachim Sênior (chefe) | `FighterArt.cs` + `src/Vale/SeniorFinale.cs` (cena final) | `vale_combat.json` | `ValeFighter` (`Kind.Senior`) | `ValeMap.cs` | parcial | T08 |
 | Estátua da mestra | `FighterArt.cs` | `vale_combat.json` | `ValeFighter` (`Kind.Statue`) | `ValeMap.cs` | parcial | — |

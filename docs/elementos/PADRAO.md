@@ -31,7 +31,7 @@ Uma família tem **um comportamento** e **várias aparências**. Um elemento nov
 | Arbusto | `WorldElement` (reação ao contato, sem colisão) | `ArbustoArt` | `assets/data/elements/arbustos/` |
 | Ferramenta | `PlainsGame.Equip` + `ToolDef` (tipo, força, alcance) | `src/Elements/Tools/ToolArt.cs` (na mão), `ItemIcons.cs` (na bolsa) | `plains_items.json` (`tool`) |
 | Item / erva / material | `ItemCatalog`, `Inventory`, receitas | `ItemIcons.cs` | `plains_items.json` |
-| Animal | cérebro (`RabbitBrain`, `BoarBrain`) + corpo (`Rabbit`, `Boar`) | o `_Draw` do corpo | `RabbitTuning.tres`, `BoarTuning.tres`, `plains_progression.json` (`creatures`) |
+| Animal | cérebro (`RabbitBrain`, `BoarBrain`) + corpo (`Rabbit`, `Boar`) | `src/Elements/Fauna/CoelhoArt.cs`, `JavaliArt.cs`; a pegada em `PegadaArt.cs` (T07) | `RabbitTuning.tres`, `BoarTuning.tres`, `plains_progression.json` (`creatures`), `plains_fauna.json` (pegadas, leitura do combate) |
 | Inimigo humano / chefe | `ValeFighter` (estados, guarda, golpe) | `src/Combat/FighterArt.cs` | `assets/data/vale_combat.json` |
 | Técnica | `TechniqueData` / `TechniqueSet` (custo, estado, números) | o efeito no `Player` e no `KiWave` | `assets/data/combat_techniques.json` |
 | Interface | uma classe por painel (ver §5) | a própria classe | — |
@@ -49,6 +49,7 @@ src/Elements/                 elementos do mundo (padrão novo, pedido 14)
   Flora/  PinheiroArt.cs BambuArt.cs ArbustoArt.cs …
   Rocks/  RochaArt.cs …
   Tools/  ToolArt.cs
+  Fauna/  CoelhoArt.cs JavaliArt.cs PegadaArt.cs   (T07: o corpo e o cérebro continuam em src/Creatures/)
 assets/data/elements/<família>/<id>.json   um arquivo por elemento (esquema no LEIA-ME.md da pasta)
 src/Dev/Inspecao.tscn         prévia de qualquer elemento no tamanho real
 ```
