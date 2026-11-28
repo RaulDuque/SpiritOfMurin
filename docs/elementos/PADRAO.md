@@ -73,9 +73,15 @@ As famílias que já existiam antes do padrão (animais, lutadores, itens, técn
 | HUD (barras de Vida/Vigor/Ki, nível, mãos, relógio) | `src/Plains/PlainsHud.cs` (`DrawBars`, `SetTime`) | cores no topo da classe |
 | Barra do inimigo focado (com números) | `src/Plains/PlainsHud.cs` (`DrawFocusBar`, `FocusBarW/H`) | tamanho e cores |
 | Números de dano (assistência) | `src/Game/CombatText.cs` | cores, tamanhos, duração |
-| Bolsa e fabricação | `src/Game/BagPanel.cs` (desenho), `PlainsGame.RefreshRows` (linhas e receitas) | grade, textos |
+| Bolsa e fabricação (T06) | `src/Game/BagPanel.cs` (abas, grade, detalhe), `src/Items/BagRules.cs` (abas, "tenho X de Y", comparação em golpes), `PlainsGame.RefreshRows` (o que entra em cada aba) | `DrawTabs`, `DrawSlot`, `DrawDetail`; categoria de cada item em `plains_items.json` (`category`) |
+| Atalhos de item (T06) | `src/Game/QuickBar.cs` (a fileira no HUD), `PlainsGame.AssignQuick/UseQuick/RefreshQuickBar` | teclas em Esc → Controles (`quick_1`…`quick_8`) |
+| Alvo do E (T06) | `src/Game/TargetMarker.cs` (anel e lista), `TargetChoice` em `src/Items/BagRules.cs`, `PlainsGame.Interactables` | cores no topo da classe |
+| Ganhos sobre a cabeça (T06) | `src/Game/GainFeed.cs`, `GainLog` em `src/Items/BagRules.cs` | cores; tempo em `plains_hud.json` |
+| Tempos das mensagens (T06) | `assets/data/plains/plains_hud.json` (`src/Game/HudSettings.cs`) | `gain_seconds`, `toast_seconds`, `important_seconds` |
+| Rodapé contextual (T06) | `PlainsGame.ContextHints` + `PlainsHud.SetContext` | quais ações aparecem |
 | Ícones dos itens | `src/Game/ItemIcons.cs` | um `case` por id |
-| Ficha | `PlainsGame.RefreshSheet` + `PlainsHud` (painel `_sheet`) | linhas e prévia (`PlayerStats.Preview`) |
+| Ficha (T06) | `src/Game/SheetPanel.cs` (desenho, botões "+"), `PlainsGame.RefreshSheet` + `SheetExtras` (prévia da arma e do teto de CON), `PlayerStats.Preview` | `PlusRect`, cores |
+| Vida completa ao inspecionar (T06) | `PlainsHud.LifeFull`, `UpdateLifeTip` | texto e posição |
 | Mapa e minimapa | `src/Game/MapView.cs` (moldura, caderno), `src/Game/MapIcons.cs` (figuras e legenda), `PlainsGame.DrawMap` (o que aparece) | figuras e nomes |
 | Livro de Técnicas | `src/Game/BookPanel.cs` | páginas, comandos |
 | Pausa e Modo de assistência | `src/Game/GamePanels.cs` (`PauseRows`) | linhas do menu |

@@ -24,6 +24,8 @@ public sealed class ItemDef
     public string Id { get; set; } = "";
     /// <summary>Name shown to the player.</summary>
     public string Name { get; set; } = "";
+    /// <summary>The bag's tab (T06): "equipamento", "ferramenta", "consumivel" or "material".</summary>
+    public string Category { get; set; } = "";
     /// <summary>Short inventory text.</summary>
     public string Description { get; set; } = "";
     /// <summary>What this item puts in the hand ("knife", "axe", "pickaxe"), or empty.</summary>

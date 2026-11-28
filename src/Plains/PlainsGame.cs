@@ -130,7 +130,7 @@ public partial class PlainsGame : Node2D, IMapSource
     public int ReceiveCoins(int amount, string why = "")
     {
         int total = Wallet.Receive(amount);
-        if (amount > 0) Hud.Toast($"+{amount} moedas{(why.Length > 0 ? " (" + why + ")" : "")}   (tem {total})");
+        if (amount > 0) { Feed?.Add("coins", "moedas", amount); Hud.Log($"+{amount} moedas{(why.Length > 0 ? " (" + why + ")" : "")}   (tem {total})"); }
         return total;
     }
 
@@ -265,6 +265,14 @@ public partial class PlainsGame : Node2D, IMapSource
     public CombatText Numbers { get; private set; } = null!;
     /// <summary>The world's elements (trees, rocks, bamboo, bushes) from assets/data/elements (pedido 14, Entrega 5).</summary>
     public ElementCatalog Elements { get; private set; } = new();
+    /// <summary>What was just gained, over the head (T06).</summary>
+    public GainFeed Feed { get; private set; } = null!;
+    /// <summary>The ring and the list when several things are within reach of E (T06).</summary>
+    public TargetMarker Target { get; private set; } = null!;
+    /// <summary>Which of the things within reach E acts on (T06).</summary>
+    public TargetChoice Choice { get; } = new();
+    private readonly List<Node2D> _targets = new();
+    private HashSet<string> _craftable = new();
     /// <summary>The item in the hand (its id), or "" with empty hands.</summary>
     public string EquippedItem { get; private set; } = "";
     /// <summary>Proficiencies.</summary>
@@ -396,6 +404,9 @@ public partial class PlainsGame : Node2D, IMapSource
         Player.BladeActive += OnBlade;
         Numbers = new CombatText { Name = "NumerosDeDano" }; GetNode<Node2D>("World").AddChild(Numbers);
         Player.Hurt += a => Numbers.Taken(Player.GlobalPosition + new Vector2(8, -44), a);
+        Feed = new GainFeed { Name = "Ganhos", Around = Player }; GetNode<Node2D>("World").AddChild(Feed);
+        Feed.Log.Window = HudSettings.Current.GainSeconds;
+        Target = new TargetMarker { Name = "AlvoDoE", Around = Player }; GetNode<Node2D>("World").AddChild(Target);
         Player.EmptyHanded += () => Hud.Toast(Bindings.F("Mãos vazias: fabrique uma ferramenta no inventário ([inventory])."));
         Player.OutOfBreath += () => Hud.Toast("Sem fôlego: espere o vigor voltar ou coma carne assada.");
         Player.TechniqueRefused += (_, m) => { Hud.Toast(m); Sfx?.Play("fizzle"); };
@@ -435,6 +446,8 @@ public partial class PlainsGame : Node2D, IMapSource
             Tech.Set(b.Tech, b.State switch { "Selada" => TechniqueState.Sealed, "Enfraquecida" => TechniqueState.Weakened, _ => TechniqueState.Full });
         _returnOnStart = d != null; // a journey saved at level 3 or more with the techniques still sealed gets them back once, now
         ApplyStats(fill: d == null);
+        _craftable = Catalog.Recipes.Where(r => Inventory.CanCraft(r)).Select(r => r.Id).ToHashSet(); // what is already possible is not announced again
+        RefreshQuickBar();
         if (d != null)
         {
             // the item in hand; journeys from before only say "knife"
@@ -563,6 +576,8 @@ public partial class PlainsGame : Node2D, IMapSource
             else return;
             Handled(); return;
         }
+        // Tab opens the bag and, inside it, changes the tab (Shift+Tab goes back)
+        if (Hud.InventoryOpen && e.IsActionPressed("bag_tab")) { SetBagTab(Hud.Bag.ActiveTab + (Input.IsKeyPressed(Key.Shift) ? -1 : 1)); Handled(); return; }
         if (e.IsActionPressed("inventory") || (Hud.InventoryOpen && e.IsActionPressed("ui_cancel"))) { ToggleInventory(); Handled(); return; }
         if (e.IsActionPressed("sheet") || (Hud.SheetOpen && e.IsActionPressed("ui_cancel"))) { ToggleSheet(); Handled(); return; }
         if (Hud.InventoryOpen)
@@ -572,6 +587,7 @@ public partial class PlainsGame : Node2D, IMapSource
             else if (e.IsActionPressed("move_left") || e.IsActionPressed("ui_left")) Hud.MoveSelectionSide(-1);
             else if (e.IsActionPressed("move_right") || e.IsActionPressed("ui_right")) Hud.MoveSelectionSide(1);
             else if (e.IsActionPressed("use") || e.IsActionPressed("ui_accept")) ActOnSelection();
+            else if (QuickPressed(e) is int slot) AssignQuick(slot);
             else return;
             Handled(); return;
         }
@@ -588,6 +604,16 @@ public partial class PlainsGame : Node2D, IMapSource
         else if (e.IsActionPressed("book")) { ToggleBook(); Handled(); }
         else if (e.IsActionPressed("lock")) { ToggleFocus(); Handled(); }
         else if (e.IsActionPressed("heal")) { QuickHeal(); Handled(); }
+        else if (e.IsActionPressed("target_next")) { Choice.Step(1); Handled(); }
+        else if (e.IsActionPressed("target_prev")) { Choice.Step(-1); Handled(); }
+        else if (QuickPressed(e) is int slot) { UseQuick(slot); Handled(); }
+    }
+
+    // which item shortcut an event presses (0-7), or null
+    private static int? QuickPressed(InputEvent e)
+    {
+        for (int i = 0; i < Bindings.QuickActions.Length; i++) if (e.IsActionPressed(Bindings.QuickActions[i])) return i;
+        return null;
     }
 
     private void Handled() => GetViewport().SetInputAsHandled();
@@ -598,7 +624,9 @@ public partial class PlainsGame : Node2D, IMapSource
         switch (panel)
         {
             case "inv": ActOnSelection(); break;
-            case "sheet": RefreshSheet(); SpendPoint(PlayerStats.AttributeIds[Mathf.Clamp(i, 0, 5)]); break;
+            case "sheet": RefreshSheet(); SpendPoint(PlayerStats.AttributeIds[Mathf.Clamp(i, 0, PlayerStats.AttributeIds.Length - 1)]); break;
+            case "sheethover": RefreshSheet(); break;
+            case "bagtab": SetBagTab(i); break;
             case "book": Hud.ShowBook(BookRows()); break;
             case "title": TitleChoose(); break;
         }
@@ -739,10 +767,11 @@ public partial class PlainsGame : Node2D, IMapSource
     {
         if (amount <= 0) return;
         int levels = Stats.AddXp(amount);
-        if (!quiet) Hud.Toast($"+{amount} XP ({reason})");
+        Feed?.Add("xp", "XP", amount); // over the head, adding up (T06); the log keeps the reason
+        Hud.Log($"+{amount} XP ({reason})");
         if (levels > 0)
         {
-            Hud.Toast(Bindings.F($"Nível {Stats.Level}! +{levels * Data.PointsPerLevel} pontos de atributo: abra a ficha ([sheet])."));
+            Hud.Toast(Bindings.F($"Nível {Stats.Level}! +{levels * Data.PointsPerLevel} pontos de atributo: abra a ficha ([sheet])."), important: true);
             RefreshSheet();
             ReturnTechniques();
         }
@@ -845,6 +874,7 @@ public partial class PlainsGame : Node2D, IMapSource
         foreach (var (item, count) in got)
         {
             Inventory.Add(item, count);
+            Feed.Add("item:" + item, Catalog.Get(item).Name, count);
             bool bonus = e.Def.Bonus.Any(b => b.Item == item);
             parts.Add($"+{count} {Catalog.Get(item).Name}{(bonus ? " (achado!)" : "")}");
         }
@@ -852,6 +882,7 @@ public partial class PlainsGame : Node2D, IMapSource
         Hud.Toast($"{e.Def.Name}: " + (parts.Count > 0 ? string.Join(" · ", parts) : "nada aproveitável."));
         LastYield = got;
         if (e.Def.Xp > 0) GainXp(e.Def.Xp, e.Def.Name, quiet: true);
+        CheckNewRecipes();
         RefreshRows();
     }
 
@@ -884,6 +915,45 @@ public partial class PlainsGame : Node2D, IMapSource
     // ------------------------------------------------------------------ interaction
 
     /// <summary>The nearest thing E can act on, or null.</summary>
+    /// <summary>Everything E can act on within reach now, nearest first (the trail's prints a little behind, as before).</summary>
+    public List<Node2D> Interactables()
+    {
+        var found = new List<(Node2D N, float Score)>();
+        foreach (var n in World.Objects.GetChildren())
+        {
+            if (n is not (Pickup or Carcass or TrackPrint or Campfire or MeditationMat) || n.IsQueuedForDeletion()) continue;
+            var nd = (Node2D)n;
+            float reach = n is Campfire or MeditationMat ? InteractRadius + 12 : InteractRadius;
+            float d = nd.GlobalPosition.DistanceTo(Player.GlobalPosition);
+            if (d <= reach) found.Add((nd, d + (n is TrackPrint ? 10 : 0)));
+        }
+        // one print per trail (the nearest): two prints of the same trail are one choice, not two "pegada" in the list
+        var seen = new HashSet<string>();
+        return found.OrderBy(f => f.Score).Where(f => f.N is not TrackPrint tp || seen.Add(tp.TrailId)).Select(f => f.N).ToList();
+    }
+
+    /// <summary>The target E acts on now: the chosen one among <see cref="Interactables"/> (the nearest unless the wheel chose another).</summary>
+    public Node2D? ChosenTarget()
+    {
+        var list = Interactables();
+        Choice.Update(list.Select(n => n.GetInstanceId().ToString()).ToList());
+        return list.FirstOrDefault(n => n.GetInstanceId().ToString() == Choice.Chosen);
+    }
+
+    /// <summary>What a target is called in the list ("erva", "pegada", "carcaça de coelho"…).</summary>
+    public string TargetName(Node2D n) => n switch
+    {
+        Pickup { ItemId: "moedas" } => "bolsinha de moedas",
+        Pickup { ItemId: "grama_sangue" } => "erva",
+        Pickup { ItemId: "raiz_amarga" } => "raiz",
+        Pickup p => Catalog.Get(p.ItemId).Name.ToLowerInvariant(),
+        Carcass c => c.IsBoar ? "carcaça de javali" : "carcaça de coelho",
+        TrackPrint => "pegada",
+        Campfire => "fogueira",
+        MeditationMat => "esteira",
+        _ => n.Name,
+    };
+
     public Node2D? NearestInteractable()
     {
         Node2D? best = null; float bestD = float.MaxValue;
@@ -920,7 +990,15 @@ public partial class PlainsGame : Node2D, IMapSource
 
     private void UpdatePrompt()
     {
-        var t = Hud.AnyPanelOpen ? null : NearestInteractable();
+        Node2D? t = null;
+        if (!Hud.AnyPanelOpen)
+        {
+            t = ChosenTarget();
+            var all = Interactables();
+            if (t != null && all.Count > 1) Target.Show(all.Select(TargetName).ToList(), Mathf.Max(0, all.IndexOf(t)), t.GlobalPosition);
+            else Target.Show(System.Array.Empty<string>(), 0, Vector2.Zero);
+        }
+        else Target.Show(System.Array.Empty<string>(), 0, Vector2.Zero);
         string? text = t switch
         {
             Pickup { ItemId: "moedas" } => Bindings.F("[use] · pegar a bolsinha de moedas"),
@@ -942,19 +1020,22 @@ public partial class PlainsGame : Node2D, IMapSource
         }
         Vector2 screen = t == null ? Vector2.Zero : GetViewport().GetCanvasTransform() * t.GlobalPosition;
         Hud.SetPrompt(text, screen);
+        Hud.SetContext(ContextHints(t, text));
     }
 
     private int AddItem(string id, int n = 1)
     {
         int total = Inventory.Add(id, n);
-        Hud.Toast($"+{n} {Catalog.Get(id).Name}   (tem {total})");
+        Feed.Add("item:" + id, Catalog.Get(id).Name, n); // over the head, adding up (T06)
+        Hud.Log($"+{n} {Catalog.Get(id).Name}   (tem {total})");
+        CheckNewRecipes();
         return total;
     }
 
     /// <summary>Acts on the nearest thing; <paramref name="withKi"/> is K (skin with Ki). Returns true when something happened.</summary>
     public bool TryInteract(bool withKi)
     {
-        switch (NearestInteractable())
+        switch (withKi ? NearestInteractable() : ChosenTarget())
         {
             case Pickup p: return withKi ? false : TakePickup(p);
             case Carcass c: return TakePart(c, withKi);
@@ -1112,6 +1193,7 @@ public partial class PlainsGame : Node2D, IMapSource
     {
         if (Hud.SheetOpen) Hud.ShowSheet(false);
         bool open = !Hud.InventoryOpen;
+        if (open) { Hud.Bag.ActiveTab = 0; Hud.SetRows(new()); } // the bag opens on "Tudo" (T06)
         RefreshRows();
         Hud.ShowInventory(open);
         Player.InputLocked = open;
@@ -1148,31 +1230,78 @@ public partial class PlainsGame : Node2D, IMapSource
         return parts.Count == 0 ? "" : "Efeito: " + string.Join(", ", parts) + ".";
     }
 
+    /// <summary>The bag's open tab id ("tudo", "ferramenta", …, "fabricacao").</summary>
+    public string BagTab => BagRules.Tabs[Mathf.Clamp(Hud.Bag.ActiveTab, 0, BagRules.Tabs.Length - 1)].Id;
+
+    /// <summary>Opens a tab of the bag (wrapping around).</summary>
+    public void SetBagTab(int t)
+    {
+        int n = BagRules.Tabs.Length;
+        Hud.Bag.ActiveTab = ((t % n) + n) % n;
+        Hud.SetRows(new()); // the selection goes back to the first slot
+        RefreshRows();
+    }
+
+    // the numbers of a thing held in hand: reach and damage on animals (FOR included); the knife's when it has none of its own
+    private (float Reach, float Damage) HandNumbers(ItemDef? d)
+    {
+        if (d == null) return (0, 0);
+        float reach = d.Tool is { Reach: > 0 } t ? t.Reach : Player.Tuning.KnifeReach;
+        int dmg = d.Tool is { Damage: > 0 } t2 ? t2.Damage : Player.Tuning.KnifeDamage;
+        return (reach, dmg * Stats.MeleeDamageMultiplier);
+    }
+
+    // how an item that goes in the hand compares with what is in the hand now, in strikes on the same tree or rock
+    private List<PlainsHud.BagLine> CompareLines(ItemDef other)
+    {
+        var lines = new List<PlainsHud.BagLine>();
+        if (other.Equip.Length == 0) return lines;
+        if (other.Id == EquippedItem) { lines.Add(new("Está na sua mão.", PlainsHud.BagLineKind.Head)); return lines; }
+        var hand = EquippedItem.Length > 0 ? Catalog.Get(EquippedItem) : null;
+        var (hr, hd) = HandNumbers(hand); var (or, od) = HandNumbers(other);
+        lines.Add(new(hand == null ? $"Mãos vazias → com {other.Name}:" : $"Na mão: {hand.Name} → se trocar:", PlainsHud.BagLineKind.Head));
+        foreach (var c in BagRules.CompareTools(hand?.Tool, hr, hd, other.Tool, or, od, Elements.All.Values))
+            lines.Add(new($"{c.What}: {c.Hand} → {c.Other}", c.Better ? PlainsHud.BagLineKind.Better : c.Worse ? PlainsHud.BagLineKind.Worse : PlainsHud.BagLineKind.Plain));
+        return lines;
+    }
+
     private void RefreshRows()
     {
         var rows = new List<PlainsHud.Row>();
-        foreach (var (id, count) in Inventory.Entries)
+        string tab = BagTab;
+        var slots = QuickSlots();
+        if (tab != "fabricacao")
+            foreach (var (id, count) in Inventory.Entries)
+            {
+                var d = Catalog.Get(id);
+                if (!BagRules.InTab(d, tab)) continue;
+                bool inHand = id == EquippedItem;
+                string tag = d.Equip.Length > 0 ? (inHand ? "  [na mão]" : Bindings.F("  [[use]: equipar]")) : d.Usable ? Bindings.F("  [[use]: usar]") : "";
+                string action = d.Equip.Length > 0 ? (inHand ? "Na mão" : "Equipar") : d.Usable ? (id.StartsWith("carne") || id.StartsWith("broto") ? "Comer" : "Usar") : "";
+                string detail = (d.Description + " " + Effect(d)).Trim() + (action.Length > 0 ? "" : id.StartsWith("carne") ? " Crua: asse na fogueira (Fabricação) para poder comer." : " Material: serve para fabricar.");
+                int slot = System.Array.IndexOf(slots, id);
+                rows.Add(new PlainsHud.Row(false, id, $"{d.Name} ×{count}{tag}", detail, !inHand, Icon: id, Count: count, Equipped: inHand, Action: action, Name: d.Name,
+                    Lines: CompareLines(d), Slot: slot >= 0 ? QuickKey(slot) : ""));
+            }
+        else
         {
-            var d = Catalog.Get(id);
-            bool inHand = id == EquippedItem;
-            string tag = d.Equip.Length > 0 ? (inHand ? "  [na mão]" : Bindings.F("  [[use]: equipar]")) : d.Usable ? Bindings.F("  [[use]: usar]") : "";
-            // the main action now: equip a tool, eat meat, use a herb; nothing for materials
-            string action = d.Equip.Length > 0 ? (inHand ? "Na mão" : "Equipar") : d.Usable ? (id.StartsWith("carne") ? "Comer" : "Usar") : "";
-            string detail = (d.Description + " " + Effect(d)).Trim() + (action.Length > 0 ? "" : id.StartsWith("carne") ? " Crua: asse na fogueira (Fabricar) para poder comer." : " Material: serve para fabricar.");
-            rows.Add(new PlainsHud.Row(false, id, $"{d.Name} ×{count}{tag}", detail, !inHand, Icon: id, Count: count, Equipped: inHand, Action: action, Name: d.Name));
-        }
-        bool first = true;
-        foreach (var r in Catalog.Recipes)
-        {
-            string inputs = string.Join(" + ", r.Inputs.Select(kv => $"{Catalog.Get(kv.Key).Name} {Inventory.Count(kv.Key)}/{kv.Value}"));
-            var o = Catalog.Get(r.Output);
-            string where = r.Station == "fogueira" ? " · na fogueira" : "";
-            string detail = $"Ingredientes: {string.Join(", ", r.Inputs.Select(kv => $"{kv.Value} {Catalog.Get(kv.Key).Name}"))}{where}. Resultado: {r.Count} {o.Name}. {o.Description} {Effect(o)}".Trim();
-            bool can = Inventory.CanCraft(r) && NearStation(r.Station);
-            string need = !Inventory.CanCraft(r) ? "Falta: " + string.Join(", ", r.Inputs.Where(kv => Inventory.Count(kv.Key) < kv.Value).Select(kv => $"{kv.Value - Inventory.Count(kv.Key)} {Catalog.Get(kv.Key).Name}")) : !NearStation(r.Station) ? "Só junto à fogueira." : "";
-            rows.Add(new PlainsHud.Row(true, r.Id, $"{(r.Count > 1 ? r.Count + "× " : "")}{o.Name}  ({inputs}){where}", $"Fabricar {o.Name}: {inputs}{where}. {o.Description} {Effect(o)}".Trim(), can, first ? "Fabricar" : "",
-                Icon: r.Output, Count: r.Count, Action: "Fabricar", Name: $"Fabricar {o.Name}", Need: need));
-            first = false;
+            bool first = true;
+            foreach (var r in Catalog.Recipes)
+            {
+                var o = Catalog.Get(r.Output);
+                var needs = BagRules.Needs(r, Inventory.Count, Catalog);
+                string where = r.Station == "fogueira" ? " · na fogueira" : "";
+                bool can = Inventory.CanCraft(r) && NearStation(r.Station);
+                string need = !Inventory.CanCraft(r) ? "Falta: " + string.Join(", ", needs.Where(n => !n.Ok).Select(n => $"{n.Needed - n.Have} {n.Name}")) : !NearStation(r.Station) ? "Só junto à fogueira." : "";
+                var lines = new List<PlainsHud.BagLine> { new("Ingredientes:", PlainsHud.BagLineKind.Head) };
+                lines.AddRange(needs.Select(n => new PlainsHud.BagLine((n.Ok ? "✓ " : "✗ ") + n.Line, n.Ok ? PlainsHud.BagLineKind.Ok : PlainsHud.BagLineKind.Missing)));
+                if (r.Station == "fogueira") lines.Add(new(NearStation(r.Station) ? "✓ junto à fogueira" : "✗ só junto à fogueira", NearStation(r.Station) ? PlainsHud.BagLineKind.Ok : PlainsHud.BagLineKind.Missing));
+                lines.AddRange(CompareLines(o));
+                string inputs = string.Join(" + ", r.Inputs.Select(kv => $"{Catalog.Get(kv.Key).Name} {Inventory.Count(kv.Key)}/{kv.Value}"));
+                rows.Add(new PlainsHud.Row(true, r.Id, $"{(r.Count > 1 ? r.Count + "× " : "")}{o.Name}  ({inputs}){where}", $"Resultado: {r.Count} {o.Name}. {o.Description} {Effect(o)}".Trim(), can, first ? "Fabricar" : "",
+                    Icon: r.Output, Count: r.Count, Action: "Fabricar", Name: $"Fabricar {o.Name}", Need: need, Lines: lines));
+                first = false;
+            }
         }
         Hud.SetRows(rows);
         Hud.SetMoney(Wallet.Coins);
@@ -1239,6 +1368,89 @@ public partial class PlainsGame : Node2D, IMapSource
         return true;
     }
 
+    // ------------------------------------------------------------------ item shortcuts (T06)
+
+    /// <summary>What each shortcut holds now (8 slots: keys 1-6, Q, R by default), from the preferences.</summary>
+    public string[] QuickSlots()
+    {
+        var saved = Prefs.Load().QuickSlots;
+        var slots = new string[Bindings.QuickActions.Length];
+        for (int i = 0; i < slots.Length; i++) slots[i] = saved.TryGetValue((i + 1).ToString(), out var id) ? id : "";
+        return slots;
+    }
+
+    /// <summary>The key shown for a shortcut ("1", "Q"…).</summary>
+    public static string QuickKey(int slot) => Bindings.Key1(Bindings.QuickActions[slot]);
+
+    /// <summary>Puts the selected item of the bag on a shortcut (again: takes it off). An item sits on one shortcut only.</summary>
+    public void AssignQuick(int slot)
+    {
+        if (Hud.Rows.Count == 0 || Hud.Rows[Hud.Selected].IsRecipe) return;
+        string id = Hud.Rows[Hud.Selected].Id;
+        var p = Prefs.Load();
+        string key = (slot + 1).ToString();
+        bool off = p.QuickSlots.TryGetValue(key, out var was) && was == id;
+        foreach (var k in p.QuickSlots.Where(kv => kv.Value == id).Select(kv => kv.Key).ToList()) p.QuickSlots.Remove(k);
+        if (!off) p.QuickSlots[key] = id;
+        p.Save();
+        Hud.Toast(off ? $"{Catalog.Get(id).Name} saiu do atalho {QuickKey(slot)}." : $"{Catalog.Get(id).Name} no atalho {QuickKey(slot)}.");
+        RefreshRows(); RefreshQuickBar();
+    }
+
+    /// <summary>Uses (or equips) the item on a shortcut. An empty or used-up shortcut says so.</summary>
+    public bool UseQuick(int slot)
+    {
+        string id = QuickSlots()[slot];
+        if (id.Length == 0) { Hud.Toast(Bindings.F($"Atalho {QuickKey(slot)} vazio: na bolsa ([inventory]), escolha um item e aperte {QuickKey(slot)}.")); return false; }
+        if (Inventory.Count(id) <= 0) { Hud.Toast($"Atalho {QuickKey(slot)}: {Catalog.Get(id).Name} acabou."); RefreshQuickBar(); return false; }
+        bool ok = UseItem(id);
+        RefreshQuickBar();
+        return ok;
+    }
+
+    /// <summary>The shortcuts row on the HUD: H (the herb, with the Bolsa Simples) and every shortcut in use, with how many are left.</summary>
+    public void RefreshQuickBar()
+    {
+        var list = new List<QuickBar.Slot>();
+        if (Inventory.Count("bolsa_simples") > 0)
+        {
+            var herbs = Inventory.Entries.Where(e => Catalog.Get(e.Id).QuickSlot).ToList();
+            string icon = herbs.Count > 0 ? herbs[0].Id : "grama_sangue_q1";
+            list.Add(new QuickBar.Slot(Bindings.Key1("heal"), icon, herbs.Sum(h => h.Count), "erva"));
+        }
+        var slots = QuickSlots();
+        for (int i = 0; i < slots.Length; i++)
+            if (slots[i].Length > 0) list.Add(new QuickBar.Slot(QuickKey(i), slots[i], Inventory.Count(slots[i]), Catalog.Get(slots[i]).Name));
+        Hud.Quick.Set(list);
+    }
+
+    // a recipe that just became possible is announced once (T06: "assim que eu conseguir o último ingrediente")
+    private void CheckNewRecipes()
+    {
+        var now = Catalog.Recipes.Where(r => Inventory.CanCraft(r)).Select(r => r.Id).ToHashSet();
+        foreach (var id in now.Where(id => !_craftable.Contains(id)))
+        {
+            var r = Catalog.Recipes.First(x => x.Id == id);
+            Hud.Toast(Bindings.F($"Agora dá para fabricar: {Catalog.Get(r.Output).Name}{(r.Station == "fogueira" ? " (na fogueira)" : "")} — [inventory], aba Fabricação."), important: true);
+        }
+        _craftable = now;
+        RefreshQuickBar();
+    }
+
+    // the footer's useful actions now (T06): the target, the tool in front of a tree or rock, the water, an animal near
+    private string ContextHints(Node2D? t, string? prompt)
+    {
+        var parts = new List<string>();
+        if (t != null && prompt != null) parts.Add(prompt.Replace(" · ", "  "));
+        if (Interactables().Count > 1) parts.Add("roda: trocar alvo");
+        if (t == null && NearestWorkable() is { } we && ToolInHand is { } tool && we.Def.Tools.Contains(tool.Kind)) parts.Add($"[cut] {(we.Def.Family == "rocha" ? "quebrar" : "cortar")}");
+        if (Player.OnWater != WaterState.None) parts.Add(Player.OnWater == WaterState.Walk ? "[sneak] segurado: sobre a água" : "[sneak] andar sobre a água");
+        if (Focused == null && GetTree().GetNodesInGroup("creatures").OfType<IHittable>().Any(h => h.CanBeHit && h.GlobalPosition.DistanceTo(Player.GlobalPosition) < FocusRadius)) parts.Add("[lock] focar");
+        else if (Focused != null) parts.Add("[cut] corte · [step] passo");
+        if (Inventory.Count("bolsa_simples") > 0 && Player.Health < Player.MaxHealth && Inventory.Entries.Any(e => Catalog.Get(e.Id).QuickSlot)) parts.Add("[heal] erva");
+        return string.Join(" · ", parts);
+    }
+
     /// <summary>H: with the Bolsa Simples, uses the best herb without opening the inventory.</summary>
     public bool QuickHeal()
     {
@@ -1277,8 +1489,37 @@ public partial class PlainsGame : Node2D, IMapSource
             string prog = next is { } n ? $"{Skills.Practice(s)}/{n} para {Data.GradeName(g + 1)}" : "grau máximo";
             detail.Add($"  {Data.Skill(s).Name} — {Data.GradeName(g)} ({prog}): {Proficiencies.Benefit(s, g)}");
         }
-        string header = $"Vida {Player.MaxHealth} · Vigor {Stats.MaxVigor:0} · Ki {Stats.MaxKi:0} · XP {Stats.Xp}/{Stats.XpToNext(Stats.Level)} (faltam {Stats.XpMissing}) · Pontos: {Stats.Points}";
+        // the next point's effect on the hand and the ceiling of CON (T06), after the sheet's own preview
+        detail.InsertRange(Mathf.Min(detail.Count, 1 + Stats.Preview(sel, herb).Count), SheetExtras(sel));
+        string header = $"{PlainsHud.LifeFull(Player.Health, Player.MaxHealth)} · Vigor {Mathf.FloorToInt(Player.Vigor)}/{Stats.MaxVigor:0} · Ki {Mathf.FloorToInt(Player.Ki)}/{Stats.MaxKi:0} · XP {Stats.Xp}/{Stats.XpToNext(Stats.Level)} (faltam {Stats.XpMissing}) · Pontos: {Stats.Points}";
+        Hud.Sheet.Points = Stats.Points;
+        Hud.Sheet.Lines.Clear();
+        foreach (var a in PlayerStats.AttributeIds) Hud.Sheet.Lines.Add(new SheetPanel.Line(PlayerStats.Names[a].Short, Stats.Get(a), a == "ki" ? "Reserva de energia" : PlayerStats.Names[a].Long));
         Hud.SetSheet($"Ficha — Nível {Stats.Level}", header, rows, string.Join("\n", detail));
+    }
+
+    // what one more point means for the thing in hand (FOR) and how far CON still goes (T06), with the real formulas
+    private List<string> SheetExtras(string attr)
+    {
+        var lines = new List<string>();
+        var hand = EquippedItem.Length > 0 ? Catalog.Get(EquippedItem) : null;
+        if (attr == "for")
+        {
+            if (hand == null) { lines.Add("  Mãos vazias: equipe uma faca ou ferramenta para ver o dano."); return lines; }
+            int dmg = hand.Tool is { Damage: > 0 } t ? t.Damage : Player.Tuning.KnifeDamage;
+            float now = dmg * Stats.MeleeDamageMultiplier, after = dmg * (Stats.MeleeDamageMultiplier + Data.PerPoint.ForMeleeDamage);
+            static string N2(float v) => v.ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo("pt-BR")); // two decimals: FOR moves the damage in hundredths
+            lines.Add($"  {hand.Name} (na mão): dano em animais {N2(now)} → {N2(after)}");
+            lines.Add($"  Crítico (×{Stats.CritMultiplier:0.0#}): {N2(now * Stats.CritMultiplier)} → {N2(after * Stats.CritMultiplier)}");
+            if (hand.Tool != null && hand.Tool.Kind != "faca") lines.Add("  Árvores e rochas não mudam: isso é a força da ferramenta, não o FOR.");
+        }
+        else if (attr == "con")
+        {
+            float red = 1 - Stats.DamageTakenMultiplier, cap = Data.PerPoint.ConReductionCap;
+            int pointsLeft = Mathf.CeilToInt((cap - red) / Mathf.Max(0.0001f, Data.PerPoint.ConDamageReduction) - 0.0001f);
+            lines.Add($"  Dano recebido hoje: {Stats.DamageTakenMultiplier * 100:0}% · teto: {(1 - cap) * 100:0}% · ainda reduz {(cap - red) * 100:0} pontos ({pointsLeft} pontos de CON)");
+        }
+        return lines;
     }
 
     /// <summary>Spends a point on an attribute and applies it. Returns true when spent.</summary>

@@ -26,8 +26,17 @@ public partial class PlainsHud : CanvasLayer
     /// <param name="Action">The main action now ("Equipar", "Usar", "Comer", "Fabricar"; empty: none).</param>
     /// <param name="Name">The item's name (without counts or tags).</param>
     /// <param name="Need">Why the action cannot be done now (what is missing).</param>
+    /// <param name="Lines">Extra lines of the bag's detail (T06): ingredients ("tenho X de Y") and the comparison with the hand.</param>
+    /// <param name="Slot">The item shortcut that holds this item ("1", "Q"…), or "".</param>
     public readonly record struct Row(bool IsRecipe, string Id, string Text, string Detail, bool Enabled, string Group = "",
-        string Icon = "", int Count = 0, bool Equipped = false, string Action = "", string Name = "", string Need = "");
+        string Icon = "", int Count = 0, bool Equipped = false, string Action = "", string Name = "", string Need = "",
+        IReadOnlyList<BagLine>? Lines = null, string Slot = "");
+
+    /// <summary>A line of the bag's detail and how it reads: a heading, fine, missing, better, worse, plain.</summary>
+    public readonly record struct BagLine(string Text, BagLineKind Kind);
+
+    /// <summary>How a detail line is coloured.</summary>
+    public enum BagLineKind { Plain, Head, Ok, Missing, Better, Worse }
 
     private static readonly Color Text = new("#ece5d0"), Dim = new("#a39e8c"), OutlineC = new("#16140f"), Life = new("#7a3a32"), LifeHi = new("#b0574a"),
         LifeBack = new("#2b1f1a"), RegenC = new("#4c7c4a"), Panel = new(0.07f, 0.075f, 0.06f, 0.94f), Select = new("#c9a14a"), Disabled = new("#6b675c"),
@@ -45,6 +54,8 @@ public partial class PlainsHud : CanvasLayer
         public string Empty = "";
     }
 
+    /// <summary>The Vida/Vigor/Ki bars (the mouse over them shows the full Vida).</summary>
+    public Control Bars => _bars;
     private Control _root = null!, _bars = null!, _focusBar = null!, _footer = null!;
     private Label _life = null!, _vigor = null!, _ki = null!, _level = null!, _hands = null!, _seed = null!, _controls = null!, _prompt = null!, _overlayText = null!, _focus = null!;
     private VBoxContainer _toasts = null!;
@@ -76,6 +87,14 @@ public partial class PlainsHud : CanvasLayer
     /// <summary>A row was clicked with the mouse: the panel ("inv", "sheet", "title", "book", "pause") and the row index.</summary>
     public event Action<string, int>? RowClicked;
 
+    /// <summary>A rectangle of a HUD control (its local coordinates) in window coordinates, for mouse checks.</summary>
+    public Rect2 ToWindow(Control c, Rect2 local)
+    {
+        var ft = GetViewport().GetFinalTransform(); var gt = c.GetGlobalTransformWithCanvas();
+        Vector2 a = ft * (gt * local.Position), b = ft * (gt * local.End);
+        return new Rect2(a, b - a);
+    }
+
     /// <summary>The screen rectangle (in window coordinates) of a row of a panel, for mouse checks; null when not shown.</summary>
     public Rect2? RowScreenRect(string panel, int index)
     {
@@ -106,11 +125,38 @@ public partial class PlainsHud : CanvasLayer
     private ColorRect _overlay = null!;
     private float _health, _max = 10, _pending, _vig, _maxVig, _kiNow, _maxKi, _focusFrac, _overlayTime, _overlayHold, _palm, _palmCost = 100;
     private readonly List<(Label L, float T)> _toastLabels = new();
+    private Label _lifeTip = null!;
+    private System.Action<string>? _noticeHandler;
+    private bool _lifeHover;
+    private string _context = "";
+
+    /// <summary>The character sheet drawn on the parchment (T06), over the sheet's rows and detail.</summary>
+    public SheetPanel Sheet { get; private set; } = null!;
+    /// <summary>The item shortcuts row above the footer (T06).</summary>
+    public QuickBar Quick { get; private set; } = null!;
+    /// <summary>The full Vida shown while the mouse is over the bar ("Vida 60% · 6/10"), or "" (T06).</summary>
+    public string LifeTipText => _lifeTip.Visible ? _lifeTip.Text : "";
+    /// <summary>The full Vida in words: "Vida 60% · 6/10" (whole numbers, or one decimal when fractional).</summary>
+    public static string LifeFull(float health, int max) => $"Vida {LifePercent(health, max)}% · {SpiritOfMurin.Combat.DamageRules.Format(health)}/{max}";
+
+    /// <summary>Records a line in <see cref="Messages"/> without showing it (gains go over the head instead, T06).</summary>
+    public void Log(string text) { Messages.Add(text); if (Messages.Count > 500) Messages.RemoveAt(0); }
+
+    /// <summary>
+    /// The footer's useful actions now (T06): <paramref name="context"/> (already with keys, e.g. "E pegar carne · Shift andar
+    /// sobre a água") goes first, then what K does, then the panels. The full list is in Esc → Lista de comandos.
+    /// </summary>
+    public void SetContext(string context)
+    {
+        if (_context == context) return;
+        _context = context;
+        if (!_valeMode) _controls.Text = ControlsLine();
+    }
 
     /// <summary>True while the inventory is open.</summary>
     public bool InventoryOpen => Bag.Visible;
     /// <summary>True while the character sheet is open.</summary>
-    public bool SheetOpen => _sheet.Box.Visible;
+    public bool SheetOpen => Sheet.Visible;
     /// <summary>True while the title menu is shown.</summary>
     public bool TitleOpen => _title.Box.Visible;
     /// <summary>True while any panel is open.</summary>
@@ -195,6 +241,7 @@ public partial class PlainsHud : CanvasLayer
         // the footer: a dark strip across the bottom so the shortcuts read over any ground
         _footer.Position = new Vector2(0, H - 15); _footer.Size = new Vector2(W, 15);
         _controls.Position = new Vector2(6, H - 14); _controls.Size = new Vector2(W - 12, 12);
+        Quick.Position = new Vector2(6, H - 15 - QuickBar.SlotPx - 4);
         _toasts.Position = new Vector2(W / 2 - 200, H - 98);
         _banner.Position = new Vector2(0, 52); _banner.Size = new Vector2(W, 20);
         _overlayText.Position = new Vector2(0, H / 2 - 20); _overlayText.Size = new Vector2(W, 20);
@@ -202,6 +249,7 @@ public partial class PlainsHud : CanvasLayer
             m.Box.Position = new Vector2(Mathf.Round((W - m.Box.Size.X) / 2), Mathf.Round(Mathf.Max(18, (H - m.Box.Size.Y) / 2 - 6)));
         Map.Size = new Vector2(Mathf.Min(W - 40, 900), H - 46); Map.Position = new Vector2(Mathf.Round((W - Map.Size.X) / 2), 22);
         Bag.Size = new Vector2(Mathf.Min(W - 40, 560), Mathf.Min(H - 46, 330)); Bag.Position = new Vector2(Mathf.Round((W - Bag.Size.X) / 2), Mathf.Round(Mathf.Max(22, (H - Bag.Size.Y) / 2)));
+        Sheet.Size = new Vector2(Mathf.Min(W - 40, 500), Mathf.Min(H - 40, 320)); Sheet.Position = new Vector2(Mathf.Round((W - Sheet.Size.X) / 2), Mathf.Round(Mathf.Max(20, (H - Sheet.Size.Y) / 2)));
         Book.Size = new Vector2(Mathf.Min(W - 40, 820), H - 46); Book.Position = new Vector2(Mathf.Round((W - Book.Size.X) / 2), 22);
         Controls.Size = new Vector2(Mathf.Min(W - 24, 560), H - 34); Controls.Position = new Vector2(Mathf.Round((W - Controls.Size.X) / 2), 14);
     }
@@ -229,9 +277,12 @@ public partial class PlainsHud : CanvasLayer
         _root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(_root);
 
-        _bars = new Control { Size = new Vector2(220, 56), MouseFilter = Control.MouseFilterEnum.Ignore };
+        _bars = new Control { Size = new Vector2(220, 56), MouseFilter = Control.MouseFilterEnum.Pass };
         _bars.Draw += DrawBars;
         _root.AddChild(_bars);
+        // the full Vida while the mouse is over the bars (T06): the HUD itself keeps only the percentage
+        _bars.MouseEntered += () => { _lifeHover = true; UpdateLifeTip(); };
+        _bars.MouseExited += () => { _lifeHover = false; UpdateLifeTip(); };
         _life = Add(MakeLabel(8, Text), new Vector2(97, 0));
         _vigor = Add(MakeLabel(8, Dim), new Vector2(97, 10));
         _ki = Add(MakeLabel(8, Dim), new Vector2(97, 20));
@@ -251,15 +302,21 @@ public partial class PlainsHud : CanvasLayer
         _root.AddChild(_footer);
         _controls = Add(MakeLabel(8, Text), new Vector2(6, 346));
         _controls.ClipText = true;
-        _controlsTemplate = "[walk] andar · [sneak] quieto · [use] pegar/examinar · [inventory] inventário · [sheet] ficha · [book] livro · [map] mapa · [lock] focar · {ki} · [heal] erva · [cut+] corte · [step+] passo · [menu] pausa";
+        // T06: the Planície's footer is the context (set by the game) + what K does + the panels; the full list is in Esc
+        _controlsTemplate = "{ki} · [inventory] bolsa · [sheet] ficha · [map] mapa · [menu] comandos";
         _valeTemplate = "[walk] andar · [lock] travar · [cut+] corte · [step+] passo · [ki] Ki · [use] examinar · [heal] bálsamo · [inventory] inventário · [book] livro · [map] mapa · [menu] pausa";
         _controls.Text = ControlsLine();
         MiniMap = new MapView { Compact = true, Visible = false, MouseFilter = Control.MouseFilterEnum.Ignore, Name = "MiniMap", TextureFilter = CanvasItem.TextureFilterEnum.Nearest };
         _root.AddChild(MiniMap);
         Bindings.Changed += RefreshTexts;
-        if (DisplayManager.Instance != null) DisplayManager.Instance.Notice += Toast;
+        _noticeHandler = t => Toast(t);
+        if (DisplayManager.Instance != null) DisplayManager.Instance.Notice += _noticeHandler;
         if (DisplayManager.Embedded && !DisplayManager.EmbedNoticeShown) { DisplayManager.EmbedNoticeShown = true; Callable.From(() => Toast(DisplayManager.EmbedNotice)).CallDeferred(); }
 
+        _lifeTip = Add(MakeLabel(9, Colors.White), new Vector2(96, 16)); _lifeTip.Visible = false;
+        _lifeTip.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = new Color(0.086f, 0.078f, 0.06f, 0.95f), ContentMarginLeft = 4, ContentMarginRight = 4, ContentMarginTop = 1, ContentMarginBottom = 1 });
+        Quick = new QuickBar { Name = "Atalhos", Size = new Vector2(240, QuickBar.SlotPx) };
+        _root.AddChild(Quick);
         _prompt = Add(MakeLabel(8, Text), Vector2.Zero); _prompt.Visible = false; _prompt.HorizontalAlignment = HorizontalAlignment.Center; _prompt.Size = new Vector2(200, 12);
 
         _toasts = new VBoxContainer { Position = new Vector2(120, 262), Size = new Vector2(400, 78), Alignment = BoxContainer.AlignmentMode.End, MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -276,6 +333,12 @@ public partial class PlainsHud : CanvasLayer
         _root.AddChild(Book);
         _pause = MakeMenu("Pausa", "W/S ou mouse escolher · E, Enter ou clique confirmar · Esc voltar", new Vector2(200, 90), new Vector2(240, 160));
         Bag = new BagPanel { Visible = false, Name = "Bolsa", Rows = _inv.Rows, GetSelected = () => _inv.Selected, Empty = _inv.Empty };
+        foreach (var (_, name) in SpiritOfMurin.Items.BagRules.Tabs) Bag.TabNames.Add(name);
+        Bag.TabClicked += t => RowClicked?.Invoke("bagtab", t);
+        Sheet = new SheetPanel { Visible = false, Name = "Ficha", GetSelected = () => _sheet.Selected };
+        Sheet.Hovered += i => { _sheet.Selected = i; RowClicked?.Invoke("sheethover", i); };
+        Sheet.PlusClicked += i => { _sheet.Selected = i; RowClicked?.Invoke("sheet", i); };
+        _root.AddChild(Sheet);
         Bag.Hovered += i => { _inv.Selected = i; };
         Bag.Clicked += i => { _inv.Selected = i; RowClicked?.Invoke("inv", i); };
         _root.AddChild(Bag);
@@ -293,7 +356,7 @@ public partial class PlainsHud : CanvasLayer
         _overlayText = Add(MakeLabel(12, Text), new Vector2(0, 160)); _overlayText.HorizontalAlignment = HorizontalAlignment.Center; _overlayText.Size = new Vector2(640, 20);
         _overlayText.Modulate = new Color(1, 1, 1, 0);
         // the panels sit above the world's words (speech, area banner, messages) and under the fade overlay
-        foreach (Control c in new Control[] { _inv.Box, Bag, _sheet.Box, _story.Box, _pause.Box, Map, Book, Controls })
+        foreach (Control c in new Control[] { _inv.Box, Bag, _sheet.Box, Sheet, _story.Box, _pause.Box, Map, Book, Controls })
             _root.MoveChild(c, _overlay.GetIndex());
         _root.MoveChild(_title.Box, -1);
         RefreshTexts();
@@ -304,7 +367,7 @@ public partial class PlainsHud : CanvasLayer
     {
         // the controls and the display outlive the scene: let go of them
         Bindings.Changed -= RefreshTexts;
-        if (DisplayManager.Instance != null) DisplayManager.Instance.Notice -= Toast;
+        if (DisplayManager.Instance != null) DisplayManager.Instance.Notice -= _noticeHandler;
     }
 
     // ------------------------------------------------------------------ corner
@@ -321,7 +384,17 @@ public partial class PlainsHud : CanvasLayer
         _health = health; _max = max; _pending = pending;
         _life.Text = $"Vida {LifePercent(health, max)}%" + (pending > 0.05f ? " +" : "");
         _bars.QueueRedraw();
+        UpdateLifeTip();
     }
+
+    private void UpdateLifeTip()
+    {
+        _lifeTip.Visible = _lifeHover && !_valeMode;
+        if (_lifeTip.Visible) _lifeTip.Text = LifeFull(_health, Mathf.RoundToInt(_max));
+    }
+
+    /// <summary>Shows or hides the full Vida as if the mouse were over the bar (checks).</summary>
+    public void InspectLife(bool on) { _lifeHover = on; UpdateLifeTip(); }
 
     /// <summary>Updates vigor and Ki.</summary>
     public void SetEnergy(float vigor, float maxVigor, float ki, float maxKi)
@@ -407,7 +480,7 @@ public partial class PlainsHud : CanvasLayer
     }
 
     // the footer's shortcuts, written with the current controls
-    private string ControlsLine() => Bindings.F(_valeMode ? _valeTemplate : _controlsTemplate.Replace("{ki}", _kiHint));
+    private string ControlsLine() => Bindings.F(_valeMode ? _valeTemplate : (_context.Length > 0 ? _context + " · " : "") + _controlsTemplate.Replace("{ki}", _kiHint));
 
     // a control changed: every line that names a key is written again
     private void RefreshTexts()
@@ -548,15 +621,15 @@ public partial class PlainsHud : CanvasLayer
         _prompt.Position = screen + new Vector2(-100, -40);
     }
 
-    /// <summary>Adds a short message at the bottom of the screen.</summary>
-    public void Toast(string text)
+    /// <summary>Adds a short message at the bottom of the screen; an <paramref name="important"/> one stays longer (times in plains_hud.json).</summary>
+    public void Toast(string text, bool important = false)
     {
         Messages.Add(text);
         if (Messages.Count > 500) Messages.RemoveAt(0);
         var l = MakeLabel(9, Text); l.Text = text; l.HorizontalAlignment = HorizontalAlignment.Center;
         l.AutowrapMode = TextServer.AutowrapMode.WordSmart; l.CustomMinimumSize = new Vector2(400, 0);
         _toasts.AddChild(l);
-        _toastLabels.Add((l, 3.2f));
+        _toastLabels.Add((l, important ? HudSettings.Current.ImportantSeconds : HudSettings.Current.ToastSeconds));
         while (_toastLabels.Count > 4) { _toastLabels[0].L.QueueFree(); _toastLabels.RemoveAt(0); }
     }
 
@@ -642,13 +715,14 @@ public partial class PlainsHud : CanvasLayer
     public void SetRows(List<Row> rows) { _inv.Rows.Clear(); _inv.Rows.AddRange(rows); _inv.Selected = Mathf.Clamp(_inv.Selected, 0, Mathf.Max(0, rows.Count - 1)); }
 
     /// <summary>Opens or closes the character sheet.</summary>
-    public void ShowSheet(bool open) { _sheet.Box.Visible = open; if (open) Refresh(_sheet); }
+    public void ShowSheet(bool open) { _sheet.Box.Visible = false; Sheet.Visible = open; if (open) Refresh(_sheet); }
     /// <summary>Moves the sheet selection.</summary>
     public void MoveSheet(int d) { Move(_sheet, d); Refresh(_sheet); }
     /// <summary>Rebuilds the sheet: header, attribute rows and the detail text (preview + proficiencies).</summary>
     public void SetSheet(string title, string header, List<Row> rows, string detail)
     {
         _sheet.Title.Text = title; _sheet.Header.Text = Bindings.F(header); Fill(_sheet, rows); _sheet.Detail.Text = Bindings.F(detail);
+        Sheet.Title = title; Sheet.Header = Bindings.F(header); Sheet.Detail = Bindings.F(detail); Sheet.QueueRedraw();
     }
 
     /// <summary>Shows the title menu with its options and a message line (null hides it). The corner and the controls line hide behind it.</summary>

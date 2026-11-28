@@ -40,6 +40,11 @@ func _init() -> void:
 		"map": [key(KEY_M)],
 		"fullscreen": [key(KEY_F11)],
 		"menu": [key(KEY_ESCAPE), key(KEY_P)],
+		# T06: the item shortcuts (H stays the herb), the wheel chooses among the targets of E, Tab changes the bag's tab
+		"quick_1": [key(KEY_1)], "quick_2": [key(KEY_2)], "quick_3": [key(KEY_3)], "quick_4": [key(KEY_4)],
+		"quick_5": [key(KEY_5)], "quick_6": [key(KEY_6)], "quick_7": [key(KEY_Q)], "quick_8": [key(KEY_R)],
+		"target_next": [mouse(MOUSE_BUTTON_WHEEL_DOWN)], "target_prev": [mouse(MOUSE_BUTTON_WHEEL_UP)],
+		"bag_tab": [key(KEY_TAB)],
 	}
 	# actions that were renamed: "qi" became "ki" on 2026-11-27 (pedido 14)
 	for retired in ["qi"]:

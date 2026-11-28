@@ -1,0 +1,11 @@
+{
+  "_doc": {
+    "about": "Tempos da interface da Planície (T06). Lido por src/Game/HudSettings.cs.",
+    "gain_seconds": "quanto tempo um ganho fica sobre a cabeça e continua somando (\"+3 Galho Rijo\")",
+    "toast_seconds": "quanto tempo uma mensagem comum fica embaixo da tela",
+    "important_seconds": "quanto tempo fica uma mensagem importante (subir de nível, receita disponível)"
+  },
+  "gain_seconds": 2.5,
+  "toast_seconds": 3.2,
+  "important_seconds": 6.0
+}

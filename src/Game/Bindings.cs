@@ -28,7 +28,13 @@ public static class Bindings
         new("use", "Examinar / pegar"), new("heal", "Bálsamo / erva da bolsa"), new("sneak", "Andar quieto (Planície)"), new("reinforce", "Modificador do Reforço de Ki (com o corte)"),
         new("inventory", "Inventário"), new("sheet", "Ficha"), new("book", "Livro de Técnicas"), new("map", "Mapa"),
         new("menu", "Pausa"), new("fullscreen", "Tela cheia"),
+        new("target_next", "Próximo alvo do E"), new("target_prev", "Alvo anterior do E"), new("bag_tab", "Bolsa: próxima aba"),
+        new("quick_1", "Atalho de item 1"), new("quick_2", "Atalho de item 2"), new("quick_3", "Atalho de item 3"), new("quick_4", "Atalho de item 4"),
+        new("quick_5", "Atalho de item 5"), new("quick_6", "Atalho de item 6"), new("quick_7", "Atalho de item 7"), new("quick_8", "Atalho de item 8"),
     };
+
+    /// <summary>The item shortcut actions (T06), in order: slot 1 is "quick_1".</summary>
+    public static readonly string[] QuickActions = { "quick_1", "quick_2", "quick_3", "quick_4", "quick_5", "quick_6", "quick_7", "quick_8" };
 
     private static Dictionary<string, string[]>? _defaults;
 
@@ -68,7 +74,8 @@ public static class Bindings
     public static string Encode(InputEvent? e) => e switch
     {
         InputEventKey k => $"k:{(long)(k.PhysicalKeycode != Key.None ? k.PhysicalKeycode : k.Keycode)}",
-        InputEventMouseButton m when m.ButtonIndex is not (MouseButton.WheelUp or MouseButton.WheelDown or MouseButton.WheelLeft or MouseButton.WheelRight) => $"m:{(long)m.ButtonIndex}",
+        // the wheel counts too (T06: it chooses the target of E); only the sideways wheel stays out
+        InputEventMouseButton m when m.ButtonIndex is not (MouseButton.WheelLeft or MouseButton.WheelRight) => $"m:{(long)m.ButtonIndex}",
         _ => "",
     };
 
@@ -94,7 +101,8 @@ public static class Bindings
             return (MouseButton)m switch
             {
                 MouseButton.Left => "clique esq.", MouseButton.Right => "clique dir.", MouseButton.Middle => "botão do meio",
-                MouseButton.Xbutton1 => "botão lateral 1", MouseButton.Xbutton2 => "botão lateral 2", _ => $"botão {m}",
+                MouseButton.Xbutton1 => "botão lateral 1", MouseButton.Xbutton2 => "botão lateral 2",
+                MouseButton.WheelUp => "roda para cima", MouseButton.WheelDown => "roda para baixo", _ => $"botão {m}",
             };
         if (code.StartsWith("k:") && long.TryParse(code[2..], out long k))
         {
@@ -138,7 +146,7 @@ public static class Bindings
     });
 
     /// <summary>Pairs of actions that may share an input on purpose (a modifier held together with other keys).</summary>
-    private static readonly HashSet<(string, string)> Shared = new() { ("sneak", "reinforce"), ("reinforce", "sneak") };
+    private static readonly HashSet<(string, string)> Shared = new() { ("sneak", "reinforce"), ("reinforce", "sneak"), ("inventory", "bag_tab"), ("bag_tab", "inventory") }; // Tab opens the bag and, inside it, changes the tab
 
     /// <summary>Who uses an input now: (action, slot), or null. <paramref name="except"/> ignores an action and the ones allowed to share with it.</summary>
     public static (string Id, int Slot)? Owner(string code, string except = "")
