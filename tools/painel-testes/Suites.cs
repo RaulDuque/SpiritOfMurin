@@ -67,6 +67,21 @@ public static class Suites
                 ("rodape", "T06: três galhos viram um só \"+3 Galho Rijo\" sobre a cabeça; junto à carcaça o rodapé diz E e K."),
                 ("percurso", "T06: percurso contínuo: falta sílex, a receita diz, recolhe, fabrica, equipa, usa, compara com o lapidado, gasta um ponto, escolhe o alvo.") })
                 l.Add(new("Bolsa, ficha e HUD (T06)", $"{ph}, semente {s}", inv, new[] { $"--phase={ph}", $"--seed={s}", "--prefs=user://teste_inv_prefs.json" }, About: about));
+        const string fauna = "res://tests/integration/FaunaCheck.tscn";
+        foreach (int s in seeds)
+            foreach (var (ph, about) in new[] {
+                ("duelo", "T07: aparo no aviso (a lâmina resvala, som seco, Vida igual); investida acerta (impacto, empurrão e Vida no mesmo quadro); contra-ataque na recuperação (recuo no quadro em que a Vida cai)."),
+                ("faixa", "T07: a faixa da investida aparece quando a direção trava e termina onde a investida termina, com a assistência ligada e desligada; modos curta e desligada."),
+                ("barra", "T07: barra compacta com números sobre o animal focado ou o javali em luta; a barra do alto continua; some 3 s depois."),
+                ("lamina", "T07: o Passo da Lâmina Silenciosa enfraquecido atravessa o aviso com metade do dano (decisão B)."),
+                ("coelho", "T07: ouve andando a ~95 px e com Shift a ~26; orelhas, agachado antes do salto, arbusto balança, mergulho na toca."),
+                ("pegadas", "T07: pegadas frescas seguem o caminho real (também a curva) e somem em 90 s; o exame fica mais preciso com Rastreamento; a roda escolhe a pegada em vez da erva."),
+                ("tecnicas", "T07: Disparo de Ki pleno termina em 210 px e o enfraquecido em 105, desfazendo-se ali; passo longo 112 × 60 px."),
+                ("mapa", "T07: o javali só aparece no mapa depois de visto ou rastreado, e isso fica salvo."),
+                ("vento", "T07: na rajada a faixa da investida continua legível."),
+                ("oldsave", "T07: a jornada de antes do Ki (fixture) carrega; nenhum javali no mapa; faixa completa por padrão."),
+                ("trilhas", "T07: as trilhas geradas da clareira continuam as mesmas e não somem.") })
+                l.Add(new("Combate e fauna (T07)", $"{ph}, semente {s}", fauna, new[] { $"--phase={ph}", $"--seed={s}", "--prefs=user://teste_fauna_prefs.json" }, About: about));
         if (quick) return l;
         foreach (var ph in new[] { "full", "sealed", "resume2", "resume3", "migrate", "migrate2" })
             l.Add(new("Técnicas seladas", ph, tech, new[] { $"--phase={ph}" }, About: "Selo no despertar e volta enfraquecida no nível 3, com medições."));

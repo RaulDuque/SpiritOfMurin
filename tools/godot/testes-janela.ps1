@@ -55,6 +55,12 @@ foreach ($sd in 20261126, 777) {
     & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/InventarioCheck.tscn -- "--phase=$phase" "--seed=$sd" '--prefs=user://teste_inv_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
   }
 }
+# T07: duel, charge strip, near bar, Lamina through, rabbit, fresh prints, techniques, map, gust, old journey, generated trails
+foreach ($sd in 20261126, 777) {
+  foreach ($phase in 'duelo', 'faixa', 'barra', 'lamina', 'coelho', 'pegadas', 'tecnicas', 'mapa', 'vento', 'oldsave', 'trilhas') {
+    & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/FaunaCheck.tscn -- "--phase=$phase" "--seed=$sd" '--prefs=user://teste_fauna_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+  }
+}
 if ($SoPrologo) { if ($fail -eq 0) { Write-Host "Prologo: todos os testes passaram." } else { Write-Host "$fail execucao(oes) com falha." }; exit $fail }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/unit/UnitRunner.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ControlsCheck.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
