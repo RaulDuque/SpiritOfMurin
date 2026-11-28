@@ -333,6 +333,7 @@ public partial class PlainsGame : Node2D, IMapSource
             if (a == "--new") Start = StartMode.New;
             else if (a == "--continue") Start = StartMode.Continue;
             else if (a.StartsWith("--save=")) SavePath = a["--save=".Length..];
+            else if (a == "--mapa-testes") { TestMap = true; Start = StartMode.New; SavePath = TestMapSave; Seed = TestMapSeed; ShowIntro = false; SaveGame.Erase(TestMapSave); } // the test map: a fresh journey of its own
         }
         Catalog = ItemCatalog.Load();
         LoadEquipmentData(); // T18
@@ -483,6 +484,7 @@ public partial class PlainsGame : Node2D, IMapSource
         Player.GetNode<Camera2D>("Camera").ResetSmoothing();
         RefreshHands(); RefreshRows(); RefreshSheet();
         if (_returnOnStart) ReturnTechniques();
+        if (TestMap) SetupTestMap(); // every item in the bag and a showcase by the campfire
         if (awaken != null)
         {
             // from darkness into light: a pale glare that slowly clears, and the sounds of nature coming back

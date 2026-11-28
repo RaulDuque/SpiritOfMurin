@@ -20,6 +20,9 @@ public partial class Pickup : Node2D
     /// <summary>Seeded variation for the drawing.</summary>
     public int Variation { get; set; }
 
+    /// <summary>The test map (2026-11-28): an item id whose bag icon is drawn on the ground instead of the feature's picture; empty for the world's own pickups.</summary>
+    public string IconItem { get; set; } = "";
+
     private float _time;
 
     private static readonly Color Outline = new("#16140f"), FlintLight = new("#b9b6a8"), FlintMid = new("#8c8a80"), FlintDark = new("#5d5b51"),
@@ -40,6 +43,12 @@ public partial class Pickup : Node2D
     /// <inheritdoc />
     public override void _Draw()
     {
+        if (IconItem.Length > 0) // the test map's showcase: the bag's icon on a small shadow
+        {
+            DrawRect(new Rect2(-9, -3, 18, 4), new Color(0.04f, 0.03f, 0.02f, 0.35f));
+            Game.ItemIcons.Draw(this, IconItem, new Vector2(0, -9), 1);
+            return;
+        }
         switch (Kind)
         {
             case FeatureKind.Flint:
