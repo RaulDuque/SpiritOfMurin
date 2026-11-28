@@ -1,10 +1,10 @@
 # Tarefas do SpiritOfMurin — ponto de retomada
 
-*Atualizado em 2026-11-28, no fim da T07. Leia isto primeiro ao voltar ao projeto, de qualquer sessão ou ferramenta.*
+*Atualizado em 2026-11-28, no fim da T18. Leia isto primeiro ao voltar ao projeto, de qualquer sessão ou ferramenta.*
 
 **Em 1 minuto:**
-- **Em andamento:** nenhuma. A T07 terminou (2026-11-28).
-- **Próximo prompt a mandar:** o da **[T18](T18-equipamento-visual.md)** (armas, roupas, capacetes), na seção "Prompt pronto para executar". Copie e cole numa sessão nova.
+- **Em andamento:** nenhuma. A T18 terminou (2026-11-28).
+- **Próximo prompt a mandar:** o da **[T08](T08-fauna-expandida-chefes.md)** (fauna nova, elites e chefes), na seção "Prompt pronto para executar". Copie e cole numa sessão nova.
 - **O que você pode testar agora:** a seção "Pronto" abaixo. Tudo abre pelo **PainelDeTestes.exe → Jogar** (ou **Inspeção** para ver os elementos).
 - **O que depende de você:** a seção "Decisões abertas".
 
@@ -16,7 +16,7 @@ Cada tarefa tem um id estável (T01, T02…). As que têm trabalho suficiente ga
 |---|---|---|
 | ✓ | ~~[T06](T06-inventario-ficha-hud.md) — bolsa, ficha, HUD, escolha de interação~~ | pronta em 2026-11-27 |
 | ✓ | ~~[T07](T07-combate-rastreamento-fauna.md) — combate, rastreamento, javali e coelho~~ | pronta em 2026-11-28 |
-| 3 | **[T18](T18-equipamento-visual.md) — armas, roupas, capacetes** | Torna jogáveis os tipos `arma`, `roupa` e `capacete` do `/create` |
+| ✓ | ~~[T18](T18-equipamento-visual.md) — armas, roupas, capacetes~~ | pronta em 2026-11-28 |
 | 4 | **[T08](T08-fauna-expandida-chefes.md) — fauna nova, elites e chefes** (sub-entregas T08a–T08j) | Depende do vocabulário de combate da T07 |
 | 5 | **[T09](T09-clima-e-agua.md) — clima, lagos, peixes e patos** | Depende da T07 (avisos legíveis na chuva) |
 | 6 | **[T10](T10-escavacao-cavernas-dungeons.md) → [T11](T11-primeira-caverna.md) → [T12](T12-primeira-dungeon.md) — pá, caverna, dungeon** | Usa as ferramentas e o estado persistente da T05 |
@@ -39,6 +39,7 @@ Cada tarefa tem um id estável (T01, T02…). As que têm trabalho suficiente ga
 | **T05** | **Machado e picareta; cortar pinheiro e salgueiro, quebrar rocha (quartzo, ferro), bambu cedendo, arbustos que se abrem** | idem, [T05](T05-recursos-arvores-pedras-bambus.md) | roteiro "Painel → Jogar" no relatório |
 | **T06** | **Bolsa com abas, Fabricação com "tenho X de Y", comparação em golpes, 8 atalhos (1-6, Q, R) + H, ficha com "+" e prévia da arma, "Vida 60% · 6/10" ao passar o mouse, alvo do E com anel e lista (roda troca), rodapé contextual, ganhos sobre a cabeça** | [t06-bolsa-ficha-hud](../relatorios/2026-11-27-t06-bolsa-ficha-hud.md) | roteiro curto no relatório |
 | **T07** | **Javali: aparo, investida e contra-ataque distintos; faixa da investida (Esc → Modo de assistência: completa/curta/desligada); barra "atual/máximo" junto ao animal; Lâmina atravessa o couro com metade do dano. Coelho: agacha antes de fugir, mergulha na toca. Pegadas frescas pelo caminho real (90 s); exame mais preciso com Rastreamento; javali no mapa só depois de visto ou rastreado; Disparo de Ki se desfaz no fim do alcance** | [t07-combate-fauna](../relatorios/2026-11-28-t07-combate-fauna.md) | roteiro curto no relatório |
+| **T18** | **Equipamento trocável: espada, faca e sabre com números próprios; túnica de viajante e chapéu de bambu (defesa e peso no Vigor); trouxa de viajante sob o pinheiro; bolsa compara e marca o que está em uso; técnica Meia-Lua descoberta com o sabre; Inspeção troca as peças e gira nas 8 direções; `/create arma`, `roupa`, `capacete` jogáveis** | [t18-equipamento](../relatorios/2026-11-28-t18-equipamento.md) | Painel → Jogar → trouxa ao norte da clareira; Painel → Inspeção |
 | — | Padrão de elementos, cena de Inspeção e comando `/create` | [como criar e editar](../relatorios/2026-11-27-como-criar-e-editar-elementos.md) | Painel → Inspeção; `/create arvore "…"` |
 
 ## Parcial (existe, mas falta algo): detalhes em [conciliacao-2026-11-27.md](conciliacao-2026-11-27.md)
@@ -54,10 +55,11 @@ Cada tarefa tem um id estável (T01, T02…). As que têm trabalho suficiente ga
 
 As da próxima tarefa ficam em destaque. Cada prompt pergunta as suas, uma por vez, antes de implementar.
 
-- **T18 (próxima):** as decisões estão no arquivo da tarefa.
+- **T08 (próxima):** as decisões estão no arquivo da tarefa.
+- **Da T18:** quando entram o Saque do Viajante e o Corte Fluido (técnicas futuras do sabre); se a regra dos chapéus (aba nivelada, ≤ 16 px, olhos à vista) entra na bíblia de arte; separar os itens comuns e os ícones em arquivos próprios (T17).
 - **Pendências registradas no pedido 14 (item 7):**
   - **Tempos da cena final do Sênior:** pausa antes de reviver, duração da fala e da explosão. Hoje estão em `src/Vale/SeniorFinale.cs`. Ajustar depois de você jogar sem reposição de vida. Vai para a T08 (chefes).
-- **T08, T09, T10–T16, T17, T18:** a lista de cada uma está no arquivo da tarefa.
+- **T08, T09, T10–T16, T17:** a lista de cada uma está no arquivo da tarefa.
 
 ## Conferência manual (o que só você consegue ver no seu PC)
 
@@ -69,11 +71,12 @@ As da próxima tarefa ficam em destaque. Cada prompt pergunta as suas, uma por v
 - [ ] **Andar sobre a água e nadar:** o custo de 10 Ki/s está bom?
 - [ ] **T07 no seu monitor:** a faixa da investida (cor e tracejado), a barra junto ao javali, o efeito de onde o Ki se desfaz e o cone do exame da pegada estão legíveis?
 - [ ] **Diagonal** (0,8 da velocidade em cada eixo): está natural agora?
+- [ ] **T18 no seu monitor:** o chapéu de bambu, a túnica de viajante e o sabre no jogo; o custo de Vigor com a túnica (+10%) está bom?
 - [ ] **Salgueiro e rocha de ferro**, criados pelo `/create`: aparência aprovada? Se não, diga o que mudar.
 
 ## Fichas visuais
 
-Para elementos que precisam de aprovação visual antes do código (fauna nova, chefes, roupas), use **`/asset-spec`**. Ele gera a ficha e os prompts de imagem em `design/assets/specs/`. Ligue a ficha à tarefa (T08, T18). As fichas de planejamento geradas pelo `/create` ficam em `user-docs/tasks/fichas/`.
+Para elementos que precisam de aprovação visual antes do código (fauna nova, chefes, roupas), use **`/asset-spec`**. Ele gera a ficha e os prompts de imagem em `design/assets/specs/`. Ligue a ficha à tarefa (T08). As fichas da T18 estão em `design/assets/specs/t18-equipamento-assets.md`. As fichas de planejamento geradas pelo `/create` ficam em `user-docs/tasks/fichas/`.
 
 ## Histórico das tarefas
 
@@ -82,3 +85,4 @@ Para elementos que precisam de aprovação visual antes do código (fauna nova, 
 | T05 + pedido 14 | 2026-11-27 | ver o relatório do pedido 14 |
 | T06 | 2026-11-27 | ver o relatório da T06 |
 | T07 | 2026-11-28 | ver o relatório da T07 |
+| T18 | 2026-11-28 | ver o relatório da T18 |

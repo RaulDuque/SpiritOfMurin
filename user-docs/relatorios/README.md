@@ -58,6 +58,9 @@ Documentação de cada sessão de trabalho para o criador revisar: o que foi dec
 | 2026-11-27 | [2026-11-27-t07-prancha-javali.html](2026-11-27-t07-prancha-javali.html) | Prancha das decisões da T07: o aviso do javali com a faixa da investida e a barra junto ao animal, no tamanho real do jogo, assistência ligada e desligada |
 | 2026-11-28 | [2026-11-28-t07-combate-fauna.md](2026-11-28-t07-combate-fauna.md) | T07: aparo, investida e contra-ataque distintos; faixa da investida (completa/curta/desligada); barra junto ao animal; Lâmina atravessa com metade do dano; coelho agacha e mergulha na toca; pegadas frescas pelo caminho real; exame com precisão por Rastreamento; javali no mapa só depois de visto; Disparo de Ki se desfaz no fim do alcance; diagonal 0,8 por eixo; vídeos e onde mexer |
 | 2026-11-28 | [prompts/15-t07-combate-fauna.md](prompts/15-t07-combate-fauna.md) | Pedido do criador para a T07 e o ajuste da diagonal (texto integral) |
+| 2026-11-28 | [2026-11-28-t18-prancha-equipamento.html](2026-11-28-t18-prancha-equipamento.html) | Prancha das decisões da T18: túnica de viajante, chapéu de bambu e sabre sobre o protagonista (pixels do jogo, tamanho real e ampliado, frente/costas/perfil; as três maneiras de o chapéu encontrar o coque; cor, cinza e silhueta) |
+| 2026-11-28 | [2026-11-28-t18-equipamento.md](2026-11-28-t18-equipamento.md) | T18: protagonista em camadas (idêntico ao aprovado, 0 px); espada, faca e sabre por dados; túnica de viajante e chapéu de bambu com defesa e peso; trouxa de viajante; bolsa veste, compara e marca; Meia-Lua descoberta com o sabre; Inspeção troca as peças nas 8 direções; `/create arma`, `roupa`, `capacete` jogáveis; mapa de testes com todos os itens; guia com três exemplos de edição |
+| 2026-11-28 | [prompts/16-t18-equipamento.md](prompts/16-t18-equipamento.md) | Pedido do criador para a T18, as respostas das decisões e o pedido do mapa de testes (texto integral) |
 
 ## Prompts de imagem do criador
 

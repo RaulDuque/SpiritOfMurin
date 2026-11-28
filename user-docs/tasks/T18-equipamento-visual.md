@@ -1,6 +1,6 @@
 # T18 — Armas, roupas e capacetes trocáveis (equipamento visual)
 
-**Estado:** planejada · **Frente:** personagem · **Depende de:** T06 (bolsa com categorias e comparação) · **Origem:** pedido 14 itens 2, 3 e 4 (`/create arma`, `/create roupa`, `/create capacete`)
+**Estado:** **pronta (2026-11-28)** — relatório [2026-11-28-t18-equipamento](../relatorios/2026-11-28-t18-equipamento.md) · **Frente:** personagem · **Depende de:** T06 (bolsa com categorias e comparação) · **Origem:** pedido 14 itens 2, 3 e 4 (`/create arma`, `/create roupa`, `/create capacete`)
 
 ## Objetivo do jogador
 
@@ -21,12 +21,25 @@ Encontrar ou fabricar uma arma, uma túnica ou um chapéu, vestir pela bolsa e v
 5. **Inspeção:** trocar arma, roupa e capacete no personagem, em 8 direções e nas poses de corte, passo e Ki.
 6. **`/create`:** os tipos `arma`, `roupa` e `capacete` passam de "planejamento" a "jogável".
 
-## Decisões abertas (do criador)
+## Decisões do criador (2026-11-28, sobre a [prancha](../relatorios/2026-11-28-t18-prancha-equipamento.html))
 
-1. **A roupa dá defesa?** Não, só aparência (recomendado no começo); sim, um pouco; ou sim, com peso que reduz o vigor.
-2. **Armas novas:** só forma e números (recomendado); ou técnicas próprias por tipo de arma.
-3. **O chapéu esconde o coque do cabelo?** Sim, conforme o chapéu (recomendado), ou nunca.
-4. **Primeiro conjunto:** túnica de viajante + chapéu de bambu trançado + sabre de ferro gasto (os exemplos do pedido 14)?
+1. **A roupa dá defesa?** **Defesa e peso no Vigor** (`defense`, `weight` no JSON de cada peça).
+2. **Armas novas:** **técnicas próprias**. As três propostas para o sabre (Meia-Lua, Saque do Viajante e Corte Fluido) são
+   técnicas **descobertas com o tempo**. A Meia-Lua já é jogável (12 acertos com o sabre); as outras duas ficam como futuras.
+3. **O chapéu e o coque:** cada modelo define o quanto cobre (`HairCover`). O chapéu de bambu **cobre o coque e a faixa** (sem fita).
+4. **Primeiro conjunto:** **túnica de viajante + chapéu de bambu trançado + sabre de ferro gasto**, como desenhados na prancha.
+
+## Onde conseguir (Painel → Jogar)
+
+- **Sabre de Ferro Gasto** e **Túnica de Viajante:** na **trouxa de viajante** sob o pinheiro da margem, ao norte da clareira (E pega).
+- **Chapéu de Bambu Trançado:** Fabricar, com 3 Varas de Bambu (corte uma touceira com a faca) + 1 Tira de Amarração (de pele rasgada).
+- **Túnica Verde:** sempre na bolsa; tirar a outra roupa a devolve.
+
+## Pendências que ficaram
+
+- **Saque do Viajante** e **Corte Fluido** (técnicas futuras do sabre): só a ficha em `assets/data/equipamento/_tecnicas_armas.json`.
+- **Emenda à bíblia de arte §5.1** (regra dos chapéus: aba nivelada, ≤ 16 px, olhos à vista): proposta, ainda não escrita na bíblia.
+- Deitado e ajoelhado (o despertar), o personagem continua com o desenho fixo, sem chapéu e sem a roupa trocada.
 
 ## Critérios de aceite
 
@@ -36,7 +49,8 @@ Encontrar ou fabricar uma arma, uma túnica ou um chapéu, vestir pela bolsa e v
 
 ## Roteiro de teste
 
-Painel → Inspeção: Tab troca o equipamento, e as setas giram o personagem.
+Painel → Inspeção: Tab arma, R roupa, C chapéu, Z pose, Q/E giram o personagem nas 8 direções, Espaço anima.
+Painel → Jogar → Novo jogo: vá à trouxa sob o pinheiro ao norte da clareira; I abre a bolsa.
 
 ## Prompt pronto para executar
 
