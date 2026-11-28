@@ -53,6 +53,12 @@ public partial class Pickup : Node2D
                 R(3, -3, 3, 2, new Color("#f0d27a")); R(3, -3, 3, 1, new Color("#fff2c0"));
                 if (Mathf.PosMod(_time + Variation * 0.29f, 2.0f) < 0.15f) R(4, -4, 1, 1, Glint);
                 break;
+            case FeatureKind.Bundle: // T18: a traveller's linen bundle tied with a cord, a sabre's dark grip and iron guard sticking out
+                O(-7, -7, 13, 7); O(5, -11, 2, 6); O(3, -6, 6, 2);
+                R(-7, -7, 13, 7, new Color("#b3ad97")); R(-7, -2, 13, 2, new Color("#8a846f")); R(-5, -7, 9, 1, new Color("#d6d2bf"));
+                R(-2, -7, 2, 7, new Color("#4f7a64")); R(-3, -8, 4, 1, new Color("#4f7a64"));
+                R(5, -11, 2, 6, new Color("#3b2a1f")); R(3, -6, 6, 2, new Color("#4a4640"));
+                break;
             case FeatureKind.Branch:
                 O(-9, -3, 18, 2); O(3, -6, 2, 3);
                 R(-9, -3, 18, 2, Wood); R(-9, -2, 18, 1, WoodDark); R(3, -6, 2, 3, Wood); R(-6, -4, 2, 1, Wood);

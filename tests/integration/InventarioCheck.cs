@@ -170,7 +170,7 @@ public partial class InventarioCheck : Node
     {
         await Open(PlainsGame.StartMode.Continue, CreatorJourney());
         await Tap(Key.I);
-        Check("I opens the bag on 'Tudo' with every item and the coins", Hud.InventoryOpen && _g.BagTab == "tudo" && Hud.Rows.Count == 9 && Hud.Bag.Money == 25, $"aba {_g.BagTab}, {Hud.Rows.Count} itens");
+        Check("I opens the bag on 'Tudo' with every item and the coins", Hud.InventoryOpen && _g.BagTab == "tudo" && Hud.Rows.Count == 10 && Hud.Bag.Money == 25, $"aba {_g.BagTab}, {Hud.Rows.Count} itens"); // T18: + a Túnica Verde, sempre na bolsa
         var axe = Hud.Rows.FirstOrDefault(r => r.Id == "machado_pedra");
         Check("the axe in hand is marked (✓)", axe.Equipped);
         await Shot("01-bolsa-tudo");
@@ -458,7 +458,7 @@ public partial class InventarioCheck : Node
         await Frames(40);
         Check("the old journey loads: knife in hand, level 4, its items, 0 coins", _g.EquippedItem == "faca_pedra" && _g.Stats.Level == 4 && _g.Inventory.Count("pele_fina") == 1 && _g.Wallet.Coins == 0);
         await Tap(Key.I);
-        Check("its bag opens on 'Tudo' with tabs", _g.BagTab == "tudo" && Hud.Rows.Count == 2 && Hud.Bag.TabNames.Count == 6);
+        Check("its bag opens on 'Tudo' with tabs", _g.BagTab == "tudo" && Hud.Rows.Count == 3 && Hud.Bag.TabNames.Count == 6); // T18: + a Túnica Verde
         await Tap(Key.I);
         Check("no shortcuts yet (nothing assigned), no H without the Bolsa Simples", _g.QuickSlots().All(s => s.Length == 0) && Hud.Quick.Slots.Count == 0);
         await Tap(Key.C);

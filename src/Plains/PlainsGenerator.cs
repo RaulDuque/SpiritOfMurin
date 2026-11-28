@@ -11,7 +11,7 @@ public enum TileKind { Grass, Bank, Water, Ford, BushGrass, Mud }
 public enum Habitat { Grass, Bank, Water, Bushes, Mud }
 
 /// <summary>The kinds of generated objects.</summary>
-public enum FeatureKind { Flint, Branch, Pine, Boulder, Bush, Burrow, Rooted, Herb, Root, Boar, Track, Campfire, MeditationMat, CoinPouch, Bamboo }
+public enum FeatureKind { Flint, Branch, Pine, Boulder, Bush, Burrow, Rooted, Herb, Root, Boar, Track, Campfire, MeditationMat, CoinPouch, Bamboo, Bundle }
 
 /// <summary>
 /// One generated object. <see cref="Id"/> is stable for a seed: the same kind on the same tile
@@ -205,6 +205,7 @@ public sealed class PlainsGenerator
         Force(BankTile(2), 2, FeatureKind.Branch, mid);
         Force(BankTile(-6) - 1, -6, FeatureKind.Branch, mid);
         Force(BankTile(-7), -7, FeatureKind.Pine, new Vector2(16, 26));
+        Force(BankTile(-7), -7, FeatureKind.Bundle, new Vector2(29, 30)); // T18: the traveller's bundle under the pine (an already fixed tile: the old seeds keep their world)
         Force(BankTile(5), 5, FeatureKind.Boulder, new Vector2(10, 26));
         Force(BankTile(5), 5, FeatureKind.Herb, new Vector2(26, 28));
         var b = new Vector2I(Mathf.RoundToInt(BushAnchor.X), Mathf.RoundToInt(BushAnchor.Y));

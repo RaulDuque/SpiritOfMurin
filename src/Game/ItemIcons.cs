@@ -103,6 +103,34 @@ public static class ItemIcons
                 O(-5, -2, 10, 5); R(-5, -2, 10, 3, "#8a7a5e"); R(-5, 1, 10, 2, "#6a5a44"); R(-5, -2, 10, 1, "#a8987a"); R(3, -2, 2, 5, "#d8c08a"); break;
             case "broto_bambu": // a pale shoot in green sheaths
                 O(-3, -5, 6, 10); R(-2, -5, 4, 3, "#e6e0a8"); R(-3, -2, 6, 5, "#7fae5d"); R(-3, 3, 6, 2, "#5f8f4a"); R(0, -2, 1, 5, "#4d7a3c"); break;
+            // T18 — weapons, robes and hats (their drawings on the body are in src/Elements/Armas|Roupas|Capacetes)
+            case "sabre_ferro": // the worn iron sabre on the diagonal, grip down-left, a one-pixel bend and a nick in the edge
+                {
+                    for (int i = 0; i < 10; i++) { int b = i >= 4 && i <= 7 ? 1 : 0; O(-1 + i - b, 1 - i - b, 2, 1); }
+                    O(-4, 0, 1, 1); O(0, 4, 1, 1); O(-6, 3, 4, 4);
+                    for (int i = 0; i < 10; i++) { int b = i >= 4 && i <= 7 ? 1 : 0; R(-1 + i - b, 1 - i - b, 1, 1, "#b9b8ae"); if (i != 6) R(i - b, 1 - i - b, 1, 1, "#dcd8c8"); }
+                    R(8, -9, 1, 1, "#dcd8c8");
+                    for (int k = 0; k < 5; k++) R(-4 + k, k, 1, 1, "#4a4640");
+                    R(-3, 3, 2, 2, "#3b2a1f"); R(-5, 4, 2, 2, "#3b2a1f"); R(-6, 6, 1, 1, "#4a4640"); R(1, -1, 1, 1, "#6e5844");
+                    break;
+                }
+            case "tunica_viajante": // folded raw linen, crossed collar, worn-jade sash with its knot, a patch
+                O(-6, -6, 12, 12); R(-6, -6, 12, 12, "#b3ad97"); R(-6, -6, 3, 12, "#8a846f"); R(3, -6, 3, 12, "#d6d2bf");
+                R(2, -6, 1, 1, "#8a846f"); R(1, -5, 1, 1, "#8a846f"); R(0, -4, 1, 1, "#8a846f"); R(-1, -3, 1, 1, "#8a846f");
+                R(-6, -1, 12, 2, "#4f7a64"); R(-6, 1, 12, 1, "#3a5a4b"); R(2, -2, 2, 2, "#6e5a40"); R(2, 3, 2, 2, "#8a846f");
+                break;
+            case "tunica_verde": // the creator's tunic: ivory, jade trim, deep-green sash and the gold buckle
+                O(-6, -6, 12, 12); R(-6, -6, 12, 12, "#f5eedc"); R(-6, -6, 3, 12, "#cbb37c"); R(-1, -6, 1, 5, "#2f7a53"); R(2, -6, 1, 5, "#2f7a53");
+                R(-6, -1, 12, 2, "#2f7a53"); R(-6, 1, 12, 1, "#1c4f35"); R(2, -1, 2, 2, "#f5cb5c"); R(-6, 5, 12, 1, "#2f7a53");
+                break;
+            case "chapeu_bambu": // the woven bamboo hat seen from a little above: the brim, the low crown and its cord
+                O(-8, 0, 16, 3); O(-4, -4, 8, 4);
+                R(-8, 0, 16, 3, "#7f8757"); R(-7, 2, 14, 1, "#5c6340"); R(-5, 0, 10, 1, "#98a06a");
+                R(-4, -4, 8, 4, "#7f8757"); R(-2, -4, 3, 3, "#98a06a"); R(-4, -1, 8, 1, "#1c4f35"); R(0, -1, 1, 1, "#2f7a53");
+                break;
+            case "trouxa_viajante": // the traveller's bundle (T18)
+                O(-6, -4, 12, 8); R(-6, -4, 12, 8, "#b3ad97"); R(-6, 2, 12, 2, "#8a846f"); R(-1, -4, 2, 8, "#4f7a64"); R(5, -7, 2, 5, "#3b2a1f"); R(4, -3, 4, 1, "#4a4640");
+                break;
             // the prologue (prototype icons)
             case "espada": O(-7, -1, 14, 3); R(-2, -1, 9, 2, "#eef3f2"); R(-2, 1, 9, 1, "#b8c0c0"); R(-4, -2, 1, 5, "#c79e4e"); R(-7, -1, 3, 3, "#7a5a3a"); break;
             case "prata": R(-5, 0, 10, 3, "#c9ccd0"); R(-6, -2, 3, 3, "#e3e6ea"); R(3, -2, 3, 3, "#e3e6ea"); R(-2, -3, 4, 3, "#f4f6f7"); R(-5, 2, 10, 1, "#8e9196"); break;

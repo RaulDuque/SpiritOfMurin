@@ -103,6 +103,12 @@ public sealed class SaveData
     public Dictionary<string, float> Worked { get; set; } = new();
     /// <summary>The item in hand (its id), so two axes are told apart; empty in older journeys (then <see cref="Equipped"/> decides).</summary>
     public string EquippedItem { get; set; } = "";
+    /// <summary>T18: what is worn in each slot ("corpo", "cabeca" → item id; "" = the green tunic, the bare head). Null in older journeys.</summary>
+    public Dictionary<string, string>? Wearing { get; set; }
+    /// <summary>T18: swings that hit, per weapon drawing (the practice that reveals its techniques).</summary>
+    public Dictionary<string, int> WeaponHits { get; set; } = new();
+    /// <summary>T18: the weapon techniques found.</summary>
+    public List<string> WeaponTechniques { get; set; } = new();
     /// <summary>Clues found in the Planície, oldest first (the map's "última pista").</summary>
     public List<SpiritOfMurin.Vale.Clue> Clues { get; set; } = new();
 }

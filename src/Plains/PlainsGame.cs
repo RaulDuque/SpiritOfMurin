@@ -335,6 +335,7 @@ public partial class PlainsGame : Node2D, IMapSource
             else if (a.StartsWith("--save=")) SavePath = a["--save=".Length..];
         }
         Catalog = ItemCatalog.Load();
+        LoadEquipmentData(); // T18
         Data = ProgressionData.Load();
         World = GetNode<PlainsWorld>("World");
         Player = GetNode<Player>("World/Objects/Player");
@@ -470,6 +471,7 @@ public partial class PlainsGame : Node2D, IMapSource
             Player.Vigor = Mathf.Clamp(d.Vigor, 0, Player.MaxVigor);
             Ki = Mathf.Clamp(d.Ki, 0, Stats.MaxKi);
         }
+        RestoreEquipment(d); // T18: what is worn, the practice and the weapon techniques (older journeys: the green tunic, bare head)
         Player.GlobalPosition = Spot;
         Player.InputLocked = false;
         Player.Visible = true;
@@ -511,15 +513,16 @@ public partial class PlainsGame : Node2D, IMapSource
         Player.MaxVigor = Stats.MaxVigor;
         Player.VigorRegen = Stats.VigorRegen;
         Player.VigorRegenDelay = Data.Base.VigorRegenDelay;
-        Player.StepVigorCost = Data.Base.StepVigorCost;
-        Player.CutVigorCost = Data.Base.CutVigorCost;
+        // T18 (decision 1): the worn pieces weigh on the Vigor of a cut and a step
+        Player.StepVigorCost = EquipRules.VigorCost(Data.Base.StepVigorCost, WornWeight);
+        Player.CutVigorCost = EquipRules.VigorCost(Data.Base.CutVigorCost, WornWeight);
         if (fill) Player.Vigor = Player.MaxVigor;
         else if (Player.MaxVigor > oldMax && oldMax > 0) Player.Vigor += Player.MaxVigor - oldMax;
         Player.MaxKi = Stats.MaxKi; Player.KiRegen = Data.Base.KiRegen;
         if (fill) Ki = Stats.MaxKi;
         // FOR, CON and the critical (pedido 14)
         Player.MeleeMultiplier = Stats.MeleeDamageMultiplier;
-        Player.DamageTaken = Stats.DamageTakenMultiplier;
+        Player.DamageTaken = EquipRules.DamageTaken(Stats.DamageTakenMultiplier, WornDefense); // CON, then the clothes (T18)
         Player.CritChance = Stats.CritChance; Player.CritMultiplier = Stats.CritMultiplier;
     }
 
@@ -889,7 +892,7 @@ public partial class PlainsGame : Node2D, IMapSource
         foreach (var n in GetTree().GetNodesInGroup("creatures"))
         {
             if (n is not IHittable h || !h.CanBeHit || _hitThisSwing.Contains(h.CreatureId)) continue;
-            if (!Player.InBladeArc(origin, dir, reach, Player.Tuning.HitArcDegrees, h.GlobalPosition, h.BodyRadius)) continue;
+            if (!Player.InBladeArc(origin, dir, reach, Player.CutArcDegrees, h.GlobalPosition, h.BodyRadius)) continue;
             _hitThisSwing.Add(h.CreatureId);
             // the Reforço de Ki: +10% damage (fractional, no rounding) and one break roll against a boar's defence
             if (h is Boar bb && !bb.Brain.Vulnerable && Player.RollReinforceBreak() && bb.BreakGuard(Tech.Data.KiReinforce.Full.Stagger))
@@ -902,12 +905,14 @@ public partial class PlainsGame : Node2D, IMapSource
         foreach (var n in GetTree().GetNodesInGroup("elements"))
         {
             if (n is not WorldElement e || e.State != ElementState.Standing || e.Def.Family == "arbusto" || _hitThisSwing.Contains(e.PlaceId)) continue;
-            if (!Player.InBladeArc(origin, dir, reach, Player.Tuning.HitArcDegrees, e.GlobalPosition + new Vector2(0, -4), Mathf.Max(6, e.Def.BaseHalfWidth))) continue;
+            if (!Player.InBladeArc(origin, dir, reach, Player.CutArcDegrees, e.GlobalPosition + new Vector2(0, -4), Mathf.Max(6, e.Def.BaseHalfWidth))) continue;
             _hitThisSwing.Add(e.PlaceId);
             StrikeElement(e);
         }
+        if (_hitThisSwing.Count > 0 && _practicedSwing != swing) { _practicedSwing = swing; PracticeWeapon(); } // T18: the sabre's techniques come with use
     }
 
+    private int _practicedSwing = -1;
     private ulong _refusedAt;
 
     /// <summary>A strike of the tool in hand on an element: work, refusal or nothing (decor). Returns what happened.</summary>
@@ -1121,6 +1126,7 @@ public partial class PlainsGame : Node2D, IMapSource
         if (!World.State.MarkCollected(p.FeatureId)) return false;
         World.Remove(p);
         if (p.ItemId == "moedas") { ReceiveCoins(Gen.Settings.CoinPouchAmount); Sfx?.Play("pickup"); return true; }
+        if (p.ItemId == "trouxa_viajante") { OpenBundle(); return true; } // T18
         bool plant = p.ItemId is "grama_sangue" or "raiz_amarga";
         string item = p.ItemId == "grama_sangue" ? HarvestRules.HerbItem(Data, Skills.Grade("erboristeria")) : p.ItemId;
         AddItem(item);
@@ -1251,7 +1257,7 @@ public partial class PlainsGame : Node2D, IMapSource
     {
         var (collected, dead, parts, trails) = World.State.Snapshot();
         var (practice, keys) = Skills.Snapshot();
-        return new SaveData
+        var save = new SaveData
         {
             Seed = SeedInUse, Spot = new[] { Spot.X, Spot.Y }, Hour = Sky.Hour,
             Collected = collected, Dead = dead.ToDictionary(kv => kv.Key, kv => new[] { kv.Value.X, kv.Value.Y }), PartsTaken = parts, Trails = trails,
@@ -1264,6 +1270,8 @@ public partial class PlainsGame : Node2D, IMapSource
             Region = "planicie", Phase = "planicie", Book = Book, LossApplied = LossApplied, TechniquesReturned = TechniquesReturned,
             Explored = Explored.Select(c => new[] { c.X, c.Y }).ToList(), SeenAnimals = SeenAnimals.OrderBy(a => a).ToList(), Markers = MapMarkers.Select(m => new[] { m.X, m.Y }).ToList(), Clues = Clues.ToList(), Coins = Wallet.Coins,
         };
+        SnapshotEquipment(save); // T18
+        return save;
     }
 
     // ------------------------------------------------------------------ inventory
@@ -1291,7 +1299,8 @@ public partial class PlainsGame : Node2D, IMapSource
     {
         var d = itemId.Length > 0 ? Catalog.Get(itemId) : null;
         EquippedItem = d == null || d.Equip.Length == 0 ? "" : itemId;
-        Player.Equipped = d?.Equip switch { "knife" => Player.Weapon.Knife, "axe" => Player.Weapon.Axe, "pickaxe" => Player.Weapon.Pickaxe, _ => Player.Weapon.None };
+        Player.Equipped = d?.Equip switch { "knife" => Player.Weapon.Knife, "axe" => Player.Weapon.Axe, "pickaxe" => Player.Weapon.Pickaxe, "weapon" => Player.Weapon.Sword, _ => Player.Weapon.None };
+        ApplyWeapon(d); // T18: the weapon's drawing, numbers and techniques
         Player.ToolReach = d?.Tool?.Reach ?? 0; Player.ToolDamage = d?.Tool?.Damage ?? 0;
         RefreshHands();
     }
@@ -1337,6 +1346,7 @@ public partial class PlainsGame : Node2D, IMapSource
         var lines = new List<PlainsHud.BagLine>();
         if (other.Equip.Length == 0) return lines;
         if (other.Id == EquippedItem) { lines.Add(new("Está na sua mão.", PlainsHud.BagLineKind.Head)); return lines; }
+        if (other.Wear != null || other.Tool == null) return lines; // T18: clothes and weapons without a tool compare in EquipCompareLines
         var hand = EquippedItem.Length > 0 ? Catalog.Get(EquippedItem) : null;
         var (hr, hd) = HandNumbers(hand); var (or, od) = HandNumbers(other);
         lines.Add(new(hand == null ? $"Mãos vazias → com {other.Name}:" : $"Na mão: {hand.Name} → se trocar:", PlainsHud.BagLineKind.Head));
@@ -1351,17 +1361,19 @@ public partial class PlainsGame : Node2D, IMapSource
         string tab = BagTab;
         var slots = QuickSlots();
         if (tab != "fabricacao")
-            foreach (var (id, count) in Inventory.Entries)
+            foreach (var (id, count) in BagEntries())
             {
                 var d = Catalog.Get(id);
                 if (!BagRules.InTab(d, tab)) continue;
-                bool inHand = id == EquippedItem;
-                string tag = d.Equip.Length > 0 ? (inHand ? "  [na mão]" : Bindings.F("  [[use]: equipar]")) : d.Usable ? Bindings.F("  [[use]: usar]") : "";
-                string action = d.Equip.Length > 0 ? (inHand ? "Na mão" : "Equipar") : d.Usable ? (id.StartsWith("carne") || id.StartsWith("broto") ? "Comer" : "Usar") : "";
+                bool worn = d.Wear != null && IsWorn(id); // T18: the robe and the hat on the body
+                bool inHand = id == EquippedItem || worn;
+                string tag = d.Wear != null ? (worn ? (d.Wear.Slot == "cabeca" ? "  [na cabeça]" : "  [vestindo]") : Bindings.F("  [[use]: vestir]"))
+                    : d.Equip.Length > 0 ? (inHand ? "  [na mão]" : Bindings.F("  [[use]: equipar]")) : d.Usable ? Bindings.F("  [[use]: usar]") : "";
+                string action = d.Wear != null ? (worn ? (d.Base ? "Vestindo" : "Tirar") : "Vestir") : d.Equip.Length > 0 ? (inHand ? "Na mão" : "Equipar") : d.Usable ? (id.StartsWith("carne") || id.StartsWith("broto") ? "Comer" : "Usar") : "";
                 string detail = (d.Description + " " + Effect(d)).Trim() + (action.Length > 0 ? "" : id.StartsWith("carne") ? " Crua: asse na fogueira (Fabricação) para poder comer." : " Material: serve para fabricar.");
                 int slot = System.Array.IndexOf(slots, id);
-                rows.Add(new PlainsHud.Row(false, id, $"{d.Name} ×{count}{tag}", detail, !inHand, Icon: id, Count: count, Equipped: inHand, Action: action, Name: d.Name,
-                    Lines: CompareLines(d), Slot: slot >= 0 ? QuickKey(slot) : ""));
+                rows.Add(new PlainsHud.Row(false, id, $"{d.Name} ×{count}{tag}", detail, d.Wear != null ? !(worn && d.Base) : !inHand, Icon: id, Count: count, Equipped: inHand, Action: action, Name: d.Name,
+                    Lines: CompareLines(d).Concat(EquipCompareLines(d)).ToList(), Slot: slot >= 0 ? QuickKey(slot) : ""));
             }
         else
         {
@@ -1376,7 +1388,7 @@ public partial class PlainsGame : Node2D, IMapSource
                 var lines = new List<PlainsHud.BagLine> { new("Ingredientes:", PlainsHud.BagLineKind.Head) };
                 lines.AddRange(needs.Select(n => new PlainsHud.BagLine((n.Ok ? "✓ " : "✗ ") + n.Line, n.Ok ? PlainsHud.BagLineKind.Ok : PlainsHud.BagLineKind.Missing)));
                 if (r.Station == "fogueira") lines.Add(new(NearStation(r.Station) ? "✓ junto à fogueira" : "✗ só junto à fogueira", NearStation(r.Station) ? PlainsHud.BagLineKind.Ok : PlainsHud.BagLineKind.Missing));
-                lines.AddRange(CompareLines(o));
+                lines.AddRange(CompareLines(o)); lines.AddRange(EquipCompareLines(o)); // T18: weapons and clothes compare too
                 string inputs = string.Join(" + ", r.Inputs.Select(kv => $"{Catalog.Get(kv.Key).Name} {Inventory.Count(kv.Key)}/{kv.Value}"));
                 rows.Add(new PlainsHud.Row(true, r.Id, $"{(r.Count > 1 ? r.Count + "× " : "")}{o.Name}  ({inputs}){where}", $"Resultado: {r.Count} {o.Name}. {o.Description} {Effect(o)}".Trim(), can, first ? "Fabricar" : "",
                     Icon: r.Output, Count: r.Count, Action: "Fabricar", Name: $"Fabricar {o.Name}", Need: need, Lines: lines));
@@ -1427,6 +1439,7 @@ public partial class PlainsGame : Node2D, IMapSource
     public bool UseItem(string id)
     {
         var d = Catalog.Get(id);
+        if (d.Wear != null) { bool changed = ToggleWear(id); RefreshRows(); return changed; } // T18: robe and hat
         if (Inventory.Count(id) <= 0) return false;
         if (d.Equip.Length > 0)
         {

@@ -148,7 +148,7 @@ public partial class BagPanel : Control
         if (sel < 0 || sel >= Rows.Count) return;
         var row = Rows[sel];
         string name = row.Name.Length > 0 ? row.Name : row.Text;
-        DrawString(font, new Vector2(12, dy + 12), name + (row.Count > 1 && !row.IsRecipe ? $"  ×{row.Count}" : "") + (row.Equipped ? "  — na mão" : ""),
+        DrawString(font, new Vector2(12, dy + 12), name + (row.Count > 1 && !row.IsRecipe ? $"  ×{row.Count}" : "") + (row.Equipped ? (row.Text.Contains("[na cabeça]") ? "  — na cabeça" : row.Text.Contains("[vestindo]") ? "  — vestindo" : "  — na mão") : ""),
             HorizontalAlignment.Left, Size.X - 150, 11, row.Equipped ? Jade : Ink);
         float ly = dy + 18, textW = Size.X - 150;
         int descLines = 0;
