@@ -82,6 +82,21 @@ public static class Suites
                 ("oldsave", "T07: a jornada de antes do Ki (fixture) carrega; nenhum javali no mapa; faixa completa por padrão."),
                 ("trilhas", "T07: as trilhas geradas da clareira continuam as mesmas e não somem.") })
                 l.Add(new("Combate e fauna (T07)", $"{ph}, semente {s}", fauna, new[] { $"--phase={ph}", $"--seed={s}", "--prefs=user://teste_fauna_prefs.json" }, About: about));
+        const string equip = "res://tests/integration/EquipCheck.tscn", eqEv = "res://production/qa/evidence/2026-11-28_t18-equipamento";
+        const string eqPrefs = "--prefs=user://teste_equip_prefs.json";
+        l.Add(new("Equipamento (T18)", "retrato", equip, new[] { "--phase=retrato", $"--ref={eqEv}/antes", eqPrefs }, About: "T18: o protagonista padrão idêntico ao aprovado, pixel por pixel: 12 poses × 8 direções × espada, faca, machado, picareta e mãos vazias."));
+        l.Add(new("Equipamento (T18)", "conjunto", equip, new[] { "--phase=conjunto", $"--ref={eqEv}/conjunto", eqPrefs }, About: "T18: túnica de viajante, chapéu de bambu e sabre (sozinhos e juntos) iguais ao aprovado; sem o chapéu, a cabeça aprovada volta."));
+        l.Add(new("Equipamento (T18)", "sabre", equip, new[] { "--phase=sabre", eqPrefs }, About: "T18: a empunhadura acompanha a mão nos 3 cortes × 8 direções; de costas a ordem das camadas; o brilho do Reforço segue a curva."));
+        l.Add(new("Equipamento (T18)", "catalogo", equip, new[] { "--phase=catalogo", eqPrefs }, About: "T18 (/create arma, roupa, capacete): cada arquivo de assets/data/equipamento carrega, tem desenho, ícone, números, onde se consegue e prévia."));
+        foreach (int s in seeds)
+            foreach (var (ph, about) in new[] {
+                ("bolsa", "T18: a trouxa sob o pinheiro; I abre a bolsa; compara e equipa sabre, túnica e chapéu (fabricado) separadamente; tira e volta à túnica verde; faca e atalhos da T06."),
+                ("combate", "T18: alcance da bolsa = alcance do golpe; mira pelo mouse; alvo travado; Reforço de Ki com o sabre; 12 acertos revelam a Meia-Lua."),
+                ("salvar", "T18: veste o conjunto e medita (a jornada é gravada com o equipamento)."),
+                ("continuar", "T18: Continuar traz o sabre na mão, a túnica e o chapéu, marcados na bolsa (rode depois de 'salvar').") })
+                l.Add(new("Equipamento (T18)", $"{ph}, semente {s}", equip, new[] { $"--phase={ph}", $"--seed={s}", eqPrefs }, About: about));
+        l.Add(new("Equipamento (T18)", "mapa", equip, new[] { "--phase=mapa", eqPrefs }, About: "Mapa de testes: todos os itens do catálogo na bolsa, o mostruário com cada arma, roupa, chapéu e ferramenta no chão, E pega; arquivo próprio."));
+        l.Add(new("Equipamento (T18)", "oldsave", equip, new[] { "--phase=oldsave", eqPrefs }, About: "T18: a jornada de antes do Ki (fixture) volta com a túnica verde, sem chapéu e com a faca na mão."));
         if (quick) return l;
         foreach (var ph in new[] { "full", "sealed", "resume2", "resume3", "migrate", "migrate2" })
             l.Add(new("Técnicas seladas", ph, tech, new[] { $"--phase={ph}" }, About: "Selo no despertar e volta enfraquecida no nível 3, com medições."));

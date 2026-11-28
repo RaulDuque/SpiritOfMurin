@@ -61,6 +61,20 @@ foreach ($sd in 20261126, 777) {
     & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/FaunaCheck.tscn -- "--phase=$phase" "--seed=$sd" '--prefs=user://teste_fauna_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
   }
 }
+# T18: the swordsman's look (identical to the approved one), the approved set, the sabre, every piece of equipment, then the game (both seeds) and a journey from before
+$eq = 'res://production/qa/evidence/2026-11-28_t18-equipamento'
+& $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/EquipCheck.tscn -- '--phase=retrato' "--ref=$eq/antes" '--prefs=user://teste_equip_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+& $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/EquipCheck.tscn -- '--phase=conjunto' "--ref=$eq/conjunto" '--prefs=user://teste_equip_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+foreach ($phase in 'sabre', 'catalogo') {
+  & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/EquipCheck.tscn -- "--phase=$phase" '--prefs=user://teste_equip_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+}
+foreach ($sd in 20261126, 777) {
+  foreach ($phase in 'bolsa', 'combate', 'salvar', 'continuar') {
+    & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/EquipCheck.tscn -- "--phase=$phase" "--seed=$sd" '--prefs=user://teste_equip_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+  }
+}
+& $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/EquipCheck.tscn -- '--phase=mapa' '--prefs=user://teste_equip_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
+& $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/EquipCheck.tscn -- '--phase=oldsave' '--prefs=user://teste_equip_prefs.json' @slow; if ($LASTEXITCODE -ne 0) { $fail++ }
 if ($SoPrologo) { if ($fail -eq 0) { Write-Host "Prologo: todos os testes passaram." } else { Write-Host "$fail execucao(oes) com falha." }; exit $fail }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/unit/UnitRunner.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }
 & $godot --path . --windowed --resolution 1280x720 --screen $screen res://tests/integration/ControlsCheck.tscn; if ($LASTEXITCODE -ne 0) { $fail++ }

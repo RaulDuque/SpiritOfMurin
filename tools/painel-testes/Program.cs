@@ -49,7 +49,8 @@ public sealed class Painel : Form
     private readonly Button _report = new() { Text = "Abrir último relatório", Width = 170, Height = 30 };
     private readonly Button _godotBtn = new() { Text = "Escolher o Godot…", Width = 140, Height = 30 };
     private readonly Button _showcase = new() { Text = "Vitrine (personagem e mobs)", Width = 200, Height = 40 };
-    private readonly Button _inspect = new() { Text = "Inspeção (elementos)", Width = 160, Height = 40 };
+    private readonly Button _inspect = new() { Text = "Inspeção (elementos e equipamento)", Width = 160, Height = 40 };
+    private readonly Button _testMap = new() { Text = "Mapa de testes (todos os itens)", Width = 170, Height = 40 };
     private FileSystemWatcher? _watchData;
     private readonly CheckBox _live = new() { Text = "Modo ao vivo: recompilar e reabrir ao salvar o código", AutoSize = true, Checked = true };
     private FileSystemWatcher? _watch;
@@ -75,12 +76,12 @@ public sealed class Painel : Form
 
         _monitor.Items.AddRange(new object[] { "Monitor 1", "Monitor 2", "Monitor 3" }); _monitor.SelectedIndex = Math.Min(1, Screen.AllScreens.Length - 1);
         _seeds.Items.AddRange(new object[] { "Semente 20261126", "Semente 777", "As duas sementes" }); _seeds.SelectedIndex = 2;
-        foreach (var b in new[] { _play, _showcase, _inspect, _all, _quick, _headless, _stop, _report, _godotBtn }) { b.FlatStyle = FlatStyle.Flat; b.BackColor = Color.FromArgb(78, 56, 36); b.ForeColor = ForeColor; }
+        foreach (var b in new[] { _play, _showcase, _inspect, _testMap, _all, _quick, _headless, _stop, _report, _godotBtn }) { b.FlatStyle = FlatStyle.Flat; b.BackColor = Color.FromArgb(78, 56, 36); b.ForeColor = ForeColor; }
         _play.BackColor = Color.FromArgb(29, 94, 87);
 
         var top = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 54, Padding = new Padding(8), WrapContents = false };
-        top.Controls.AddRange(new Control[] { _play, _showcase, _inspect, _all, _quick, _headless, _stop });
-        _showcase.BackColor = Color.FromArgb(29, 94, 87); _inspect.BackColor = Color.FromArgb(29, 94, 87);
+        top.Controls.AddRange(new Control[] { _play, _showcase, _inspect, _testMap, _all, _quick, _headless, _stop });
+        _showcase.BackColor = Color.FromArgb(29, 94, 87); _inspect.BackColor = Color.FromArgb(29, 94, 87); _testMap.BackColor = Color.FromArgb(29, 94, 87);
         var liveRow = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 30, Padding = new Padding(8, 2, 8, 2) };
         liveRow.Controls.Add(_live);
         var opts = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 42, Padding = new Padding(8, 4, 8, 4), WrapContents = false };
@@ -92,6 +93,7 @@ public sealed class Painel : Form
         _play.Click += async (_, _) => await Launch("");
         _showcase.Click += async (_, _) => await Launch("res://src/Dev/Vitrine.tscn");
         _inspect.Click += async (_, _) => await Launch("res://src/Dev/Inspecao.tscn");
+        _testMap.Click += async (_, _) => await Launch(TestMapScene); // the Planície with every item (its own journey file)
         _debounce.Tick += async (_, _) => { _debounce.Stop(); await Rebuild(); };
         StartWatch();
         _all.Click += async (_, _) => await RunAll(window: true, quick: false);
@@ -107,7 +109,7 @@ public sealed class Painel : Form
         Log("");
         Log("▶ Jogar compila o código e abre o jogo com a sua jornada normal.");
         Log("Vitrine mostra o protagonista nas 8 direções, deitado, ajoelhado, um boneco que você controla, e os mobs em todas as poses.");
-        Log("Inspeção mostra cada elemento do mundo (árvores, rochas, bambus, arbustos) no tamanho do jogo, em todos os estados: ← → elemento, ↑ ↓ estado, J golpe, G rajada, A corpo passando, Tab ferramenta na mão.");
+        Log("Inspeção mostra cada elemento do mundo (árvores, rochas, bambus, arbustos) no tamanho do jogo, em todos os estados: ← → elemento, ↑ ↓ estado, J golpe, G rajada, A corpo passando. O personagem (T18): Tab arma, R roupa, C chapéu, Z pose, Q/E gira nas 8 direções, Espaço anima.");
         Log("Modo ao vivo: com o jogo ou a vitrine aberta pelo painel, ao salvar um arquivo .cs ele recompila e reabre sozinho (uns segundos).");
         Log("Os testes usam saves e preferências próprios (user://teste_*.json): a sua jornada e as suas teclas não são tocadas.");
         Log("Com janela, você assiste o jogo se jogar sozinho no monitor escolhido. No fim, o relatório abre no navegador.");
@@ -202,6 +204,9 @@ public sealed class Painel : Form
     }
 
     /// <summary>Compiles and opens the game ("" = the normal start) or a scene (the vitrine).</summary>
+    /// <summary>The test map: the Planície opened with every item in the bag and a showcase (journey in user://teste_mapa.json).</summary>
+    private const string TestMapScene = "res://src/Plains/Plains.tscn";
+
     private async Task Launch(string scene)
     {
         if (!Ready() || _building) return;
@@ -221,9 +226,11 @@ public sealed class Painel : Form
         if (!File.Exists(gui)) gui = _godot;
         var psi = new ProcessStartInfo(gui) { WorkingDirectory = _root, UseShellExecute = false };
         psi.ArgumentList.Add("--path"); psi.ArgumentList.Add(_root);
-        if (scene.Length > 0) { psi.ArgumentList.Add("--resolution"); psi.ArgumentList.Add("1280x960"); psi.ArgumentList.Add(scene); }
+        if (scene.Length > 0) { psi.ArgumentList.Add("--resolution"); psi.ArgumentList.Add(scene == TestMapScene ? "1280x720" : "1280x960"); psi.ArgumentList.Add(scene); }
+        if (scene == TestMapScene) { psi.ArgumentList.Add("--"); psi.ArgumentList.Add("--mapa-testes"); }
         _game = Process.Start(psi); _gameScene = scene;
-        Log(scene.Contains("Inspecao") ? "Inspeção aberta." : scene.Length > 0 ? "Vitrine aberta." : "Jogo aberto (a sua jornada normal).");
+        Log(scene.Contains("Inspecao") ? "Inspeção aberta." : scene == TestMapScene ? "Mapa de testes aberto: tudo na bolsa (I) e um mostruário ao sul da fogueira. Usa user://teste_mapa.json; a sua jornada não muda."
+            : scene.Length > 0 ? "Vitrine aberta." : "Jogo aberto (a sua jornada normal).");
     }
 
     // modo ao vivo: a saved .cs (or game data) rebuilds and reopens what the panel opened
